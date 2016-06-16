@@ -77,8 +77,10 @@ class Test extends AbstractCommand
     {
         $data = [];
 
+        $start = microtime(true);
+
         foreach (['/docs/mob/prodinfo_NL.xml', '/docs/mob/prodinfo_TEXTILE_NL.xml'] as $fileName) {
-            $prodInfo = $this->getSourceStreamer($fileName);
+            $prodInfo = $this->getSourceStreamer($fileName, 100);
             foreach ($prodInfo as $item) {
                 try {
                     $sku = $this->productMapper->getSku($item);
@@ -88,6 +90,10 @@ class Test extends AbstractCommand
                 }
             }
         }
+
+        $timeTaken = microtime(true) - $start;
+        $perSecond = count($data) / $timeTaken;
+        $output->writeln("Time taken: {$timeTaken}, products per second {$perSecond}");
 
         return array_values($data);
     }

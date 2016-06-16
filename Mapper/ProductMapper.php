@@ -64,13 +64,22 @@ class ProductMapper implements ProductMapperInterface
 
 
     /**
-     * {@inheritdoc}
+     * Get Mapping Definition
+     *
+     * @return array
      */
-    public function mapItem(array $rawProduct) : array
+    public function getMappingDefinition()
     {
-        $sku = $this->getSku($rawProduct);
-        $name = $rawProduct['LONG_DESCRIPTION'] ?? $rawProduct['SHORT_DESCRIPTION'] ?? null;
-        $configurableSku = $rawProduct['PRODUCT_BASE_NUMBER'] ?? null;
+        $sku = function ($rawProduct) {
+            return $this->getSku($rawProduct);
+        };
+
+        $name = function ($rawProduct) {
+            return $rawProduct['LONG_DESCRIPTION'] ?? $rawProduct['SHORT_DESCRIPTION'] ?? null;
+        };
+        $configurableSku = function ($rawProduct) {
+            return $rawProduct['PRODUCT_BASE_NUMBER'] ?? null;
+        };
 
         return [
             'sku'                => $sku,
@@ -79,14 +88,37 @@ class ProductMapper implements ProductMapperInterface
             'product_websites'   => 'base',
             'name'               => $name,
             'price'              => '14.0000',
-            'url_key'            => $this->url->formatUrlKey("$sku $name"),
-            'weight'             => $this->numberFormatter->parse($rawProduct['GROSS_WEIGHT']),
-            'visibility'         => $configurableSku ? 'Catalog, Search' : 'Search',
-            'tax_class_name' => 'Taxable Goods',
-            'product_online' => '1',
-//            'short_description' => null,
-//            'description' => '',
-            '_configurable_sku' => $configurableSku
+            'url_key'            => function ($rawProduct) use ($sku, $name) {
+                return $this->url->formatUrlKey("{$sku($rawProduct)} {$name($rawProduct)}");
+            },
+            'weight'             => function ($rawProduct) {
+                return $this->numberFormatter->parse($rawProduct['GROSS_WEIGHT']);
+            },
+            'visibility'         => function ($rawProduct) use ($configurableSku) {
+                return $configurableSku ? 'Catalog, Search' : 'Search';
+            },
+            'tax_class_name'     => 'Taxable Goods',
+            'product_online'     => '1',
+            'short_description'  => null,
+            'description'        => '',
+            '_configurable_sku'  => $configurableSku
         ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function mapItem(array $rawProduct) : array
+    {
+        $product = [];
+        foreach ($this->getMappingDefinition() as $key => $value) {
+            if (is_callable($value)) {
+                $value = $value($rawProduct);
+            }
+
+            $product[$key] = $value;
+        }
+
+        return $product;
     }
 }
