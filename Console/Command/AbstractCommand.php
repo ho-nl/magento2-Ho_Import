@@ -101,17 +101,19 @@ abstract class AbstractCommand extends Command
         /** @var \FireGento\FastSimpleImport2\Model\Importer $importerModel */
         $importerModel = $this->objectManager->create(\FireGento\FastSimpleImport2\Model\Importer::class);
 
-        $importerModel->setBehavior($this->getBehavior());
-        $importerModel->setEntityCode($this->getEntityCode());
+        $importerModel->setEntity($this->getEntityCode());
+        $importerModel->initImportFromConfig();
 
         try {
             $importerModel->processImport($productsArray);
         } catch (\Exception $e) {
             $output->writeln($e->getMessage());
         }
-
+        
         $output->write($importerModel->getLogTrace());
-        $output->write($importerModel->getErrorMessages());
+        foreach ($importerModel->getErrorMessages() as $error) {
+            $output->writeln("<error>$error</error>");
+        }
 
         $output->writeln('Import finished. Elapsed time: ' . round(microtime(true) - $time, 2) . 's' . "\n");
     }

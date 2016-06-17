@@ -7,6 +7,7 @@
 namespace Ho\Import\Mapper;
 
 use Ho\Import\MapperException;
+use Magento\Catalog\Model\Product\Url;
 
 class ProductMapper implements ProductMapperInterface
 {
@@ -16,7 +17,7 @@ class ProductMapper implements ProductMapperInterface
     /**
      * URL Model
      *
-     * @var \Magento\Catalog\Model\Product\Url
+     * @var Url
      */
     private $url;
 
@@ -24,10 +25,10 @@ class ProductMapper implements ProductMapperInterface
     /**
      * ProductMapper constructor.
      *
-     * @param \Magento\Catalog\Model\Product\Url $url
+     * @param Url $url
      */
     public function __construct(
-        \Magento\Catalog\Model\Product\Url $url
+        Url $url
     ) {
         $this->url = $url;
 
@@ -75,7 +76,7 @@ class ProductMapper implements ProductMapperInterface
         };
 
         $name = function ($rawProduct) {
-            return $rawProduct['LONG_DESCRIPTION'] ?? $rawProduct['SHORT_DESCRIPTION'] ?? null;
+            return preg_replace('/\s+/', ' ', $rawProduct['SHORT_DESCRIPTION']);
         };
         $configurableSku = function ($rawProduct) {
             return $rawProduct['PRODUCT_BASE_NUMBER'] ?? null;
@@ -89,7 +90,8 @@ class ProductMapper implements ProductMapperInterface
             'name'               => $name,
             'price'              => '14.0000',
             'url_key'            => function ($rawProduct) use ($sku, $name) {
-                return $this->url->formatUrlKey("{$sku($rawProduct)} {$name($rawProduct)}");
+                $name = $sku($rawProduct) . ' ' .trim(str_replace($sku($rawProduct), '', $name($rawProduct)));
+                return $this->url->formatUrlKey($name);
             },
             'weight'             => function ($rawProduct) {
                 return $this->numberFormatter->parse($rawProduct['GROSS_WEIGHT']);
@@ -101,7 +103,16 @@ class ProductMapper implements ProductMapperInterface
             'product_online'     => '1',
             'short_description'  => null,
             'description'        => '',
-            '_configurable_sku'  => $configurableSku
+            'image'              => function ($rawProduct) {
+                return $rawProduct['IMAGE_URL'];
+            },
+            'small_image'              => function ($rawProduct) {
+                return $rawProduct['IMAGE_URL'];
+            },
+            'thumbnail'              => function ($rawProduct) {
+                return $rawProduct['IMAGE_URL'];
+            },
+            'configurable_sku'  => $configurableSku
         ];
     }
 
