@@ -89,8 +89,10 @@ class ProductMapper implements ProductMapperInterface
             'product_websites'   => 'base',
             'name'               => $name,
             'price'              => '14.0000',
+            'qty'                => 10,
+            'is_in_stock'        => 1,
             'url_key'            => function ($rawProduct) use ($sku, $name) {
-                $name = $sku($rawProduct) . ' ' .trim(str_replace($sku($rawProduct), '', $name($rawProduct)));
+                $name = $sku($rawProduct) . ' ' . trim(str_replace($sku($rawProduct), '', $name($rawProduct)));
                 return $this->url->formatUrlKey($name);
             },
             'weight'             => function ($rawProduct) {
@@ -106,13 +108,19 @@ class ProductMapper implements ProductMapperInterface
             'image'              => function ($rawProduct) {
                 return $rawProduct['IMAGE_URL'];
             },
-            'small_image'              => function ($rawProduct) {
+            'small_image'        => function ($rawProduct) {
                 return $rawProduct['IMAGE_URL'];
             },
-            'thumbnail'              => function ($rawProduct) {
+            'thumbnail'          => function ($rawProduct) {
                 return $rawProduct['IMAGE_URL'];
             },
-            'configurable_sku'  => $configurableSku
+            'configurable_sku'   => $configurableSku,
+            'color'              => function ($rawProduct) {
+                $color = is_array($rawProduct['COLOR_DESCRIPTION'])
+                    ? reset($rawProduct['COLOR_DESCRIPTION'])
+                    : $rawProduct['COLOR_DESCRIPTION'];
+                return mb_convert_case(mb_strtolower($color), MB_CASE_TITLE);
+            },
         ];
     }
 

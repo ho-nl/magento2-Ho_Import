@@ -4,7 +4,7 @@
  * See LICENSE.txt for license details.
  */
 
-namespace Ho\Import;
+namespace Ho\Import\Processor;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise;
@@ -73,7 +73,7 @@ class AsyncImageDownloader
     /**
      * Set the data array for fields to import
      *
-     * @param $data
+     * @param array &$data
      */
     public function setData(&$data)
     {
@@ -86,7 +86,7 @@ class AsyncImageDownloader
      * @todo Implement the additional fields, those are comma seperated
      * @return void
      */
-    public function download()
+    public function process()
     {
         $imageFields = ['swatch_image','image', 'small_image', 'thumbnail'];
         //$additionalFields = 'additional_images';
@@ -144,9 +144,14 @@ class AsyncImageDownloader
             ->then(function () use (&$item, $field, $fileName) {
                 $item[$field] = $fileName;
             })
-            ->otherwise(function () use (&$item, $field, $targetPath) {
+            ->otherwise(function () use (&$item, $field, $fileName, $targetPath) {
                 unlink($targetPath); // clean up any remaining file pointers if the download failed
-                $item[$field] = null;
+
+                foreach ($item as $keyField => $value) {
+                    if ($value == $item[$field]) {
+                        $item[$keyField] = null;
+                    }
+                }
             });
 
         return $this->cachedRequests[$fileName] = $promise;
