@@ -4,34 +4,33 @@
  * See LICENSE.txt for license details.
  */
 
-namespace Ho\Import\Processor;
-
-use GuzzleHttp\Client;
-use GuzzleHttp\Promise;
-use Magento\Framework\App\Filesystem\DirectoryList;
-
+namespace Ho\Import\RowModifier;
 /**
  * @package Ho\Import
  */
-abstract class AbstractProcessor
+abstract class AbstractRowModifier
 {
     /**
+     * Item array with all items to import
+     *
      * @var array
      */
-    protected $data;
+    protected $items;
 
 
     /**
      * Set the data array for fields to import
      *
-     * @param array &$data
+     * @param array &$items
      */
-    public function setData(&$data)
+    public function setItems(&$items)
     {
-        $this->data =& $data;
+        $this->items =& $items;
     }
 
     /**
+     * Method to process the row data
+     *
      * @return void
      */
     abstract public function process();

@@ -85,6 +85,9 @@ class ProductMapper implements ProductMapperInterface
         return [
             'sku'                => $sku,
             'attribute_set_code' => 'Default',
+            'categories'         => function ($rawProduct) {
+                return implode(',', ['TestCategory']);
+            },
             'product_type'       => 'simple',
             'product_websites'   => 'base',
             'name'               => $name,
@@ -121,6 +124,10 @@ class ProductMapper implements ProductMapperInterface
                     : $rawProduct['COLOR_DESCRIPTION'];
                 return mb_convert_case(mb_strtolower($color), MB_CASE_TITLE);
             },
+            'size'               => function ($rawProduct) use ($sku) {
+                $skuParts = explode('-', $sku($rawProduct));
+                return end($skuParts) != $rawProduct['COLOR_CODE'] ? end($skuParts) : null;
+            }
         ];
     }
 

@@ -4,12 +4,12 @@
  * See LICENSE.txt for license details.
  */
 
-namespace Ho\Import\Processor;
+namespace Ho\Import\RowModifier;
 
 use Magento\CatalogImportExport\Model\Import\Product as ImportProduct;
 use Magento\ImportExport\Model\Import;
 
-class ConfigurableBuilder extends AbstractProcessor
+class ConfigurableBuilder extends AbstractRowModifier
 {
 
     /**
@@ -51,7 +51,7 @@ class ConfigurableBuilder extends AbstractProcessor
         $attrCallback = $this->attributes;
         $configurables = [];
 
-        foreach ($this->data as &$item) {
+        foreach ($this->items as &$item) {
             $configurableSku = $skuCallback($item);
 
             if (! $configurableSku) {
@@ -85,14 +85,14 @@ class ConfigurableBuilder extends AbstractProcessor
         }
 
         //cleanup all 'empty' configurables.
-        $configurables = array_filter($configurables, function($item){
+        $configurables = array_filter($configurables, function ($item) {
             return count($item['configurable_variations']) > 1;
         });
 
         //modify the simples that are in configurables
         foreach ($configurables as $configurable) {
             foreach ($configurable['configurable_variations'] as $simpleData) {
-                $item =& $this->data[$simpleData['sku']];
+                $item =& $this->items[$simpleData['sku']];
 
                 foreach ($this->simpleValues as $key => $value) {
                     if (is_callable($value)) {
@@ -118,7 +118,7 @@ class ConfigurableBuilder extends AbstractProcessor
             }
         }, $configurables);
 
-        $this->data += $configurables;
+        $this->items += $configurables;
     }
 
 

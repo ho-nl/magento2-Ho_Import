@@ -5,9 +5,9 @@
  */
 namespace Ho\Import\Console\Command;
 
-use Ho\Import\Processor\AsyncImageDownloader;
-use Ho\Import\Processor\AttributeOptionCreator;
-use Ho\Import\Processor\ConfigurableBuilder;
+use Ho\Import\RowModifier\ImageDownloader;
+use Ho\Import\RowModifier\AttributeOptionCreator;
+use Ho\Import\RowModifier\ConfigurableBuilder;
 use Magento\Framework\App\ObjectManagerFactory;
 use Magento\ImportExport\Model\Import;
 use Magento\Framework\App\Filesystem\DirectoryList;
@@ -29,9 +29,9 @@ class Test extends AbstractCommand
     private $productMapper;
 
     /**
-     * @var AsyncImageDownloader
+     * @var ImageDownloader
      */
-    private $asyncImageDownloader;
+    private $imageDownloader;
 
     /**
      * @var AttributeOptionCreator
@@ -50,7 +50,7 @@ class Test extends AbstractCommand
      * @param ObjectManagerFactory   $objectManagerFactory
      * @param DirectoryList          $directoryList
      * @param ProductMapper          $productMapper
-     * @param AsyncImageDownloader   $asyncImageDownloader
+     * @param ImageDownloader   $imageDownloader
      * @param AttributeOptionCreator $attributeOptionCreator
      * @param ConfigurableBuilder    $configurableBuilder
      */
@@ -58,14 +58,14 @@ class Test extends AbstractCommand
         ObjectManagerFactory $objectManagerFactory,
         DirectoryList $directoryList,
         ProductMapper $productMapper,
-        AsyncImageDownloader $asyncImageDownloader,
+        ImageDownloader $imageDownloader,
         AttributeOptionCreator $attributeOptionCreator,
         ConfigurableBuilder $configurableBuilder
     ) {
         parent::__construct($objectManagerFactory);
         $this->directoryList = $directoryList;
         $this->productMapper = $productMapper;
-        $this->asyncImageDownloader = $asyncImageDownloader;
+        $this->imageDownloader = $imageDownloader;
         $this->attributeOptionCreator = $attributeOptionCreator;
         $this->configurableBuilder = $configurableBuilder;
     }
@@ -114,7 +114,7 @@ class Test extends AbstractCommand
         $start = microtime(true);
 
         foreach (['/docs/mob/prodinfo_NL.xml', '/docs/mob/prodinfo_TEXTILE_NL.xml'] as $fileName) {
-            $prodInfo = $this->getSourceStreamer($fileName, 10);
+            $prodInfo = $this->getSourceStreamer($fileName);
             foreach ($prodInfo as $item) {
                 try {
                     $sku = $this->productMapper->getSku($item);
@@ -125,10 +125,9 @@ class Test extends AbstractCommand
             }
         }
 
-
         $this->downloadImages($data);
         $this->createAttributeOptions($data);
-        $this->buildConfiruables($data);
+        $this->buildConfigurables($data);
 
         $timeTaken = round(microtime(true) - $start, 2);
         $perSecond = round(count($data) / $timeTaken, 2);
@@ -147,10 +146,10 @@ class Test extends AbstractCommand
      */
     protected function downloadImages(&$data)
     {
-        $this->asyncImageDownloader->setData($data);
-        $this->asyncImageDownloader->setUseExisting(true);
-        $this->asyncImageDownloader->setConcurrent(10);
-        $this->asyncImageDownloader->process();
+        $this->imageDownloader->setItems($data);
+        $this->imageDownloader->setUseExisting(true);
+        $this->imageDownloader->setConcurrent(10);
+        $this->imageDownloader->process();
     }
 
 
@@ -158,13 +157,13 @@ class Test extends AbstractCommand
      * Create attributes from the source data.
      *
      * @param array &$data
-     * @param array $attributes
      * @return void
      */
     protected function createAttributeOptions(array &$data)
     {
-        $this->attributeOptionCreator->setData($data);
-        $this->attributeOptionCreator->process(['color']);
+        $this->attributeOptionCreator->setItems($data);
+        $this->attributeOptionCreator->setAttributes(['color', 'size']);
+        $this->attributeOptionCreator->process();
     }
 
 
@@ -174,11 +173,18 @@ class Test extends AbstractCommand
      * @param array &$data
      * @return void
      */
-    public function buildConfiruables(array &$data)
+    public function buildConfigurables(array &$data)
     {
-        $this->configurableBuilder->setData($data);
+        $this->configurableBuilder->setItems($data);
         $this->configurableBuilder->setAttributes(function (&$item) {
-            return ['color'];
+            $attributes = [];
+            if (!empty($item['color'])) {
+                $attributes[] = 'color';
+            }
+            if (!empty($item['size'])) {
+                $attributes[] = 'size';
+            }
+            return $attributes;
         });
         $this->configurableBuilder->setConfigurableSku(function (&$item) {
             return $item['configurable_sku'];

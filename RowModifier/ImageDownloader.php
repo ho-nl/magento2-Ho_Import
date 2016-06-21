@@ -4,7 +4,7 @@
  * See LICENSE.txt for license details.
  */
 
-namespace Ho\Import\Processor;
+namespace Ho\Import\RowModifier;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise;
@@ -16,12 +16,8 @@ use Magento\Framework\App\Filesystem\DirectoryList;
  * @todo implement Guzzle request Pool http://docs.guzzlephp.org/en/latest/quickstart.html#concurrent-requests
  * @package Ho\Import
  */
-class AsyncImageDownloader
+class ImageDownloader extends AbstractRowModifier
 {
-    /**
-     * @var array
-     */
-    protected $data;
 
     /**
      * @var Client
@@ -69,17 +65,6 @@ class AsyncImageDownloader
         $this->client = $client;
     }
 
-
-    /**
-     * Set the data array for fields to import
-     *
-     * @param array &$data
-     */
-    public function setData(&$data)
-    {
-        $this->data =& $data;
-    }
-
     /**
      * Actually download the images async
      *
@@ -94,7 +79,7 @@ class AsyncImageDownloader
         $promises = [];
 
         $count = 0;
-        foreach ($this->data as &$item) {
+        foreach ($this->items as &$item) {
             foreach ($imageFields as $field) {
                 if (!isset($item[$field])) {
                     continue;
