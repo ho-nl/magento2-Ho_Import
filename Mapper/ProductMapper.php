@@ -86,7 +86,18 @@ class ProductMapper implements ProductMapperInterface
             'sku'                => $sku,
             'attribute_set_code' => 'Default',
             'categories'         => function ($rawProduct) {
-                return implode(',', ['TestCategory']);
+                $category = implode('/', array_filter([
+                    isset($rawProduct['CATEGORY_LEVEL_3'])
+                        ? mb_convert_case($rawProduct['CATEGORY_LEVEL_1'], MB_CASE_TITLE)
+                        : null,
+                    isset($rawProduct['CATEGORY_LEVEL_3'])
+                        ? mb_convert_case($rawProduct['CATEGORY_LEVEL_2'], MB_CASE_TITLE)
+                        : null,
+                    isset($rawProduct['CATEGORY_LEVEL_3'])
+                        ? mb_convert_case($rawProduct['CATEGORY_LEVEL_3'], MB_CASE_TITLE)
+                        : null,
+                ]));
+                return $category;
             },
             'product_type'       => 'simple',
             'product_websites'   => 'base',
