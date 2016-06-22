@@ -128,8 +128,14 @@ class ProductMapper implements ProductMapperInterface
             'thumbnail'          => function ($rawProduct) {
                 return $rawProduct['IMAGE_URL'];
             },
+            'swatch_image'          => function ($rawProduct) {
+                return $rawProduct['IMAGE_URL'];
+            },
             'configurable_sku'   => $configurableSku,
             'color'              => function ($rawProduct) {
+                if (!isset($rawProduct['COLOR_DESCRIPTION'])) {
+                    return null;
+                }
                 $color = is_array($rawProduct['COLOR_DESCRIPTION'])
                     ? reset($rawProduct['COLOR_DESCRIPTION'])
                     : $rawProduct['COLOR_DESCRIPTION'];
