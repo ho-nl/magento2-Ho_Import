@@ -9,6 +9,8 @@ namespace Ho\Import\RowModifier;
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise;
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
  * Class AsyncImageDownloader
@@ -18,6 +20,8 @@ use Magento\Framework\App\Filesystem\DirectoryList;
  */
 class ImageDownloader extends AbstractRowModifier
 {
+
+    protected $progressBar;
 
     /**
      * @var Client
@@ -50,19 +54,28 @@ class ImageDownloader extends AbstractRowModifier
      */
     protected $useExisting = false;
 
+    /**
+     * @var ConsoleOutput
+     */
+    private $consoleOutput;
+
 
     /**
      * AsyncImageDownloader constructor.
      *
      * @param DirectoryList $directoryList
      * @param Client        $client
+     * @param ConsoleOutput $consoleOutput
      */
     public function __construct(
         DirectoryList $directoryList,
-        Client $client
+        Client $client,
+        ConsoleOutput $consoleOutput
     ) {
         $this->directoryList = $directoryList;
         $this->client = $client;
+        $this->consoleOutput = $consoleOutput;
+        $this->progressBar = new ProgressBar($this->consoleOutput);
     }
 
     /**
@@ -76,18 +89,26 @@ class ImageDownloader extends AbstractRowModifier
         $imageFields = ['swatch_image','image', 'small_image', 'thumbnail'];
         //$additionalFields = 'additional_images';
 
+
+        $itemCount = count($this->items);
+        $this->consoleOutput->writeln("<info>Downloading images for {$itemCount} items</info>");
+        $this->progressBar->start();
+
         $promises = [];
 
         $count = 0;
+        $totalCount = 0;
         foreach ($this->items as &$item) {
             foreach ($imageFields as $field) {
                 if (!isset($item[$field])) {
                     continue;
                 }
+
                 if ($promise = $this->downloadAsync($item, $field)) {
                     $promises[] = $promise;
                 }
                 $count++;
+                $totalCount++;
             }
 
             if ($count >= $this->getConcurrent()) {
@@ -96,6 +117,10 @@ class ImageDownloader extends AbstractRowModifier
                 $count = 0;
             }
         }
+
+
+        $this->progressBar->finish();
+        $this->consoleOutput->write("\n");
     }
 
 
@@ -112,12 +137,13 @@ class ImageDownloader extends AbstractRowModifier
         $fileName   = basename($item[$field]);
         $targetPath = $this->directoryList->getPath('media') . '/import/' . $fileName;
 
-        if (file_exists($targetPath)) {
+        if (isset($this->cachedRequests[$fileName])) {
+            $promise = $this->cachedRequests[$fileName];
+        } elseif (file_exists($targetPath)) {
             $item[$field] = $fileName;
             return null;
-        } elseif (isset($this->cachedRequests[$fileName])) {
-            $promise = $this->cachedRequests[$fileName];
         } else {
+            $this->progressBar->advance();
             $promise = $this->client
                 ->getAsync($item[$field], [
                     'sink' => $targetPath,
@@ -131,6 +157,10 @@ class ImageDownloader extends AbstractRowModifier
             })
             ->otherwise(function () use (&$item, $field, $fileName, $targetPath) {
                 unlink($targetPath); // clean up any remaining file pointers if the download failed
+
+                $this->consoleOutput->writeln(
+                    "\n<comment>Image can not be downloaded: {$fileName} for {$item['sku']}</comment>"
+                );
 
                 foreach ($item as $keyField => $value) {
                     if ($value == $item[$field]) {
