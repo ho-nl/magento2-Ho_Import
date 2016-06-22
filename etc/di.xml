@@ -10,9 +10,10 @@
     <type name="Magento\Framework\Console\CommandList">
         <arguments>
             <argument name="commands" xsi:type="array">
-                <item name="ho_import_test" xsi:type="object">Ho\Import\Console\Command\Test</item>
+                <item name="ho_import_run" xsi:type="object">Ho\Import\Console\Command\RunCommand</item>
             </argument>
         </arguments>
     </type>
+    <preference for="Ho\Import\Api\ImportProfileListInterface" type="Ho\Import\ImportProfileList" />
     <preference for="Magento\CatalogImportExport\Model\Import\Product" type="Ho\Import\Rewrite\ImportExport\Import\Product" />
 </config>

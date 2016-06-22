@@ -1,6 +1,6 @@
 <?php
 
-namespace Ho\Import\Mapper;
+namespace Ho\Import\Api;
 
 interface ProductMapperInterface
 {
