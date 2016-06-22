@@ -32,7 +32,6 @@ class ProductMapper implements ProductMapperInterface
     ) {
         $this->url = $url;
 
-        //@todo What is the locale of the file of MOB
         $this->numberFormatter = new \NumberFormatter('de_DE', \NumberFormatter::DECIMAL);
     }
 
@@ -102,9 +101,6 @@ class ProductMapper implements ProductMapperInterface
             'product_type'       => 'simple',
             'product_websites'   => 'base',
             'name'               => $name,
-            'price'              => '14.0000',
-            'qty'                => 10,
-            'is_in_stock'        => 1,
             'url_key'            => function ($rawProduct) use ($sku, $name) {
                 $name = $sku($rawProduct) . ' ' . trim(str_replace($sku($rawProduct), '', $name($rawProduct)));
                 return $this->url->formatUrlKey($name);
