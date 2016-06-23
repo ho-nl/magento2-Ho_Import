@@ -43,10 +43,18 @@ class InstallData implements InstallDataInterface
         /** @var \Magento\Catalog\Setup\CategorySetup $categorySetup */
         $categorySetup = $this->categorySetupFactory->create(['setup' => $setup]);
 
-        $categorySetup->removeAttribute(CategoryAttributeInterface::ENTITY_TYPE_CODE, 'external_id');
         $categorySetup->addAttribute(CategoryAttributeInterface::ENTITY_TYPE_CODE, 'external_id', [
             'type' => 'varchar',
             'label' => 'External ID',
+            'input' => 'text',
+            'required' => false,
+            'sort_order' => 9,
+            'global' => ScopedAttributeInterface::SCOPE_GLOBAL
+        ]);
+
+        $categorySetup->addAttribute(CategoryAttributeInterface::ENTITY_TYPE_CODE, 'product_price_margin', [
+            'type' => 'varchar',
+            'label' => 'Product Price Margin',
             'input' => 'text',
             'required' => false,
             'sort_order' => 9,

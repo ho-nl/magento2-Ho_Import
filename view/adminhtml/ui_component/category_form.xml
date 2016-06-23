@@ -56,5 +56,17 @@
                 <!--</item>-->
             <!--</argument>-->
         </field>
+
+        <field name="product_price_margin">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="sortOrder" xsi:type="number">40</item>
+                    <item name="dataType" xsi:type="string">string</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="notice" xsi:type="string">Apply a margin to all the products assigned below.</item>
+                    <item name="label" xsi:type="string" translate="true">Product Margin</item>
+                </item>
+            </argument>
+        </field>
     </fieldset>
 </form>
