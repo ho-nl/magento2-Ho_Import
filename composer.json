@@ -2,7 +2,8 @@
     "name": "ho/import",
     "description": "",
     "require": {
-        "php": "~7.0.0"
+        "php": "~7.0.0",
+        "magento/module-catalog": "100.1.*"
     },
     "type": "magento2-module",
     "version": "0.1.0",

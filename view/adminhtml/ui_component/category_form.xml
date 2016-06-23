@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * See LICENSE.txt for license details.
+ */
+-->
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <!--
+
+    -->
+    <fieldset name="general">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string"/>
+                <item name="collapsible" xsi:type="boolean">false</item>
+                <item name="sortOrder" xsi:type="number">1</item>
+            </item>
+        </argument>
+    </fieldset>
+    <fieldset name="assign_products">
+        <field name="external_id">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="sortOrder" xsi:type="number">30</item>
+                    <item name="dataType" xsi:type="string">string</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="notice" xsi:type="string">Manage the products in the category by this external category. Multiple values separted by comma.</item>
+                    <item name="label" xsi:type="string" translate="true">External ID</item>
+                </item>
+            </argument>
+            <!-- Copied from vendor/magento/module-catalog/view/adminhtml/ui_component/new_category_form.xml -->
+            <!--<argument name="data" xsi:type="array">-->
+                <!--<item name="options" xsi:type="object">Magento\Catalog\Ui\Component\Product\Form\Categories\Options</item>-->
+                <!--<item name="config" xsi:type="array">-->
+                    <!--<item name="label" xsi:type="string" translate="true">Parent Category</item>-->
+                    <!--<item name="componentType" xsi:type="string">field</item>-->
+                    <!--<item name="formElement" xsi:type="string">multiselect</item>-->
+                    <!--<item name="component" xsi:type="string">Magento_Catalog/js/components/new-category</item>-->
+                    <!--<item name="elementTmpl" xsi:type="string">ui/grid/filters/elements/ui-select</item>-->
+                    <!--<item name="dataScope" xsi:type="string">data.parent</item>-->
+                    <!--<item name="filterOptions" xsi:type="boolean">true</item>-->
+                    <!--<item name="showCheckbox" xsi:type="boolean">false</item>-->
+                    <!--<item name="disableLabel" xsi:type="boolean">true</item>-->
+                    <!--<item name="multiple" xsi:type="boolean">false</item>-->
+                    <!--<item name="levelsVisibility" xsi:type="number">1</item>-->
+                    <!--<item name="sortOrder" xsi:type="number">20</item>-->
+                    <!--<item name="required" xsi:type="boolean">true</item>-->
+                    <!--<item name="validation" xsi:type="array">-->
+                        <!--<item name="required-entry" xsi:type="boolean">true</item>-->
+                    <!--</item>-->
+                    <!--<item name="listens" xsi:type="array">-->
+                        <!--<item name="${ $.namespace }.${ $.namespace }:responseData" xsi:type="string">setParsed</item>-->
+                    <!--</item>-->
+                <!--</item>-->
+            <!--</argument>-->
+        </field>
+    </fieldset>
+</form>
