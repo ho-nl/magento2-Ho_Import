@@ -10,6 +10,13 @@ use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
+/**
+ * Class ExternalCategoryManagement
+ *
+ * @todo Keep existing categories.
+ * @todo understand external_categories array.
+ * @package Ho\Import\RowModifier
+ */
 class ExternalCategoryManagement extends AbstractRowModifier
 {
 

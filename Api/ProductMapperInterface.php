@@ -32,4 +32,19 @@ interface ProductMapperInterface
      * @return string
      */
     public function getSku(array $rawProduct);
+
+
+    /**
+     * Get an array or \Generator with all the source items
+     *
+     * @return array|\Generator
+     */
+    public function getSourceItems();
+
+    /**
+     * Get the mapping definition
+     *
+     * @return array
+     */
+    public function getMappingDefinition();
 }

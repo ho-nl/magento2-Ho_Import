@@ -26,7 +26,7 @@ abstract class AbstractRowModifier
     /**
      * Item array with all items to import
      *
-     * @var array
+     * @var \[]
      */
     protected $items;
 
@@ -46,7 +46,7 @@ abstract class AbstractRowModifier
     /**
      * Set the data array for fields to import
      *
-     * @param array &$items
+     * @param \[] &$items
      */
     public function setItems(&$items)
     {

@@ -138,7 +138,7 @@ class ImageDownloader extends AbstractRowModifier
 
         if (isset($this->cachedRequests[$fileName])) {
             $promise = $this->cachedRequests[$fileName];
-        } elseif (file_exists($targetPath)) {
+        } elseif (file_exists($targetPath)) { //@todo honor isUseExisting
             $item[$field] = $fileName;
             return null;
         } else {
