@@ -55,6 +55,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
                     $categories = array_merge($categories, $this->categoryMapping[$category]);
                 }
             }
+            $item['categories'] = implode(',', $categories);
         }
     }
 
