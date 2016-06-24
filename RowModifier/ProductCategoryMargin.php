@@ -47,8 +47,6 @@ class ProductCategoryMargin extends AbstractRowModifier
     {
         $this->initCategoryMapping();
 
-//        var_dump($this->categoryMapping);exit;
-
         foreach ($this->items as &$item) {
             $categories = explode(',', $item['categories']);
             $margins = [];
@@ -64,10 +62,25 @@ class ProductCategoryMargin extends AbstractRowModifier
 
                 $margins[] = end($marginCategories);
             }
-            
-            $margin = max($margins);
+
+
+            if (! $margins) {
+                $this->consoleOutput->writeln(
+                    "<comment>No margin found for product {$item['sku']}, with categories:</comment>"
+                );
+                $this->consoleOutput->writeln($categories);
+            }
+
+            $margin = (max($margins)) / 100 + 1;
             $item['price'] = round($item['cost'] * $margin, 2);
-            var_dump($item['tier_prices']);exit;
+            if (isset($item['tier_prices'])) {
+                $tierPrices = \GuzzleHttp\json_decode($item['tier_prices'], true);
+
+                foreach ($tierPrices as &$tierPrice) {
+                    $tierPrice['price'] = round($tierPrice['cost'] * $margin, 2);
+                }
+                $item['tier_prices'] = json_encode($tierPrices);
+            }
         }
     }
 
