@@ -5,12 +5,14 @@
  */
 namespace Ho\Import\Console\Command;
 
-use FireGento\FastSimpleImport2\Model\Importer;
+use Ho\Import\Api\ImportProfileInterface;
 use Ho\Import\Api\ImportProfileListInterface;
+use Ho\Import\Model\Importer;
 use Magento\Backend\App\Area\FrontNameResolver;
 use Magento\Framework\App\ObjectManager\ConfigLoader;
 use Magento\Framework\App\ObjectManagerFactory;
 use Magento\Framework\App\State as AppState;
+use Magento\Framework\ObjectManager\ConfigLoaderInterface;
 use Magento\Framework\Phrase;
 use Magento\ImportExport\Model\Import;
 use Magento\Store\Model\Store;
@@ -35,19 +37,29 @@ class RunCommand extends Command
     const INPUT_KEY_PROFILE = 'profile';
 
     /**
+     * List of available import profiles
+     *
      * @var ImportProfileListInterface
      */
     private $importProfileList;
 
     /**
+     * Measurement of timing information
+     *
      * @var Stopwatch
      */
     private $stopwatch;
 
 
+    /**
+     * Usage of the objectManager
+     * @var \Magento\Framework\ObjectManagerInterface
+     */
     private $objectManager;
 
     /**
+     * Output texts to the cli.
+     *
      * @var ConsoleOutput
      */
     private $consoleOutput;
@@ -80,7 +92,7 @@ class RunCommand extends Command
         /* @var \Magento\Framework\App\State $appState */
         $appState = $this->objectManager->get(AppState::class);
         $appState->setAreaCode($area);
-        $configLoader = $this->objectManager->get(\Magento\Framework\ObjectManager\ConfigLoaderInterface::class);
+        $configLoader = $this->objectManager->get(ConfigLoaderInterface::class);
         $this->objectManager->configure($configLoader->load($area));
 
         $this->importProfileList = $importProfileList;
@@ -109,6 +121,8 @@ class RunCommand extends Command
 
 
     /**
+     * Run the selected profile.
+     *
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
@@ -129,7 +143,7 @@ class RunCommand extends Command
         $items = $this->getItems($profile, $profileInstance);
 
 
-        /** @var \FireGento\FastSimpleImport2\Model\Importer $importer */
+        /** @var Importer $importer */
         $importer = $this->objectManager->create(Importer::class);
         $importer->setConfig($profileInstance->getConfig());
 
@@ -158,10 +172,10 @@ class RunCommand extends Command
     /**
      * Get all items that need to be imported
      *
-     * @param $profile
-     * @param $profileInstance
+     * @param string $profile
+     * @param ImportProfileInterface $profileInstance
      *
-     * @return mixed
+     * @return \[]
      */
     protected function getItems($profile, $profileInstance)
     {

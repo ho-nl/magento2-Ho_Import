@@ -9,6 +9,13 @@ namespace Ho\Import\Api;
 interface ImportProfileListInterface
 {
     /**
+     * Constructor
+     *
+     * @param \Ho\Import\Api\ImportProfileInterface[]|\[] $profiles
+     */
+    public function __construct(array $profiles = []);
+
+    /**
      * Array of all items
      *
      * @return ImportProfileInterface[]

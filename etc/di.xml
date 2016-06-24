@@ -14,6 +14,6 @@
             </argument>
         </arguments>
     </type>
-    <preference for="Ho\Import\Api\ImportProfileListInterface" type="Ho\Import\ImportProfileList" />
+    <preference for="Ho\Import\Api\ImportProfileListInterface" type="Ho\Import\Model\ImportProfileList" />
     <preference for="Magento\CatalogImportExport\Model\Import\Product" type="Ho\Import\Rewrite\ImportExport\Import\Product" />
 </config>

@@ -4,7 +4,7 @@
  * See LICENSE.txt for license details.
  */
 
-namespace Ho\Import;
+namespace Ho\Import\Model;
 
 use Ho\Import\Api\ImportProfileListInterface;
 
