@@ -8,6 +8,7 @@ namespace Ho\Import\RowModifier;
 
 use Magento\Catalog\Api\ProductAttributeOptionManagementInterface as OptionManagement;
 use Magento\Eav\Model\Entity\Attribute\OptionFactory;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class AttributeOptionCreator extends AbstractRowModifier
 {
@@ -37,13 +38,16 @@ class AttributeOptionCreator extends AbstractRowModifier
     /**
      * AttributeOptionCreator constructor.
      *
-     * @param OptionManagement    $optionManagement
-     * @param OptionFactory       $optionFactory
+     * @param OptionManagement $optionManagement
+     * @param OptionFactory    $optionFactory
+     * @param ConsoleOutput    $consoleOutput
      */
     public function __construct(
         OptionManagement $optionManagement,
-        OptionFactory $optionFactory
+        OptionFactory $optionFactory,
+        ConsoleOutput $consoleOutput
     ) {
+        parent::__construct($consoleOutput);
         $this->optionManagement = $optionManagement;
         $this->optionFactory = $optionFactory;
     }

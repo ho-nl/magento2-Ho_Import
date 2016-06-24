@@ -5,17 +5,42 @@
  */
 
 namespace Ho\Import\RowModifier;
+
+use Symfony\Component\Console\Output\ConsoleOutput;
+
 /**
  * @package Ho\Import
  */
 abstract class AbstractRowModifier
 {
+
+    /**
+     * Log items to the console.
+     *
+     * @var ConsoleOutput
+     */
+    protected $consoleOutput;
+
+
+
     /**
      * Item array with all items to import
      *
      * @var array
      */
     protected $items;
+
+
+    /**
+     * AbstractRowModifier constructor.
+     *
+     * @param ConsoleOutput $consoleOutput
+     */
+    public function __construct(
+        ConsoleOutput $consoleOutput
+    ) {
+        $this->consoleOutput = $consoleOutput;
+    }
 
 
     /**

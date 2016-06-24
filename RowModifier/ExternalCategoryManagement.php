@@ -8,6 +8,7 @@ namespace Ho\Import\RowModifier;
 
 use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class ExternalCategoryManagement extends AbstractRowModifier
 {
@@ -29,12 +30,14 @@ class ExternalCategoryManagement extends AbstractRowModifier
      * ExternalCategoryManagement constructor.
      *
      * @param CategoryCollectionFactory $categoryCollectionFactory
+     * @param ConsoleOutput             $consoleOutput
      */
     public function __construct(
-        CategoryCollectionFactory $categoryCollectionFactory
+        CategoryCollectionFactory $categoryCollectionFactory,
+        ConsoleOutput $consoleOutput
     ) {
+        parent::__construct($consoleOutput);
         $this->categoryCollectionFactory = $categoryCollectionFactory;
-
     }
 
 

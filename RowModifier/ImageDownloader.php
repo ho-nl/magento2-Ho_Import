@@ -6,7 +6,7 @@
 
 namespace Ho\Import\RowModifier;
 
-use GuzzleHttp\Client;
+use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Promise;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -21,14 +21,22 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 class ImageDownloader extends AbstractRowModifier
 {
 
+    /**
+     * Console progressbar component.
+     *
+     * @var ProgressBar
+     */
     protected $progressBar;
 
     /**
-     * @var Client
+     * Gruzzle Http Client
+     * @var HttpClient
      */
-    private $client;
+    private $httpClient;
 
     /**
+     * Get Magento directories to place images.
+     *
      * @var DirectoryList
      */
     private $directoryList;
@@ -43,7 +51,7 @@ class ImageDownloader extends AbstractRowModifier
     /**
      * Array to cache all requests so they don't get downloaded twice
      *
-     * @var array
+     * @var \[]
      */
     protected $cachedRequests = [];
 
@@ -55,27 +63,21 @@ class ImageDownloader extends AbstractRowModifier
     protected $useExisting = false;
 
     /**
-     * @var ConsoleOutput
-     */
-    private $consoleOutput;
-
-
-    /**
      * AsyncImageDownloader constructor.
      *
      * @param DirectoryList $directoryList
-     * @param Client        $client
+     * @param HttpClient    $httpClient
      * @param ConsoleOutput $consoleOutput
      */
     public function __construct(
         DirectoryList $directoryList,
-        Client $client,
+        HttpClient $httpClient,
         ConsoleOutput $consoleOutput
     ) {
+        parent::__construct($consoleOutput);
         $this->directoryList = $directoryList;
-        $this->client = $client;
-        $this->consoleOutput = $consoleOutput;
-        $this->progressBar = new ProgressBar($this->consoleOutput);
+        $this->httpClient    = $httpClient;
+        $this->progressBar   = new ProgressBar($this->consoleOutput);
     }
 
     /**
@@ -88,7 +90,6 @@ class ImageDownloader extends AbstractRowModifier
     {
         $imageFields = ['swatch_image','image', 'small_image', 'thumbnail'];
         //$additionalFields = 'additional_images';
-
 
         $itemCount = count($this->items);
         $this->consoleOutput->writeln("<info>Downloading images for {$itemCount} items</info>");
@@ -118,11 +119,9 @@ class ImageDownloader extends AbstractRowModifier
             }
         }
 
-
         $this->progressBar->finish();
         $this->consoleOutput->write("\n");
     }
-
 
     /**
      * Download the actual image async and resolve the to the new value
@@ -144,7 +143,7 @@ class ImageDownloader extends AbstractRowModifier
             return null;
         } else {
             $this->progressBar->advance();
-            $promise = $this->client
+            $promise = $this->httpClient
                 ->getAsync($item[$field], [
                     'sink' => $targetPath,
                     'connect_timeout' => 5
@@ -172,7 +171,6 @@ class ImageDownloader extends AbstractRowModifier
         return $this->cachedRequests[$fileName] = $promise;
     }
 
-
     /**
      * Get the amount of concurrent images downloaded
      *
@@ -182,7 +180,6 @@ class ImageDownloader extends AbstractRowModifier
     {
         return $this->concurrent;
     }
-
 
     /**
      * Set the amount of concurrent images downloaded
@@ -194,8 +191,9 @@ class ImageDownloader extends AbstractRowModifier
         $this->concurrent = $concurrent;
     }
 
-
     /**
+     * Overwrite existing images or not.
+     *
      * @return boolean
      */
     public function isUseExisting()
@@ -203,9 +201,10 @@ class ImageDownloader extends AbstractRowModifier
         return $this->useExisting;
     }
 
-
     /**
+     * Overwrite existing images or not.
      * @param boolean $useExisting
+     * @return void
      */
     public function setUseExisting($useExisting)
     {
