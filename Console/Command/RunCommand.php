@@ -183,6 +183,11 @@ class RunCommand extends Command
         $this->consoleOutput->writeln((string)new Phrase('Getting profile data from <info>%1</info>', [$profile]));
         $items = $profileInstance->getItems();
         $stopwatchEvent = $this->stopwatch->stop('profileinstance');
+        
+        if (! $stopwatchEvent->getDuration()) {
+            return $items;
+        }
+
         $this->consoleOutput->writeln((string)new Phrase('%1 items processed in %2 sec, <info>%3 items / sec</info> (%4mb used)',
             [
                 count($items),

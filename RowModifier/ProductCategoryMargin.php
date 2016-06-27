@@ -64,11 +64,12 @@ class ProductCategoryMargin extends AbstractRowModifier
             }
 
 
-            if (! $margins) {
+            if (count($margins) <= 0) {
                 $this->consoleOutput->writeln(
                     "<comment>No margin found for product {$item['sku']}, with categories:</comment>"
                 );
                 $this->consoleOutput->writeln($categories);
+                return;
             }
 
             $margin = (max($margins)) / 100 + 1;

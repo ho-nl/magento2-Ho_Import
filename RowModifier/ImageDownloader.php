@@ -71,12 +71,11 @@ class ImageDownloader extends AbstractRowModifier
      */
     public function __construct(
         DirectoryList $directoryList,
-        HttpClient $httpClient,
         ConsoleOutput $consoleOutput
     ) {
         parent::__construct($consoleOutput);
         $this->directoryList = $directoryList;
-        $this->httpClient    = $httpClient;
+        $this->httpClient    = new HttpClient();
         $this->progressBar   = new ProgressBar($this->consoleOutput);
     }
 
