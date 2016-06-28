@@ -51,6 +51,12 @@ class ProductCategoryMargin extends AbstractRowModifier
             $categories = explode(',', $item['categories']);
             $margins = [];
 
+            if (! isset($item['cost'])) {
+                $this->consoleOutput->writeln(
+                    "<error>Cost not set for product {$item['sku']}, you might run into errors.</error>"
+                );
+            }
+
             foreach ($categories as $category) {
                 $marginCategories = array_filter($this->categoryMapping, function ($marginCategory) use ($category) {
                     return strpos($category, $marginCategory) === 0;
@@ -66,18 +72,24 @@ class ProductCategoryMargin extends AbstractRowModifier
 
             if (count($margins) <= 0) {
                 $this->consoleOutput->writeln(
-                    "<comment>No margin found for product {$item['sku']}, with categories:</comment>"
+                    "<error>No margin-category found for product {$item['sku']}, setting cost as price:</error>"
                 );
                 $this->consoleOutput->writeln($categories);
-                return;
+                $margin = 1;
+            } else {
+                $margin = (max($margins)) / 100 + 1;
             }
 
-            $margin = (max($margins)) / 100 + 1;
             $item['price'] = round($item['cost'] * $margin, 2);
             if (isset($item['tier_prices'])) {
                 $tierPrices = \GuzzleHttp\json_decode($item['tier_prices'], true);
 
                 foreach ($tierPrices as &$tierPrice) {
+                    if (! isset($tierPrice['cost'])) {
+                        $this->consoleOutput->writeln(
+                            "<error>Cost not set for product {$item['sku']} tier price, you might run into errors.</error>"
+                        );
+                    }
                     $tierPrice['price'] = round($tierPrice['cost'] * $margin, 2);
                 }
                 $item['tier_prices'] = json_encode($tierPrices);
