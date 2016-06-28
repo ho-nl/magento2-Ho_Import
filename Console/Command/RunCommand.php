@@ -50,7 +50,6 @@ class RunCommand extends Command
      */
     private $stopwatch;
 
-
     /**
      * Usage of the objectManager
      * @var \Magento\Framework\ObjectManagerInterface
@@ -63,7 +62,6 @@ class RunCommand extends Command
      * @var ConsoleOutput
      */
     private $consoleOutput;
-
 
     /**
      * Constructor
@@ -81,25 +79,11 @@ class RunCommand extends Command
         ObjectManagerFactory $objectManagerFactory,
         ConsoleOutput $consoleOutput
     ) {
-        parent::__construct();
-
-        $omParams = $_SERVER;
-        $omParams[StoreManager::PARAM_RUN_CODE] = 'admin';
-        $omParams[Store::CUSTOM_ENTRY_POINT_PARAM] = true;
-        $this->objectManager = $objectManagerFactory->create($omParams);
-
-        $area = FrontNameResolver::AREA_CODE;
-        /* @var \Magento\Framework\App\State $appState */
-        $appState = $this->objectManager->get(AppState::class);
-        $appState->setAreaCode($area);
-        $configLoader = $this->objectManager->get(ConfigLoaderInterface::class);
-        $this->objectManager->configure($configLoader->load($area));
-
         $this->importProfileList = $importProfileList;
         $this->stopwatch = $stopwatch;
         $this->consoleOutput = $consoleOutput;
+        parent::__construct();
     }
-
 
     /**
      * Configures the current command.
@@ -118,7 +102,6 @@ class RunCommand extends Command
 
         parent::configure();
     }
-
 
     /**
      * Run the selected profile.
@@ -144,7 +127,7 @@ class RunCommand extends Command
 
 
         /** @var Importer $importer */
-        $importer = $this->objectManager->create(Importer::class);
+        $importer = $this->getObjectManager()->create(Importer::class);
         $importer->setConfig($profileInstance->getConfig());
 
         try {
@@ -167,7 +150,6 @@ class RunCommand extends Command
             $this->consoleOutput->writeln("<error>$error</error>");
         }
     }
-
 
     /**
      * Get all items that need to be imported
@@ -196,5 +178,28 @@ class RunCommand extends Command
                 round($stopwatchEvent->getMemory() / 1024 / 1024, 1)
             ]));
         return $items;
+    }
+
+    /**
+     * Gets initialized object manager
+     *
+     * @return ObjectManagerInterface
+     */
+    protected function getObjectManager()
+    {
+        if (null == $this->objectManager) {
+            $omParams = $_SERVER;
+            $omParams[StoreManager::PARAM_RUN_CODE] = 'admin';
+            $omParams[Store::CUSTOM_ENTRY_POINT_PARAM] = true;
+            $this->objectManager = $this->objectManagerFactory->create($omParams);
+
+            $area = FrontNameResolver::AREA_CODE;
+            /** @var \Magento\Framework\App\State $appState */
+            $appState = $this->objectManager->get('Magento\Framework\App\State');
+            $appState->setAreaCode($area);
+            $configLoader = $this->objectManager->get('Magento\Framework\ObjectManager\ConfigLoaderInterface');
+            $this->objectManager->configure($configLoader->load($area));
+        }
+        return $this->objectManager;
     }
 }
