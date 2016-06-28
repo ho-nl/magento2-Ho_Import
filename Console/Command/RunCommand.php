@@ -8,15 +8,11 @@ namespace Ho\Import\Console\Command;
 use Ho\Import\Api\ImportProfileInterface;
 use Ho\Import\Api\ImportProfileListInterface;
 use Ho\Import\Model\Importer;
-use Magento\Backend\App\Area\FrontNameResolver;
 use Magento\Framework\App\ObjectManager\ConfigLoader;
 use Magento\Framework\App\ObjectManagerFactory;
 use Magento\Framework\App\State as AppState;
-use Magento\Framework\ObjectManager\ConfigLoaderInterface;
 use Magento\Framework\Phrase;
 use Magento\ImportExport\Model\Import;
-use Magento\Store\Model\Store;
-use Magento\Store\Model\StoreManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -35,6 +31,8 @@ class RunCommand extends Command
      * Input argument types
      */
     const INPUT_KEY_PROFILE = 'profile';
+
+    protected $objectManagerFactory;
 
     /**
      * List of available import profiles
@@ -80,6 +78,7 @@ class RunCommand extends Command
         ConsoleOutput $consoleOutput
     ) {
         $this->importProfileList = $importProfileList;
+        $this->objectManagerFactory = $objectManagerFactory;
         $this->stopwatch = $stopwatch;
         $this->consoleOutput = $consoleOutput;
         parent::__construct();
@@ -189,15 +188,16 @@ class RunCommand extends Command
     {
         if (null == $this->objectManager) {
             $omParams = $_SERVER;
-            $omParams[StoreManager::PARAM_RUN_CODE] = 'admin';
-            $omParams[Store::CUSTOM_ENTRY_POINT_PARAM] = true;
+            $omParams[\Magento\Store\Model\StoreManager::PARAM_RUN_CODE] = 'admin';
+            $omParams[\Magento\Store\Model\Store::CUSTOM_ENTRY_POINT_PARAM] = true;
             $this->objectManager = $this->objectManagerFactory->create($omParams);
 
-            $area = FrontNameResolver::AREA_CODE;
+
+            $area = \Magento\Backend\App\Area\FrontNameResolver::AREA_CODE;
             /** @var \Magento\Framework\App\State $appState */
-            $appState = $this->objectManager->get('Magento\Framework\App\State');
+            $appState = $this->objectManager->get(\Magento\Framework\App\State::class);
             $appState->setAreaCode($area);
-            $configLoader = $this->objectManager->get('Magento\Framework\ObjectManager\ConfigLoaderInterface');
+            $configLoader = $this->objectManager->get(\Magento\Framework\ObjectManager\ConfigLoaderInterface::class);
             $this->objectManager->configure($configLoader->load($area));
         }
         return $this->objectManager;
