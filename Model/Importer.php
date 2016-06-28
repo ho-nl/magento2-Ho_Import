@@ -124,9 +124,9 @@ class Importer
         $errorAggregator = $this->importModel->getErrorAggregator();
         return array_map(function (ProcessingError $error) {
             return sprintf(
-                'Error %s for line %s: %s',
-                $error->getErrorMessage(),
+                'Line %s: %s %s',
                 $error->getRowNumber(),
+                $error->getErrorMessage(),
                 $error->getErrorDescription()
             );
         }, $errorAggregator->getAllErrors());
