@@ -8,6 +8,7 @@ namespace Ho\Import\RowModifier;
 
 use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
@@ -32,19 +33,32 @@ class ExternalCategoryManagement extends AbstractRowModifier
      */
     private $categoryCollectionFactory;
 
+    /**
+     * Product Collection Factory
+     * @var ProductCollectionFactory
+     */
+    private $productCollectionFactory;
+
+    private $externalCategoryPathFilter;
+
+    private $productCategoryMapping;
+
 
     /**
      * ExternalCategoryManagement constructor.
      *
-     * @param CategoryCollectionFactory $categoryCollectionFactory
      * @param ConsoleOutput             $consoleOutput
+     * @param CategoryCollectionFactory $categoryCollectionFactory
+     * @param ProductCollectionFactory  $productCollectionFactory
      */
     public function __construct(
+        ConsoleOutput $consoleOutput,
         CategoryCollectionFactory $categoryCollectionFactory,
-        ConsoleOutput $consoleOutput
+        ProductCollectionFactory $productCollectionFactory
     ) {
         parent::__construct($consoleOutput);
         $this->categoryCollectionFactory = $categoryCollectionFactory;
+        $this->productCollectionFactory = $productCollectionFactory;
     }
 
 
@@ -55,6 +69,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
     public function process()
     {
         $this->initCategoryMapping();
+        $this->initCategoryProductMapping();
         foreach ($this->items as &$item) {
             $categories = explode(',', $item['categories']);
             foreach ($categories as $category) {
@@ -62,6 +77,11 @@ class ExternalCategoryManagement extends AbstractRowModifier
                     $categories = array_merge($categories, $this->categoryMapping[$category]);
                 }
             }
+            
+            if (isset($this->productCategoryMapping[$item['sku']])) {
+                $categories = array_merge($categories, $this->productCategoryMapping[$item['sku']]);
+            }
+
             $item['categories'] = implode(',', $categories);
         }
     }
@@ -112,5 +132,95 @@ class ExternalCategoryManagement extends AbstractRowModifier
         }
 
         return $this->categoryMapping;
+    }
+
+
+    /**
+     * @todo Add filter on current products
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    protected function initCategoryProductMapping()
+    {
+        //Get all categories that aren't managed externally.
+        $categoryCollection = $this->categoryCollectionFactory->create();
+        $categoryCollection->addNameToResult();
+        $categoryCollection->addAttributeToFilter('external_id', ['null' => true], 'left');
+
+        $categoryMapping = [];
+        foreach ($categoryCollection as $category) {
+            /** @var Category $category */
+
+            $structure = explode('/', $category->getPath());
+            $pathSize = count($structure);
+            if ($pathSize > 2) {
+                $path = [];
+                for ($i = 1; $i < $pathSize; $i++) {
+                    $item = $categoryCollection->getItemById($structure[$i]);
+                    if ($item instanceof Category) {
+                        $path[] = $item->getName();
+                    }
+                }
+
+                $categoryMapping[$category->getId()] = implode('/', $path);
+            }
+        }
+
+        if ($this->externalCategoryPathFilter) {
+            $categoryMapping = array_filter($categoryMapping, function ($category) {
+                foreach ($this->externalCategoryPathFilter as $external) {
+                    if (strpos($category, $external) === 0) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        }
+
+
+        $productCollection = $this->productCollectionFactory->create();
+
+        $categorySelect = $productCollection->getConnection()->select()->from(
+            ['cat' => $productCollection->getTable('catalog_category_product')],
+            ['cat.category_id']
+        )->where($productCollection->getConnection()->prepareSqlCondition(
+            'cat.category_id',
+            ['in' => $categoryCollection->getAllIds()]
+        ));
+
+        $categorySelect->join(
+            ['products' => $productCollection->getMainTable()],
+            'cat.product_id = products.entity_id',
+            ['products.sku']
+        );
+        $categorySelect->where('products.sku IN(?)', array_keys($this->items));
+
+        $results = $productCollection->getConnection()->fetchAll($categorySelect);
+
+        $this->productCategoryMapping =  [];
+        foreach ($results as $result) {
+            if (! isset($categoryMapping[$result['category_id']])) {
+                continue;
+            }
+
+            if (! isset($this->productCategoryMapping[$result['sku']])) {
+                $this->productCategoryMapping[$result['sku']] = [];
+            }
+
+            $this->productCategoryMapping[$result['sku']][] = $categoryMapping[$result['category_id']];
+        }
+
+    }
+
+
+    /**
+     * Ability to always mark certain category paths as externally managed.
+     *
+     * @param array $externalCategoryPathFilter
+     * @return void
+     */
+    public function setExternalCategoryPathFilter(array $externalCategoryPathFilter)
+    {
+        $this->externalCategoryPathFilter = $externalCategoryPathFilter;
     }
 }
