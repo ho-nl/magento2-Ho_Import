@@ -22,4 +22,12 @@ interface ImportProfileInterface
      * @return \[]
      */
     public function getConfig();
+
+
+    /**
+     * Run the import
+     *
+     * @return mixed
+     */
+    public function run();
 }
