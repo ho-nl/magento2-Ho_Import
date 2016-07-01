@@ -110,6 +110,7 @@ class ProductCategoryMargin extends AbstractRowModifier
         $categoryCollection->addAttributeToSort('level', 'asc');
         $categoryCollection->addAttributeToSort('position', 'asc');
 
+        $this->categoryMapping = [];
         foreach ($categoryCollection as $category) {
             /** @var Category $category */
 
