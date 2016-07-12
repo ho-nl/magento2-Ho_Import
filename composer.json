@@ -1,5 +1,5 @@
 {
-    "name": "ho/import",
+    "name": "ho-nl/import",
     "description": "",
     "require": {
         "php": "~7.0.0",
