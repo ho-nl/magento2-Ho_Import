@@ -105,8 +105,10 @@ class ProductCategoryMargin extends AbstractRowModifier
     protected function initCategoryMapping()
     {
         $categoryCollection = $this->categoryCollectionFactory->create();
+        $categoryCollection->setStoreId(0);
         $categoryCollection->addNameToResult();
         $categoryCollection->addAttributeToSelect('product_price_margin');
+        $categoryCollection->addAttributeToFilter('product_price_margin', ['gt' => 0]);
         $categoryCollection->addAttributeToSort('level', 'asc');
         $categoryCollection->addAttributeToSort('position', 'asc');
 

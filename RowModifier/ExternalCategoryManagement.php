@@ -95,6 +95,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
     {
         $categoryCollection = $this->categoryCollectionFactory->create();
         $categoryCollection->addNameToResult();
+        $categoryCollection->setStoreId(0);
         $categoryCollection->addAttributeToSelect('external_id');
 
         foreach ($categoryCollection as $category) {
