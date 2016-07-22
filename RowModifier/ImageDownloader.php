@@ -16,6 +16,9 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  * Class AsyncImageDownloader
  *
  * @todo implement Guzzle request Pool http://docs.guzzlephp.org/en/latest/quickstart.html#concurrent-requests
+ * @todo implement caching strategory. We don't need to download the file each time, but would be nice if it gets
+ *       downloaded once in a while.
+ * @fixme The ImageDownloader keeps all the connections open causing problems with the OS'es max open files.
  * @package Ho\Import
  */
 class ImageDownloader extends AbstractRowModifier

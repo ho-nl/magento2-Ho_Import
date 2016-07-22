@@ -30,7 +30,6 @@ abstract class AbstractRowModifier
      */
     protected $items;
 
-
     /**
      * AbstractRowModifier constructor.
      *

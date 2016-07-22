@@ -6,22 +6,28 @@
 
 namespace Ho\Import\RowModifier;
 
-use Ho\Import\Api\ProductMapperInterface;
-
 /**
  * @package Ho\Import
  */
-abstract class ProductMapper extends AbstractRowModifier
-    implements ProductMapperInterface
+class ItemMapper extends AbstractRowModifier
 {
+
+    /**
+     * Mapping Definition
+     * @var \Closure[]|string[]
+     */
+    protected $mappingDefinition;
+
+
     /**
      * Check if the product can be imported
      *
      * @param array $item
+     * @param string $sku
      *
-     * @return bool|\[] return true if validated, return an array of errors when not valid.
+     * @return bool|\string[] return true if validated, return an array of errors when not valid.
      */
-    public function validateItem(array $item)
+    public function validateItem(array $item, $sku)
     {
         return true;
     }
@@ -33,12 +39,11 @@ abstract class ProductMapper extends AbstractRowModifier
      */
     public function process()
     {
-        foreach ($this->getSourceItems() as $item) {
+        foreach ($this->items as $sku => $item) {
             try {
-                $sku = $this->getSku($item);
-                $errors = $this->validateItem($item);
+                $errors = $this->validateItem($item, $sku);
                 if ($errors === true) {
-                    $this->items[$sku] = $this->mapItem($item);
+                    $this->items[$sku] = array_filter($this->mapItem($item));
                 } else {
                     $this->consoleOutput->writeln(
                         sprintf("<comment>Error validating, skipping %s: %s</comment>", $sku, implode(",", $errors))
@@ -57,7 +62,7 @@ abstract class ProductMapper extends AbstractRowModifier
     public function mapItem(array $item) : array
     {
         $product = [];
-        foreach ($this->getMappingDefinition() as $key => $value) {
+        foreach ($this->mappingDefinition as $key => $value) {
             if (is_callable($value)) {
                 $value = $value($item);
             }
@@ -66,5 +71,16 @@ abstract class ProductMapper extends AbstractRowModifier
         }
 
         return $product;
+    }
+
+
+    /**
+     * Set the mapping definition of the product.
+     * @param \Closure[]|string[] $mappingDefinition
+     * @return void
+     */
+    public function setMappingDefinition($mappingDefinition)
+    {
+        $this->mappingDefinition = $mappingDefinition;
     }
 }
