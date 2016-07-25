@@ -70,7 +70,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
     {
         $this->initCategoryMapping();
         $this->initCategoryProductMapping();
-        foreach ($this->items as &$item) {
+        foreach ($this->items as $identifier => &$item) {
             $categories = explode(',', $item['categories']);
             foreach ($categories as $category) {
                 if (isset($this->categoryMapping[$category])) {
@@ -78,10 +78,9 @@ class ExternalCategoryManagement extends AbstractRowModifier
                 }
             }
             
-            if (isset($this->productCategoryMapping[$item['sku']])) {
-                $categories = array_merge($categories, $this->productCategoryMapping[$item['sku']]);
+            if (isset($this->productCategoryMapping[$identifier])) {
+                $categories = array_merge($categories, $this->productCategoryMapping[$identifier]);
             }
-
             $item['categories'] = implode(',', $categories);
         }
     }

@@ -47,14 +47,19 @@ class ProductCategoryMargin extends AbstractRowModifier
     {
         $this->initCategoryMapping();
 
-        foreach ($this->items as &$item) {
+        foreach ($this->items as $identifier => &$item) {
+            if (! isset($item['categories'])) {
+                continue;
+            }
+            
             $categories = explode(',', $item['categories']);
             $margins = [];
 
             if (! isset($item['cost'])) {
                 $this->consoleOutput->writeln(
-                    "<error>Cost not set for product {$item['sku']}, you might run into errors.</error>"
+                    "<comment>Cost not set for product {$identifier}, skipping row.</comment>"
                 );
+                continue;
             }
 
             foreach ($categories as $category) {
@@ -71,10 +76,11 @@ class ProductCategoryMargin extends AbstractRowModifier
 
 
             if (count($margins) <= 0) {
+                $categoryNames = implode(',', $categories);
                 $this->consoleOutput->writeln(
-                    "<error>No margin-category found for product {$item['sku']}, setting cost as price:</error>"
+                    "<comment>No margin-category found for product {$identifier}, setting cost as price (categories: " .
+                    "{$categoryNames})</comment>"
                 );
-                $this->consoleOutput->writeln($categories);
                 $margin = 1;
             } else {
                 $margin = (max($margins)) / 100 + 1;
@@ -87,8 +93,10 @@ class ProductCategoryMargin extends AbstractRowModifier
                 foreach ($tierPrices as &$tierPrice) {
                     if (! isset($tierPrice['cost'])) {
                         $this->consoleOutput->writeln(
-                            "<error>Cost not set for product {$item['sku']} tier price, you might run into errors.</error>"
+                            "<comment>Cost not set for product {$identifier} tier price, skipping row." .
+                            "</comment>"
                         );
+                        continue;
                     }
                     $tierPrice['price'] = round($tierPrice['cost'] * $margin, 2);
                 }

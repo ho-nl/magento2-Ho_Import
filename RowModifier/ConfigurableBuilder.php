@@ -51,7 +51,7 @@ class ConfigurableBuilder extends AbstractRowModifier
         $attrCallback = $this->attributes;
         $configurables = [];
 
-        foreach ($this->items as &$item) {
+        foreach ($this->items as $identifier => &$item) {
             $configurableSku = $skuCallback($item);
 
             if (! $configurableSku) {
@@ -76,7 +76,7 @@ class ConfigurableBuilder extends AbstractRowModifier
 
             //Add the configurable simple to the configurable
             $attributes = $attrCallback($item);
-            $variation = ['sku' => $item['sku']];
+            $variation = ['sku' => $identifier];
             foreach ($attributes as $attribute) {
                 $variation[$attribute] = $item[$attribute];
                 unset($configurables[$configurableSku][$attribute]);
