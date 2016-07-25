@@ -11,7 +11,8 @@ namespace Ho\Import\RowModifier;
  */
 class ItemMapper extends AbstractRowModifier
 {
-
+    const FIELD_EMPTY = 'field-empty';
+    
     /**
      * Mapping Definition
      * @var \Closure[]|string[]
@@ -43,7 +44,12 @@ class ItemMapper extends AbstractRowModifier
             try {
                 $errors = $this->validateItem($item, $sku);
                 if ($errors === true) {
-                    $this->items[$sku] = array_filter($this->mapItem($item));
+                    $this->items[$sku] = array_map(function ($item) {
+                        if ($item == self::FIELD_EMPTY) {
+                            return null;
+                        }
+                        return $item;
+                    }, array_filter($this->mapItem($item)));
                 } else {
                     $this->consoleOutput->writeln(
                         sprintf("<comment>Error validating, skipping %s: %s</comment>", $sku, implode(",", $errors))
