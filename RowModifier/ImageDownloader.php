@@ -9,7 +9,6 @@ namespace Ho\Import\RowModifier;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Promise;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
@@ -69,7 +68,6 @@ class ImageDownloader extends AbstractRowModifier
      * AsyncImageDownloader constructor.
      *
      * @param DirectoryList $directoryList
-     * @param HttpClient    $httpClient
      * @param ConsoleOutput $consoleOutput
      */
     public function __construct(
@@ -79,7 +77,7 @@ class ImageDownloader extends AbstractRowModifier
         parent::__construct($consoleOutput);
         $this->directoryList = $directoryList;
         $this->httpClient    = new HttpClient();
-        $this->progressBar   = new ProgressBar($this->consoleOutput);
+        $this->progressBar   = new \Symfony\Component\Console\Helper\ProgressBar($this->consoleOutput);
     }
 
     /**

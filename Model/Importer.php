@@ -125,7 +125,7 @@ class Importer
         return array_map(function (ProcessingError $error) {
             return sprintf(
                 'Line %s: %s %s',
-                $error->getRowNumber(),
+                $error->getRowNumber() ?: '[?]',
                 $error->getErrorMessage(),
                 $error->getErrorDescription()
             );
