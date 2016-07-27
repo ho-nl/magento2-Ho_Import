@@ -11,10 +11,13 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
  * Class SourceIterator
+ * 
  * @package Ho\Import\RowModifier
  */
 class SourceIterator extends AbstractRowModifier
 {
+    const MODE_CREATE = 'create';
+    const MODE_ADD = 'add';
 
     /**
      * The row Identifier
@@ -31,20 +34,28 @@ class SourceIterator extends AbstractRowModifier
     protected $iterator;
 
     /**
+     * @var string
+     */
+    protected $mode;
+
+    /**
      * SourceIterator constructor.
      *
      * @param ConsoleOutput $consoleOutput
      * @param Closure       $identifier
      * @param Iterator      $iterator
+     * @param string        $mode
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         Closure $identifier,
-        Iterator $iterator
+        Iterator $iterator,
+        $mode = self::MODE_CREATE
     ) {
         parent::__construct($consoleOutput);
         $this->identifier = $identifier;
-        $this->iterator   = $iterator;
+        $this->iterator = $iterator;
+        $this->mode = $mode;
     }
 
     /**
@@ -57,10 +68,23 @@ class SourceIterator extends AbstractRowModifier
         $identifier = $this->identifier;
         foreach ($this->iterator as $item) {
             $id = $identifier($item);
-            if (!isset($this->items[$id])) {
-                $this->items[$id] = [];
+
+            switch ($this->mode) {
+                case self::MODE_CREATE:
+                    if (!isset($this->items[$id])) {
+                        $this->items[$id] = [];
+                    }
+                    $this->items[$id] += $item;
+
+                    break;
+                case self::MODE_ADD:
+                    if (!isset($this->items[$id])) {
+                        $this->consoleOutput->writeln("<comment>Item not found for {$id}</comment>");
+                        continue;
+                    }
+                    $this->items[$id] += $item;
+                    break;
             }
-            $this->items[$id] += $item;
         }
     }
 
