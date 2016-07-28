@@ -117,6 +117,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
 
                 $importGroups = explode(',', $category->getData('external_id'));
                 foreach ($importGroups as $importGroup) {
+                    $importGroup = trim($importGroup);
 
                     if (! isset($this->categoryMapping[trim($importGroup)])) {
                         $this->categoryMapping[trim($importGroup)] = [];
