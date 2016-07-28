@@ -70,7 +70,10 @@ class Ftp extends AbstractDownloader
         }
 
         if (!is_writeable($this->getTargetPath($this->getTarget()))) {
-            throw new NotFoundException(__('Target %1 is not writable', [$this->getTarget()]));
+            mkdir($this->getTargetPath($this->getTarget()), 0777, true);
+            if (!is_writeable($this->getTargetPath($this->getTarget()))) {
+                throw new NotFoundException(__('Target %1 is not writable', [$this->getTarget()]));
+            }
         }
         foreach ($this->getFiles() as $sourcePath) {
             $targetPath = $this->getTargetPath($this->getTarget(), basename($sourcePath));
