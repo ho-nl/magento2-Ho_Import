@@ -25,7 +25,7 @@
                 <item name="config" xsi:type="array">
                     <item name="sortOrder" xsi:type="number">30</item>
                     <item name="dataType" xsi:type="string">string</item>
-                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="formElement" xsi:type="string">textarea</item>
                     <item name="notice" xsi:type="string">Manage the products in the category by this external category. Multiple values separted by comma.</item>
                     <item name="label" xsi:type="string" translate="true">External ID</item>
                 </item>
