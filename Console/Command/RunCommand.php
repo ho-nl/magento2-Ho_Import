@@ -102,7 +102,7 @@ class RunCommand extends Command
         $profiles = $this->importProfileList->getProfiles();
         $profile = $input->getArgument('profile');
         if (!isset($profiles[$profile])) {
-            $profileList = implode("\n", array_keys($profiles));
+            $profileList = implode(", ", array_keys($profiles));
             $output->writeln((string) new Phrase("<error>Profile not in profilelist: %1</error>", [$profileList]));
             return;
         }
