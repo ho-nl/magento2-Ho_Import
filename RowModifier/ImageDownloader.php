@@ -14,10 +14,8 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 /**
  * Class AsyncImageDownloader
  *
- * @todo implement Guzzle request Pool http://docs.guzzlephp.org/en/latest/quickstart.html#concurrent-requests
  * @todo implement caching strategory. We don't need to download the file each time, but would be nice if it gets
  *       downloaded once in a while.
- * @fixme The ImageDownloader keeps all the connections open causing problems with the OS'es max open files.
  * @package Ho\Import
  */
 class ImageDownloader extends AbstractRowModifier
@@ -48,7 +46,7 @@ class ImageDownloader extends AbstractRowModifier
      *
      * @var int
      */
-    protected $concurrent = 10;
+    protected $concurrent = 25;
 
     /**
      * Array to cache all requests so they don't get downloaded twice
@@ -64,6 +62,8 @@ class ImageDownloader extends AbstractRowModifier
      */
     protected $useExisting = false;
 
+    private $stopwatch;
+
     /**
      * AsyncImageDownloader constructor.
      *
@@ -78,6 +78,7 @@ class ImageDownloader extends AbstractRowModifier
         $this->directoryList = $directoryList;
         $this->httpClient    = new HttpClient();
         $this->progressBar   = new \Symfony\Component\Console\Helper\ProgressBar($this->consoleOutput);
+        $this->stopwatch   = new \Symfony\Component\Stopwatch\Stopwatch();
     }
 
     /**
@@ -95,29 +96,29 @@ class ImageDownloader extends AbstractRowModifier
         $this->consoleOutput->writeln("<info>Downloading images for {$itemCount} items</info>");
         $this->progressBar->start();
 
-        $promises = [];
-
-        $count = 0;
-        $totalCount = 0;
-        foreach ($this->items as &$item) {
-            foreach ($imageFields as $field) {
-                if (!isset($item[$field])) {
-                    continue;
-                }
-
-                if ($promise = $this->downloadAsync($item, $field)) {
-                    $promises[] = $promise;
-                }
-                $count++;
-                $totalCount++;
-            }
-
-            if ($count >= $this->getConcurrent()) {
-                Promise\settle($promises)->wait();
-                $promises = [];
-                $count = 0;
-            }
+        if (! file_exists($this->directoryList->getPath('media') . '/import/')) {
+            mkdir($this->directoryList->getPath('media') . '/import/', 0777, true);
         }
+
+
+        $requestGenerator = function () use ($imageFields) {
+            foreach ($this->items as &$item) {
+                foreach ($imageFields as $field) {
+                    if (!isset($item[$field])) {
+                        continue;
+                    }
+
+                    if ($promise = $this->downloadAsync($item, $field)) {
+                        yield $promise;
+                    }
+                }
+            }
+        };
+
+        $pool = new \GuzzleHttp\Pool($this->httpClient, $requestGenerator(), [
+            'concurrency' => $this->getConcurrent(),
+        ]);
+        $pool->promise()->wait();
 
         $this->progressBar->finish();
         $this->consoleOutput->write("\n");
@@ -133,42 +134,44 @@ class ImageDownloader extends AbstractRowModifier
      */
     protected function downloadAsync(&$item, $field)
     {
-        $fileName   = basename($item[$field]);
-        $targetPath = $this->directoryList->getPath('media') . '/import/' . $fileName;
+        return function () use (&$item, $field) {
+            $fileName   = basename($item[$field]);
+            $targetPath = $this->directoryList->getPath('media') . '/import/' . $fileName;
 
-        if (isset($this->cachedRequests[$fileName])) {
-            $promise = $this->cachedRequests[$fileName];
-        } elseif (file_exists($targetPath)) { //@todo honor isUseExisting
-            $item[$field] = $fileName;
-            return null;
-        } else {
-            $this->progressBar->advance();
-            $promise = $this->httpClient
-                ->getAsync($item[$field], [
-                    'sink' => $targetPath,
-                    'connect_timeout' => 5
-                ]);
-        }
-
-        $promise
-            ->then(function () use (&$item, $field, $fileName) {
+            if (isset($this->cachedRequests[$fileName])) {
+                $promise = $this->cachedRequests[$fileName];
+            } elseif (file_exists($targetPath)) { //@todo honor isUseExisting
                 $item[$field] = $fileName;
-            })
-            ->otherwise(function () use (&$item, $field, $fileName, $targetPath) {
-                unlink($targetPath); // clean up any remaining file pointers if the download failed
+                return null;
+            } else {
+                $this->progressBar->advance();
+                $promise = $this->httpClient
+                    ->getAsync($item[$field], [
+                        'sink' => $targetPath,
+                        'connect_timeout' => 5
+                    ]);
+            }
 
-                $this->consoleOutput->writeln(
-                    "\n<comment>Image can not be downloaded: {$fileName} for {$item['sku']}</comment>"
-                );
+            $promise
+                ->then(function () use (&$item, $field, $fileName) {
+                    $item[$field] = $fileName;
+                })
+                ->otherwise(function () use (&$item, $field, $fileName, $targetPath) {
+                    unlink($targetPath); // clean up any remaining file pointers if the download failed
 
-                foreach ($item as $keyField => $value) {
-                    if ($value == $item[$field]) {
-                        $item[$keyField] = null;
+                    $this->consoleOutput->writeln(
+                        "\n<comment>Image can not be downloaded: {$fileName} for {$item['sku']}</comment>"
+                    );
+
+                    foreach ($item as $keyField => $value) {
+                        if ($value == $item[$field]) {
+                            $item[$keyField] = null;
+                        }
                     }
-                }
-            });
+                });
 
-        return $this->cachedRequests[$fileName] = $promise;
+            return $this->cachedRequests[$fileName] = $promise;
+        };
     }
 
     /**
