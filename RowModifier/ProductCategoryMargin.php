@@ -49,9 +49,13 @@ class ProductCategoryMargin extends AbstractRowModifier
 
         foreach ($this->items as $identifier => &$item) {
             if (! isset($item['categories'])) {
+                $this->consoleOutput->writeln(
+                    "<comment>No category found for product {$identifier}, setting cost as price.</comment>"
+                );
+                $item['price'] = $item['cost'];
                 continue;
             }
-            
+
             $categories = explode(',', $item['categories']);
             $margins = [];
 
