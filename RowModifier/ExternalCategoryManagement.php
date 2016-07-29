@@ -39,10 +39,12 @@ class ExternalCategoryManagement extends AbstractRowModifier
      */
     private $productCollectionFactory;
 
+    /**
+     * @var string[]
+     */
     private $externalCategoryPathFilter;
 
     private $productCategoryMapping;
-
 
     /**
      * ExternalCategoryManagement constructor.
@@ -50,15 +52,18 @@ class ExternalCategoryManagement extends AbstractRowModifier
      * @param ConsoleOutput             $consoleOutput
      * @param CategoryCollectionFactory $categoryCollectionFactory
      * @param ProductCollectionFactory  $productCollectionFactory
+     * @param string[]                  $externalCategoryPathFilter
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         CategoryCollectionFactory $categoryCollectionFactory,
-        ProductCollectionFactory $productCollectionFactory
+        ProductCollectionFactory $productCollectionFactory,
+        $externalCategoryPathFilter = []
     ) {
         parent::__construct($consoleOutput);
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->productCollectionFactory = $productCollectionFactory;
+        $this->externalCategoryPathFilter = $externalCategoryPathFilter;
     }
 
 
@@ -210,18 +215,6 @@ class ExternalCategoryManagement extends AbstractRowModifier
 
             $this->productCategoryMapping[$result['sku']][] = $categoryMapping[$result['category_id']];
         }
-    }
-
-
-    /**
-     * Ability to always mark certain category paths as externally managed.
-     *
-     * @param string[] $externalCategoryPathFilter
-     * @return void
-     */
-    public function setExternalCategoryPathFilter(array $externalCategoryPathFilter)
-    {
-        $this->externalCategoryPathFilter = $externalCategoryPathFilter;
     }
 
     /**
