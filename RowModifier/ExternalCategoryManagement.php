@@ -71,7 +71,8 @@ class ExternalCategoryManagement extends AbstractRowModifier
         $this->initCategoryMapping();
         $this->initCategoryProductMapping();
         foreach ($this->items as $identifier => &$item) {
-            $categories = explode(',', $item['categories']);
+            $categories = $this->extractCategoriesFromString($item['categories']);
+
             foreach ($categories as $category) {
                 if (isset($this->categoryMapping[$category])) {
                     $categories = array_merge($categories, $this->categoryMapping[$category]);
@@ -115,8 +116,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
                     }
                 }
 
-                $importGroups = explode(',', $category->getData('external_id'));
-                foreach ($importGroups as $importGroup) {
+                foreach ($this->extractCategoriesFromString($category->getData('external_id')) as $importGroup) {
                     $importGroup = trim($importGroup);
 
                     if (! isset($this->categoryMapping[trim($importGroup)])) {
@@ -210,18 +210,31 @@ class ExternalCategoryManagement extends AbstractRowModifier
 
             $this->productCategoryMapping[$result['sku']][] = $categoryMapping[$result['category_id']];
         }
-
     }
 
 
     /**
      * Ability to always mark certain category paths as externally managed.
      *
-     * @param array $externalCategoryPathFilter
+     * @param string[] $externalCategoryPathFilter
      * @return void
      */
     public function setExternalCategoryPathFilter(array $externalCategoryPathFilter)
     {
         $this->externalCategoryPathFilter = $externalCategoryPathFilter;
+    }
+
+    /**
+     * Remove any surrounding whitespaces
+     * Remove empty array values
+     *
+     * @param string $categories
+     * @todo move to helper
+     *
+     * @return string[] mixed
+     */
+    protected function extractCategoriesFromString($categories)
+    {
+        return array_filter(array_map('trim', explode(',', trim($categories))));
     }
 }

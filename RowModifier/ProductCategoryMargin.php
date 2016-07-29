@@ -56,7 +56,7 @@ class ProductCategoryMargin extends AbstractRowModifier
                 continue;
             }
 
-            $categories = explode(',', $item['categories']);
+            $categories = $this->extractCategoriesFromString($item['categories']);
             $margins = [];
 
             if (! isset($item['cost'])) {
@@ -148,5 +148,19 @@ class ProductCategoryMargin extends AbstractRowModifier
         }
 
         return $this->categoryMapping;
+    }
+
+    /**
+     * Remove any surrounding whitespaces
+     * Remove empty array values
+     *
+     * @param string $categories
+     * @todo move to helper
+     *
+     * @return string[] mixed
+     */
+    protected function extractCategoriesFromString($categories)
+    {
+        return array_filter(array_map('trim', explode(',', trim($categories))));
     }
 }
