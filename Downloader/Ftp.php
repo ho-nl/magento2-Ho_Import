@@ -28,12 +28,12 @@ class Ftp extends AbstractDownloader
     /**
      * @var array
      */
-    protected $options;
+    protected $options = [];
 
     /**
      * @var array
      */
-    protected $files;
+    protected $files = [];
 
     /**
      * @var array
@@ -64,11 +64,7 @@ class Ftp extends AbstractDownloader
         $this->ftp->open($this->getOptions() + [
             'timeout' => 10,
         ]);
-
-        if (!is_array($this->getFiles())) {
-            $files = [$this->getFiles()];
-        }
-
+        
         if (!is_writeable($this->getTargetPath($this->getTarget()))) {
             mkdir($this->getTargetPath($this->getTarget()), 0777, true);
             if (!is_writeable($this->getTargetPath($this->getTarget()))) {
