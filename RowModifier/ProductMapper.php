@@ -33,13 +33,19 @@ abstract class ProductMapper extends AbstractRowModifier
     {
         foreach ($this->getSourceItems() as $item) {
             try {
-                $sku = $this->getSku($item);
-                $errors = $this->validateItem($item);
+                $identifier = $this->getSku($item);
+                $errors = $this->validateItem($item, $identifier);
                 if ($errors === true) {
-                    $this->items[$sku] = $this->mapItem($item);
+                    $this->items[$identifier] = array_map(function ($item) {
+                        if ($item == \Ho\Import\RowModifier\ItemMapper::FIELD_EMPTY) {
+                            return null;
+                        }
+                        return $item;
+                    }, array_filter($this->mapItem($item)));
                 } else {
                     $this->consoleOutput->writeln(
-                        sprintf("<comment>Error validating, skipping %s: %s</comment>", $sku, implode(",", $errors))
+                        sprintf("<comment>Error validating, skipping %s: %s</comment>",
+                            $identifier, implode(",", $errors))
                     );
                 }
 

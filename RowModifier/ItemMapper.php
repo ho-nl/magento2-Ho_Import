@@ -12,7 +12,7 @@ namespace Ho\Import\RowModifier;
 class ItemMapper extends AbstractRowModifier
 {
     const FIELD_EMPTY = 'field-empty';
-    
+
     /**
      * Mapping Definition
      * @var \Closure[]|string[]
@@ -40,11 +40,11 @@ class ItemMapper extends AbstractRowModifier
      */
     public function process()
     {
-        foreach ($this->items as $sku => $item) {
+        foreach ($this->items as $identifier => $item) {
             try {
-                $errors = $this->validateItem($item, $sku);
+                $errors = $this->validateItem($item, $identifier);
                 if ($errors === true) {
-                    $this->items[$sku] = array_map(function ($item) {
+                    $this->items[$identifier] = array_map(function ($item) {
                         if ($item == self::FIELD_EMPTY) {
                             return null;
                         }
@@ -52,7 +52,8 @@ class ItemMapper extends AbstractRowModifier
                     }, array_filter($this->mapItem($item)));
                 } else {
                     $this->consoleOutput->writeln(
-                        sprintf("<comment>Error validating, skipping %s: %s</comment>", $sku, implode(",", $errors))
+                        sprintf("<comment>Error validating, skipping %s: %s</comment>",
+                            $identifier, implode(",", $errors))
                     );
                 }
 
