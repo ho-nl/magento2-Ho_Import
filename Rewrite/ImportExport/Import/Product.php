@@ -28,9 +28,33 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      */
     private $productEntityIdentifierField;
 
+
+    /**
+     * Create Product entity from raw data.
+     * @fixme https://github.com/magento/magento2/issues/5993
+     *
+     * @throws \Exception
+     * @return bool Result of operation.
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
+    protected function _importData()
+    {
+        $this->_validatedRows = null;
+        if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
+            $this->_deleteProducts();
+        } elseif (Import::BEHAVIOR_REPLACE == $this->getBehavior()) {
+            $this->_replaceFlag = true;
+            $this->_saveProductsData();
+        } else {
+            $this->_saveProductsData();
+        }
+        $this->_eventManager->dispatch('catalog_product_import_finish_before', ['adapter' => $this]);
+        return true;
+    }
+
     /**
      * Gather and save information about product entities.
-     * Waiting for https://github.com/magento/magento2/issues/5160 to be resolved.
+     * @fixme https://github.com/magento/magento2/issues/5160
      *
      * @return $this
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
