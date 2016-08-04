@@ -20,12 +20,11 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  */
 class ExternalCategoryManagement extends AbstractRowModifier
 {
-
     /**
      * Mapping from category to internal mapping.
      * @var null
      */
-    protected $categoryMapping = null;
+    private $categoryMapping = null;
 
     /**
      * Category Collection Factory
@@ -66,7 +65,6 @@ class ExternalCategoryManagement extends AbstractRowModifier
         $this->externalCategoryPathFilter = $externalCategoryPathFilter;
     }
 
-
     /**
      * Add additional categories to products
      * @return void
@@ -91,12 +89,11 @@ class ExternalCategoryManagement extends AbstractRowModifier
         }
     }
 
-
     /**
      * Load Magento's categories with the import_group
      * @return \[]
      */
-    protected function initCategoryMapping()
+    private function initCategoryMapping()
     {
         $categoryCollection = $this->categoryCollectionFactory->create();
         $categoryCollection->addNameToResult();
@@ -110,8 +107,8 @@ class ExternalCategoryManagement extends AbstractRowModifier
                 continue;
             }
 
-            $structure = explode('/', $category->getPath());
-            $pathSize = count($structure);
+            $structure = $category->getPathIds();
+            $pathSize = $category->getLevel() + 1;
             if ($pathSize > 2) {
                 $path = [];
                 for ($i = 1; $i < $pathSize; $i++) {
@@ -140,13 +137,11 @@ class ExternalCategoryManagement extends AbstractRowModifier
         return $this->categoryMapping;
     }
 
-
     /**
      * @todo Add filter on current products
-     *
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    protected function initCategoryProductMapping()
+    private function initCategoryProductMapping()
     {
         //Get all categories that aren't managed externally.
         $categoryCollection = $this->categoryCollectionFactory->create();
@@ -157,8 +152,8 @@ class ExternalCategoryManagement extends AbstractRowModifier
         foreach ($categoryCollection as $category) {
             /** @var Category $category */
 
-            $structure = explode('/', $category->getPath());
-            $pathSize = count($structure);
+            $structure = $category->getPathIds();
+            $pathSize = $category->getLevel() + 1;
             if ($pathSize > 2) {
                 $path = [];
                 for ($i = 1; $i < $pathSize; $i++) {
@@ -182,7 +177,6 @@ class ExternalCategoryManagement extends AbstractRowModifier
                 return true;
             });
         }
-
 
         $productCollection = $this->productCollectionFactory->create();
 
@@ -226,7 +220,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
      *
      * @return string[] mixed
      */
-    protected function extractCategoriesFromString($categories)
+    private function extractCategoriesFromString($categories)
     {
         return array_filter(array_map('trim', explode(',', trim($categories))));
     }
