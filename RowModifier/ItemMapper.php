@@ -44,12 +44,16 @@ class ItemMapper extends AbstractRowModifier
             try {
                 $errors = $this->validateItem($item, $identifier);
                 if ($errors === true) {
+                    $filteredItem = array_filter($this->mapItem($item), function ($value) {
+                        return $value !== null;
+                    });
+
                     $this->items[$identifier] = array_map(function ($item) {
-                        if ($item == self::FIELD_EMPTY) {
+                        if ($item == \Ho\Import\RowModifier\ItemMapper::FIELD_EMPTY) {
                             return null;
                         }
                         return $item;
-                    }, array_filter($this->mapItem($item)));
+                    }, $filteredItem);
                 } else {
                     $this->consoleOutput->writeln(
                         sprintf("<comment>Error validating, skipping %s: %s</comment>",
