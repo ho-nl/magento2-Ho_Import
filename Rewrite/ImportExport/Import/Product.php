@@ -3,9 +3,9 @@
  * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
  * See LICENSE.txt for license details.
  */
-
 namespace Ho\Import\Rewrite\ImportExport\Import;
 
+use Magento\Catalog\Model\Product\Visibility;
 use Magento\CatalogImportExport\Model\Import\Product\RowValidatorInterface as ValidatorInterface;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\ImportExport\Model\Import;
@@ -27,7 +27,6 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @var string
      */
     private $productEntityIdentifierField;
-
 
     /**
      * Create Product entity from raw data.
@@ -343,6 +342,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
     }
 
     /**
+     * Required for self::_saveProducts
      * Get product entity link field
      *
      * @return string
@@ -358,21 +358,6 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
     }
 
     /**
-     * Get product entity identifier field
-     *
-     * @return string
-     */
-    private function getProductIdentifierField()
-    {
-        if (!$this->productEntityIdentifierField) {
-            $this->productEntityIdentifierField = $this->getMetadataPool()
-                ->getMetadata(\Magento\Catalog\Api\Data\ProductInterface::class)
-                ->getIdentifierField();
-        }
-        return $this->productEntityIdentifierField;
-    }
-
-    /**
      * Stock item saving.
      * @fixme https://github.com/magento/magento2/issues/5887
      *
@@ -380,7 +365,6 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      */
     protected function _saveStockItem()
     {
-//        $indexer = $this->indexerRegistry->get('catalog_product_category');
         /** @var $stockResource \Magento\CatalogInventory\Model\ResourceModel\Stock\Item */
         $stockResource = $this->_stockResItemFac->create();
         $entityTable = $stockResource->getMainTable();
@@ -435,11 +419,166 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
             if (!empty($stockData)) {
                 $this->_connection->insertOnDuplicate($entityTable, array_values($stockData));
             }
-
-            if ($productIdsToReindex) {
-//                $indexer->reindexList($productIdsToReindex);
-            }
         }
         return $this;
     }
+
+    /**
+     * Validate data row.
+     *
+     * @fixme https://github.com/magento/magento2/issues/5993
+     * @param array $rowData
+     * @param int   $rowNum
+     *
+     * @return boolean
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     */
+    public function validateRow(array $rowData, $rowNum)
+    {
+        if (isset($this->_validatedRows[$rowNum])) {
+            // check that row is already validated
+            return !$this->getErrorAggregator()->isRowInvalid($rowNum);
+        }
+        $this->_validatedRows[$rowNum] = true;
+        $rowScope = $this->getRowScope($rowData);
+        // BEHAVIOR_DELETE use specific validation logic
+        if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
+            if (self::SCOPE_DEFAULT == $rowScope && !isset($this->_oldSku[$rowData[self::COL_SKU]])) {
+                $this->addRowError(ValidatorInterface::ERROR_SKU_NOT_FOUND_FOR_DELETE, $rowNum);
+                return false;
+            }
+            return true;
+        }
+        if (!$this->validator->isValid($rowData)) {
+            foreach ($this->validator->getMessages() as $message) {
+                $this->addRowError($message, $rowNum, $this->validator->getInvalidAttribute());
+            }
+        }
+        $sku = $rowData[self::COL_SKU];
+        if (null === $sku) {
+            $this->addRowError(ValidatorInterface::ERROR_SKU_IS_EMPTY, $rowNum);
+        } elseif (false === $sku) {
+            $this->addRowError(ValidatorInterface::ERROR_ROW_IS_ORPHAN, $rowNum);
+        } elseif (self::SCOPE_STORE == $rowScope
+            && !$this->storeResolver->getStoreCodeToId($rowData[self::COL_STORE])
+        ) {
+            $this->addRowError(ValidatorInterface::ERROR_INVALID_STORE, $rowNum);
+        }
+        // SKU is specified, row is SCOPE_DEFAULT, new product block begins
+        $this->_processedEntitiesCount++;
+        $sku = $rowData[self::COL_SKU];
+        if (isset($this->_oldSku[$sku])) {
+            // can we get all necessary data from existent DB product?
+            // check for supported type of existing product
+            if (isset($this->_productTypeModels[$this->_oldSku[$sku]['type_id']])) {
+                $this->skuProcessor->addNewSku(
+                    $sku,
+                    $this->prepareNewSkuData($sku)
+                );
+            } else {
+                $this->addRowError(ValidatorInterface::ERROR_TYPE_UNSUPPORTED, $rowNum);
+                // child rows of legacy products with unsupported types are orphans
+                $sku = false;
+            }
+        } else {
+            // validate new product type and attribute set
+            if (!isset($rowData[self::COL_TYPE]) || !isset($this->_productTypeModels[$rowData[self::COL_TYPE]])) {
+                $this->addRowError(ValidatorInterface::ERROR_INVALID_TYPE, $rowNum);
+            } elseif (!isset(
+                    $rowData[self::COL_ATTR_SET]
+                )
+                || !isset(
+                    $this->_attrSetNameToId[$rowData[self::COL_ATTR_SET]]
+                )
+            ) {
+                $this->addRowError(ValidatorInterface::ERROR_INVALID_ATTR_SET, $rowNum);
+            } elseif (is_null($this->skuProcessor->getNewSku($sku))) {
+                $this->skuProcessor->addNewSku(
+                    $sku,
+                    [
+                        'row_id' => null,
+                        'entity_id' => null,
+                        'type_id' => $rowData[self::COL_TYPE],
+                        'attr_set_id' => $this->_attrSetNameToId[$rowData[self::COL_ATTR_SET]],
+                        'attr_set_code' => $rowData[self::COL_ATTR_SET],
+                    ]
+                );
+            }
+            if ($this->getErrorAggregator()->isRowInvalid($rowNum)) {
+                // mark SCOPE_DEFAULT row as invalid for future child rows if product not in DB already
+                $sku = false;
+            }
+        }
+        if (!$this->getErrorAggregator()->isRowInvalid($rowNum)) {
+            $newSku = $this->skuProcessor->getNewSku($sku);
+            // set attribute set code into row data for followed attribute validation in type model
+            $rowData[self::COL_ATTR_SET] = $newSku['attr_set_code'];
+            $rowAttributesValid = $this->_productTypeModels[$newSku['type_id']]->isRowValid(
+                $rowData,
+                $rowNum,
+                !isset($this->_oldSku[$sku])
+            );
+            if (!$rowAttributesValid && self::SCOPE_DEFAULT == $rowScope) {
+                // mark SCOPE_DEFAULT row as invalid for future child rows if product not in DB already
+                $sku = false;
+            }
+        }
+        // validate custom options
+        $this->getOptionEntity()->validateRow($rowData, $rowNum);
+        if ($this->isNeedToValidateUrlKey($rowData)) {
+            $urlKey     = $this->getUrlKey($rowData);
+            $storeCodes = empty($rowData[self::COL_STORE_VIEW_CODE])
+                ? array_flip($this->storeResolver->getStoreCodeToId())
+                : explode($this->getMultipleValueSeparator(), $rowData[self::COL_STORE_VIEW_CODE]);
+            foreach ($storeCodes as $storeCode) {
+                $storeId          = $this->storeResolver->getStoreCodeToId($storeCode);
+                $productUrlSuffix = $this->getProductUrlSuffix($storeId);
+                $urlPath          = $urlKey . $productUrlSuffix;
+                if (empty($this->urlKeys[$storeId][$urlPath])
+                    || ($this->urlKeys[$storeId][$urlPath] == $rowData[self::COL_SKU])
+                ) {
+                    $this->urlKeys[$storeId][$urlPath]    = $rowData[self::COL_SKU];
+                    $this->rowNumbers[$storeId][$urlPath] = $rowNum;
+                } else {
+                    $this->addRowError(ValidatorInterface::ERROR_DUPLICATE_URL_KEY, $rowNum);
+                }
+            }
+        }
+        return !$this->getErrorAggregator()->isRowInvalid($rowNum);
+    }
+
+
+    /**
+     * @param array $rowData
+     * @return bool
+     */
+    private function isNeedToValidateUrlKey($rowData)
+    {
+        return (!empty($rowData[self::URL_KEY]) || !empty($rowData[self::COL_NAME]))
+            && (empty($rowData[self::COL_VISIBILITY])
+            || $rowData[self::COL_VISIBILITY]
+            !== (string)Visibility::getOptionArray()[Visibility::VISIBILITY_NOT_VISIBLE]);
+    }
+
+    /**
+     * Required for self::validateRow
+     * Prepare new SKU data
+     *
+     * @param string $sku
+     * @return array
+     */
+    private function prepareNewSkuData($sku)
+    {
+        $data = [];
+        foreach ($this->_oldSku[$sku] as $key => $value) {
+            $data[$key] = $value;
+        }
+
+        $data['attr_set_code'] = $this->_attrSetIdToName[$this->_oldSku[$sku]['attr_set_id']];
+
+        return $data;
+    }
+
 }

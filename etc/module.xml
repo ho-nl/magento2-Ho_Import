@@ -3,6 +3,8 @@
     <module name="Ho_Import" setup_version="0.2.0">
         <sequence>
             <module name="Magento_Catalog"/>
+            <module name="Magento_CatalogImportExport"/>
+            <module name="Magento_ConfigurableImportExport"/>
         </sequence>
     </module>
 </config>

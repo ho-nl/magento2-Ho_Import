@@ -15,7 +15,9 @@
         </arguments>
     </type>
     <preference for="Ho\Import\Api\ImportProfileListInterface" type="Ho\Import\Model\ImportProfileList" />
-    <preference for="Magento\CatalogImportExport\Model\Import\Product" type="Ho\Import\Rewrite\ImportExport\Import\Product" />
     <preference for="Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator" type="Ho\Import\Rewrite\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator" />
     <preference for="Magento\CatalogUrlRewrite\Observer\AfterImportDataObserver" type="Ho\Import\Rewrite\CatalogUrlRewrite\Observer\AfterImportDataObserver" />
+
+    <!-- Bug fixes in the ImportExport module -->
+    <preference for="Magento\CatalogImportExport\Model\Import\Product" type="Ho\Import\Rewrite\ImportExport\Import\Product" />
 </config>

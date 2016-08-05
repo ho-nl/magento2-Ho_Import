@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!--
+  ~ Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+  ~ See LICENSE.txt for license details.
+  -->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_ImportExport:etc/import.xsd">
+    <!-- Bug fixes in ConfigurableImportExport -->
+    <entityType entity="catalog_product" name="configurable" model="Ho\Import\Rewrite\ConfigurableImportExport\ModelImportProductTypeConfigurable" />
+</config>
