@@ -21,6 +21,12 @@ class ModelImportProductTypeConfigurable
      */
     protected function _collectSuperDataLabels($data, $productSuperAttrId, $productId, $variationLabels)
     {
+        $attrParams = $this->_superAttributes[$data['_super_attribute_code']];
+        $this->_superAttributesData['attributes'][$productId][$attrParams['id']] = [
+            'product_super_attribute_id' => $productSuperAttrId,
+            'position' => 0,
+        ];
+
         return $this;
     }
 }
