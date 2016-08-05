@@ -14,8 +14,9 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 /**
  * Class AsyncImageDownloader
  *
- * @todo implement caching strategory. We don't need to download the file each time, but would be nice if it gets
+ * @todo Implement caching strategory. We don't need to download the file each time, but would be nice if it gets
  *       downloaded once in a while.
+ * @todo Implement additional images download
  * @package Ho\Import
  */
 class ImageDownloader extends AbstractRowModifier

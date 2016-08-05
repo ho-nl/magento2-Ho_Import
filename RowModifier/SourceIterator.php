@@ -79,7 +79,7 @@ class SourceIterator extends AbstractRowModifier
                     break;
                 case self::MODE_ADD:
                     if (!isset($this->items[$id])) {
-                        $this->consoleOutput->writeln("<comment>Item not found for {$id}</comment>");
+                        $this->consoleOutput->writeln("<comment>SourceIterator: Item not found for {$id}</comment>");
                         continue;
                     }
                     $this->items[$id] += $item;

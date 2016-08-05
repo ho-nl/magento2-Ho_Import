@@ -47,7 +47,7 @@ class NonUniqueSourceIterator extends SourceIterator
         foreach ($this->iterator as $item) {
             $id = $identifier($item);
             if (!isset($this->items[$id])) {
-                $this->consoleOutput->writeln("<comment>Item not found for {$id}</comment>");
+                $this->consoleOutput->writeln("<comment>NonUniqueSourceIterator: Item not found for {$id}</comment>");
                 continue;
             }
             $this->items[$id][$this->nodeName][] = $item;
