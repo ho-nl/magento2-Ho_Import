@@ -6,8 +6,10 @@
 
 namespace Ho\Import\RowModifier;
 
+use Ho\Import\Helper\LineFormatterMulti;
 use Magento\CatalogImportExport\Model\Import\Product as ImportProduct;
 use Magento\ImportExport\Model\Import;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class ConfigurableBuilder extends AbstractRowModifier
 {
@@ -41,6 +43,25 @@ class ConfigurableBuilder extends AbstractRowModifier
      * @var array
      */
     protected $simpleValues = [];
+
+    /**
+     * @var LineFormatterMulti
+     */
+    private $lineFormatterMulti;
+
+    /**
+     * ConfigurableBuilder constructor.
+     *
+     * @param ConsoleOutput      $consoleOutput
+     * @param LineFormatterMulti $lineFormatterMulti
+     */
+    public function __construct(
+        ConsoleOutput $consoleOutput,
+        LineFormatterMulti $lineFormatterMulti
+    ) {
+        parent::__construct($consoleOutput);
+        $this->lineFormatterMulti = $lineFormatterMulti;
+    }
 
     /**
      * {@inheritdoc}
@@ -81,6 +102,14 @@ class ConfigurableBuilder extends AbstractRowModifier
                 $variation[$attribute] = $item[$attribute];
                 unset($configurables[$configurableSku][$attribute]);
             }
+
+            if (! isset($configurables[$configurableSku]['_is_in_stock'])) {
+                $configurables[$configurableSku]['_is_in_stock'] = 0;
+            }
+            if (isset($item['is_in_stock']) && $item['is_in_stock'] > 0) {
+                $configurables[$configurableSku]['_is_in_stock'] = $item['is_in_stock'];
+            }
+
             $configurables[$configurableSku]['configurable_variations'][] = $variation;
         }
 
@@ -105,17 +134,14 @@ class ConfigurableBuilder extends AbstractRowModifier
         }
 
         $configurables = array_map(function ($configurable) {
-            foreach (['configurable_variations'] as $field) {
-                $configurable[$field] = array_map(function ($options) {
-                    $newOptions = [];
-                    foreach ($options as $key => $value) {
-                        $newOptions[] = sprintf('%s=%s', $key, $value);
-                    }
-                    return implode(Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR, $newOptions);
-                }, $configurable[$field]);
-                $configurable[$field] = implode(ImportProduct::PSEUDO_MULTI_LINE_SEPARATOR, $configurable[$field]);
-                return $configurable;
-            }
+            $configurable['is_in_stock'] = $configurable['_is_in_stock'];
+            unset($configurable['_is_in_stock']);
+
+            $configurable['configurable_variations'] = $this->lineFormatterMulti->encode(
+                $configurable['configurable_variations']
+            );
+
+            return $configurable;
         }, $configurables);
 
         $this->items += $configurables;
