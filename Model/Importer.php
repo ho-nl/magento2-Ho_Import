@@ -5,13 +5,13 @@
  */
 namespace Ho\Import\Model;
 
+use Magento\Framework\Indexer\StateInterface;
 use Magento\ImportExport\Model\Import;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingError;
 
 /**
  * Class Importer
  *
- * @todo implement method to lock all indexer processes while importing (https://github.com/magento/magento2/issues/6004)
  * @package Ho\Import\Model
  */
 class Importer
@@ -32,19 +32,26 @@ class Importer
      */
     protected $arrayAdapterFactory;
 
+    /**
+     * @var \Magento\Indexer\Model\Indexer\Collection
+     */
+    private $indexerCollection;
 
     /**
      * Importer constructor.
      *
-     * @param Import              $importModel
-     * @param ArrayAdapterFactory $arrayAdapterFactory
+     * @param Import                                           $importModel
+     * @param ArrayAdapterFactory                              $arrayAdapterFactory
+     * @param \Magento\Indexer\Model\Indexer\Collection $indexerCollection
      */
     public function __construct(
         Import $importModel,
-        ArrayAdapterFactory $arrayAdapterFactory
+        ArrayAdapterFactory $arrayAdapterFactory,
+        \Magento\Indexer\Model\Indexer\Collection $indexerCollection
     ) {
-        $this->importModel         = $importModel;
+        $this->importModel = $importModel;
         $this->arrayAdapterFactory = $arrayAdapterFactory;
+        $this->indexerCollection = $indexerCollection;
     }
 
 
@@ -77,7 +84,10 @@ class Importer
         if (!$this->importModel->validateSource($sourceAdapter)) {
             return;
         }
+
+        $this->lockIndexers();
         $this->importModel->importSource();
+        $this->unlockIndexers();
         if (!$this->importModel->getErrorAggregator()->hasToBeTerminated()) {
             $this->importModel->invalidateIndex();
         }
@@ -136,6 +146,31 @@ class Importer
                 $error->getErrorDescription()
             );
         }, $errorAggregator->getAllErrors());
+    }
+
+    /**
+     * Lock indexers
+     * Prevent unwanted running of indexers, bad for performance and possible deadlock situation
+     * @return void
+     */
+    public function lockIndexers()
+    {
+        foreach ($this->indexerCollection as $indexer) {
+            /** @var \Magento\Indexer\Model\Indexer $indexer */
+            $indexer->getState()->setStatus(StateInterface::STATUS_WORKING);
+        }
+    }
+
+    /**
+     * Unlock indexers
+     * @return void
+     */
+    protected function unlockIndexers()
+    {
+        foreach ($this->indexerCollection as $indexer) {
+            /** @var \Magento\Indexer\Model\Indexer $indexer */
+            $indexer->getState()->setStatus(StateInterface::STATUS_VALID);
+        }
     }
 
 }
