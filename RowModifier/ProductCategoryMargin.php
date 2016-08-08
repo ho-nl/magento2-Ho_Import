@@ -51,11 +51,22 @@ class ProductCategoryMargin extends AbstractRowModifier
     public function process()
     {
         $this->initCategoryMapping();
+        $scope = get_class();
 
         foreach ($this->items as $identifier => &$item) {
-            if (! isset($item['categories'])) {
+
+            if (empty($item['cost'])) {
                 $this->consoleOutput->writeln(
-                    "<comment>No category found for product {$identifier}, setting cost as price.</comment>"
+                    "<comment>{$scope}: No cost field found for product {$identifier}, disabling product.</comment>"
+                );
+                $item['status'] = 0;
+                $item['product_online'] = 0;
+                continue;
+            }
+
+            if (empty($item['categories'])) {
+                $this->consoleOutput->writeln(
+                    "<comment>{$scope}: No category found for product {$identifier}, setting cost as price.</comment>"
                 );
                 $item['price'] = $item['cost'];
                 continue;
@@ -63,13 +74,6 @@ class ProductCategoryMargin extends AbstractRowModifier
 
             $categories = $this->extractCategoriesFromString($item['categories']);
             $margins = [];
-
-            if (! isset($item['cost'])) {
-                $this->consoleOutput->writeln(
-                    "<comment>Cost not set for product {$identifier}, skipping row.</comment>"
-                );
-                continue;
-            }
 
             foreach ($categories as $category) {
                 $marginCategories = array_filter($this->categoryMapping, function ($marginCategory) use ($category) {
@@ -83,11 +87,10 @@ class ProductCategoryMargin extends AbstractRowModifier
                 $margins[] = end($marginCategories);
             }
 
-
             if (count($margins) <= 0) {
                 $categoryNames = implode(',', $categories);
                 $this->consoleOutput->writeln(
-                    "<comment>No margin-category found for product {$identifier}, setting cost as price (categories: " .
+                    "<comment>{$scope}: No margin-category found for product {$identifier}, setting cost as price (categories: " .
                     "{$categoryNames})</comment>"
                 );
                 $margin = 1;
@@ -102,7 +105,7 @@ class ProductCategoryMargin extends AbstractRowModifier
                 foreach ($tierPrices as &$tierPrice) {
                     if (! isset($tierPrice['cost'])) {
                         $this->consoleOutput->writeln(
-                            "<comment>Cost not set for product {$identifier} tier price, skipping row." .
+                            "<comment>{$scope}: Cost not set for product {$identifier} tier price, skipping row." .
                             "</comment>"
                         );
                         continue;
