@@ -8,6 +8,12 @@ namespace Ho\Import\Model;
 use Magento\ImportExport\Model\Import;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingError;
 
+/**
+ * Class Importer
+ *
+ * @todo implement method to lock all indexer processes while importing (https://github.com/magento/magento2/issues/6004)
+ * @package Ho\Import\Model
+ */
 class Importer
 {
 
