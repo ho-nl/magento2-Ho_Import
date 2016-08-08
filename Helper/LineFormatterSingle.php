@@ -19,11 +19,7 @@ class LineFormatterSingle
     {
         $values = [];
         foreach ($line as $key => $value) {
-            if (is_numeric($key)) {
-                $values[] = $value;
-            } else {
-                $values[] = implode(self::VALUE_DELIMITER, [$key, $value]);
-            }
+            $values[] = implode(self::VALUE_DELIMITER, [$key, $value]);
         }
         return implode(self::ITEM_DELIMITER, $values);
     }

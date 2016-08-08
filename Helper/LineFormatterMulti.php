@@ -49,7 +49,7 @@ class LineFormatterMulti
      * Decode Lines
      *
      * @param string $line
-     * @return array
+     * @return string[string[]]
      */
     public function decode($line)
     {

@@ -22,7 +22,7 @@ class ProductCategoryMargin extends AbstractRowModifier
      * Mapping from category to internal mapping.
      * @var null
      */
-    protected $categoryMapping = null;
+    private $categoryMapping = null;
 
     /**
      * Category Collection Factory
@@ -62,7 +62,6 @@ class ProductCategoryMargin extends AbstractRowModifier
         $scope = get_class();
 
         foreach ($this->items as $identifier => &$item) {
-
             if (empty($item['cost'])) {
                 $this->consoleOutput->writeln(
                     "<comment>{$scope}: No cost field found for product {$identifier}, disabling product.</comment>"
@@ -107,23 +106,40 @@ class ProductCategoryMargin extends AbstractRowModifier
             }
 
             $item['price'] = round($item['cost'] * $margin, 2);
-            if (isset($item['tier_prices'])) {
-                $tierPrices = $this->lineFormatterMulti->decode($item['tier_prices']);
 
-                foreach ($tierPrices as &$tierPrice) {
-                    if (! isset($tierPrice['cost'])) {
-                        $this->consoleOutput->writeln(
-                            "<comment>{$scope}: Cost not set for product {$identifier} tier price, skipping row." .
-                            "</comment>"
-                        );
-                        continue;
-                    }
-                    $tierPrice['price'] = round($tierPrice['cost'] * $margin, 2);
+            foreach (['tier_prices','options_pricing'] as $option) {
+                if (empty($item[$option])) {
+                    continue;
                 }
-                $item['tier_prices'] = $this->lineFormatterMulti->encode($tierPrices);
+
+                $decodedOptions = $this->lineFormatterMulti->decode($item[$option]);
+                $this->applyMargin($decodedOptions, $margin);
+                $item[$option] = $this->lineFormatterMulti->encode($decodedOptions);
             }
         }
     }
+
+    /**
+     * @param $item
+     * @param $margin
+     */
+    protected function applyMargin(&$item, $margin)
+    {
+        if (isset($item['cost'])) {
+            $item['price'] = round($item['cost'] * $margin, 2);
+            unset($item['cost']);
+            return;
+        }
+
+        if (! is_array($item)) {
+            return;
+        }
+
+        foreach ($item as &$subItem) {
+            $this->applyMargin($subItem, $margin);
+        }
+    }
+
 
 
     /**
