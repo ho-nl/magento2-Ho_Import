@@ -5,14 +5,115 @@
  */
 namespace Ho\Import\Rewrite\ImportExport\Import;
 
+use Ho\Import\Helper\LineFormatterMulti;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\CatalogImportExport\Model\Import\Product\RowValidatorInterface as ValidatorInterface;
+use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
+use Magento\Framework\Model\ResourceModel\Db\TransactionManagerInterface;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\ImportExport\Model\Import;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingError;
+use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
 
 class Product extends \Magento\CatalogImportExport\Model\Import\Product
 {
+
+    /**
+     * @var LineFormatterMulti
+     */
+    private $lineFormatterMulti;
+
+    /**
+     * Product constructor.
+     *
+     * @param \Magento\Framework\Json\Helper\Data                                     $jsonHelper
+     * @param \Magento\ImportExport\Helper\Data                                       $importExportData
+     * @param \Magento\ImportExport\Model\ResourceModel\Import\Data                   $importData
+     * @param \Magento\Eav\Model\Config                                               $config
+     * @param \Magento\Framework\App\ResourceConnection                               $resource
+     * @param \Magento\ImportExport\Model\ResourceModel\Helper                        $resourceHelper
+     * @param \Magento\Framework\Stdlib\StringUtils                                   $string
+     * @param ProcessingErrorAggregatorInterface                                      $errorAggregator
+     * @param \Magento\Framework\Event\ManagerInterface                               $eventManager
+     * @param \Magento\CatalogInventory\Api\StockRegistryInterface                    $stockRegistry
+     * @param \Magento\CatalogInventory\Api\StockConfigurationInterface               $stockConfiguration
+     * @param \Magento\CatalogInventory\Model\Spi\StockStateProviderInterface         $stockStateProvider
+     * @param \Magento\Catalog\Helper\Data                                            $catalogData
+     * @param Import\Config                                                           $importConfig
+     * @param                                                                         $resourceFactory
+     * @param \Magento\CatalogImportExport\Model\Import\Product\OptionFactory         $optionFactory
+     * @param \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory $setColFactory
+     * @param \Magento\CatalogImportExport\Model\Import\Product\Type\Factory          $productTypeFactory
+     * @param \Magento\Catalog\Model\ResourceModel\Product\LinkFactory                $linkFactory
+     * @param Proxy\ProductFactory                                                    $proxyProdFactory
+     * @param UploaderFactory                                                         $uploaderFactory
+     * @param \Magento\Framework\Filesystem                                           $filesystem
+     * @param \Magento\CatalogInventory\Model\ResourceModel\Stock\ItemFactory         $stockResItemFac
+     * @param DateTime\TimezoneInterface                                              $localeDate
+     * @param DateTime                                                                $dateTime
+     * @param \Psr\Log\LoggerInterface                                                $logger
+     * @param \Magento\Framework\Indexer\IndexerRegistry                              $indexerRegistry
+     * @param \Magento\CatalogImportExport\Model\Import\Product\StoreResolver         $storeResolver
+     * @param \Magento\CatalogImportExport\Model\Import\Product\SkuProcessor          $skuProcessor
+     * @param \Magento\CatalogImportExport\Model\Import\Product\CategoryProcessor     $categoryProcessor
+     * @param \Magento\CatalogImportExport\Model\Import\Product\Validator             $validator
+     * @param ObjectRelationProcessor                                                 $objectRelationProcessor
+     * @param TransactionManagerInterface                                             $transactionManager
+     * @param \Magento\CatalogImportExport\Model\Import\Product\TaxClassProcessor     $taxClassProcessor
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface                      $scopeConfig
+     * @param \Magento\Catalog\Model\Product\Url                                      $productUrl
+     * @param LineFormatterMulti                                                      $lineFormatterMulti
+     * @param array                                                                   $data
+     */
+    public function __construct(
+        \Magento\Framework\Json\Helper\Data $jsonHelper,
+        \Magento\ImportExport\Helper\Data $importExportData,
+        \Magento\ImportExport\Model\ResourceModel\Import\Data $importData,
+        \Magento\Eav\Model\Config $config,
+        \Magento\Framework\App\ResourceConnection $resource,
+        \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper,
+        \Magento\Framework\Stdlib\StringUtils $string,
+        ProcessingErrorAggregatorInterface $errorAggregator,
+        \Magento\Framework\Event\ManagerInterface $eventManager,
+        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
+        \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration,
+        \Magento\CatalogInventory\Model\Spi\StockStateProviderInterface $stockStateProvider,
+        \Magento\Catalog\Helper\Data $catalogData,
+        Import\Config $importConfig,
+        $resourceFactory,
+        \Magento\CatalogImportExport\Model\Import\Product\OptionFactory $optionFactory,
+        \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory $setColFactory,
+        \Magento\CatalogImportExport\Model\Import\Product\Type\Factory $productTypeFactory,
+        \Magento\Catalog\Model\ResourceModel\Product\LinkFactory $linkFactory,
+        Proxy\ProductFactory $proxyProdFactory,
+        UploaderFactory $uploaderFactory,
+        \Magento\Framework\Filesystem $filesystem,
+        \Magento\CatalogInventory\Model\ResourceModel\Stock\ItemFactory $stockResItemFac,
+        DateTime\TimezoneInterface $localeDate,
+        DateTime $dateTime,
+        \Psr\Log\LoggerInterface $logger,
+        \Magento\Framework\Indexer\IndexerRegistry $indexerRegistry,
+        \Magento\CatalogImportExport\Model\Import\Product\StoreResolver $storeResolver,
+        \Magento\CatalogImportExport\Model\Import\Product\SkuProcessor $skuProcessor,
+        \Magento\CatalogImportExport\Model\Import\Product\CategoryProcessor $categoryProcessor,
+        \Magento\CatalogImportExport\Model\Import\Product\Validator $validator,
+        ObjectRelationProcessor $objectRelationProcessor,
+        TransactionManagerInterface $transactionManager,
+        \Magento\CatalogImportExport\Model\Import\Product\TaxClassProcessor $taxClassProcessor,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Catalog\Model\Product\Url $productUrl,
+        LineFormatterMulti $lineFormatterMulti,
+        array $data
+    ) {
+        \Magento\CatalogImportExport\Model\Import\Product::__construct($jsonHelper, $importExportData, $importData,
+            $config, $resource, $resourceHelper, $string,
+            $errorAggregator, $eventManager, $stockRegistry, $stockConfiguration, $stockStateProvider, $catalogData,
+            $importConfig, $resourceFactory, $optionFactory, $setColFactory, $productTypeFactory, $linkFactory,
+            $proxyProdFactory, $uploaderFactory, $filesystem, $stockResItemFac, $localeDate, $dateTime, $logger,
+            $indexerRegistry, $storeResolver, $skuProcessor, $categoryProcessor, $validator, $objectRelationProcessor,
+            $transactionManager, $taxClassProcessor, $scopeConfig, $productUrl, $data);
+        $this->lineFormatterMulti = $lineFormatterMulti;
+    }
 
     /**
      * Product entity link field
@@ -20,13 +121,6 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @var string
      */
     private $productEntityLinkField;
-
-    /**
-     * Product entity identifier field
-     *
-     * @var string
-     */
-    private $productEntityIdentifierField;
 
     /**
      * Create Product entity from raw data.
@@ -157,8 +251,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
 
 
                 if (!empty($rowData['tier_prices'])) {
-                    $tierPriceData = json_decode($rowData['tier_prices'], true);
-
+                    $tierPriceData = $this->lineFormatterMulti->decode($rowData['tier_prices']);
                     foreach ($tierPriceData as $tierPrice) {
                         $tierPrices[$rowSku][] = [
                             'all_groups' => $tierPrice['website'] == self::VALUE_ALL,

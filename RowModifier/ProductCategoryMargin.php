@@ -6,6 +6,7 @@
 
 namespace Ho\Import\RowModifier;
 
+use Ho\Import\Helper\LineFormatterMulti;
 use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -29,19 +30,26 @@ class ProductCategoryMargin extends AbstractRowModifier
      */
     private $categoryCollectionFactory;
 
+    /**
+     * @var LineFormatterMulti
+     */
+    private $lineFormatterMulti;
 
     /**
      * ExternalCategoryManagement constructor.
      *
      * @param ConsoleOutput             $consoleOutput
      * @param CategoryCollectionFactory $categoryCollectionFactory
+     * @param LineFormatterMulti        $lineFormatterMulti
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
-        CategoryCollectionFactory $categoryCollectionFactory
+        CategoryCollectionFactory $categoryCollectionFactory,
+        LineFormatterMulti $lineFormatterMulti
     ) {
         parent::__construct($consoleOutput);
         $this->categoryCollectionFactory = $categoryCollectionFactory;
+        $this->lineFormatterMulti = $lineFormatterMulti;
     }
 
     /**
@@ -100,7 +108,7 @@ class ProductCategoryMargin extends AbstractRowModifier
 
             $item['price'] = round($item['cost'] * $margin, 2);
             if (isset($item['tier_prices'])) {
-                $tierPrices = \GuzzleHttp\json_decode($item['tier_prices'], true);
+                $tierPrices = $this->lineFormatterMulti->decode($item['tier_prices']);
 
                 foreach ($tierPrices as &$tierPrice) {
                     if (! isset($tierPrice['cost'])) {
@@ -112,7 +120,7 @@ class ProductCategoryMargin extends AbstractRowModifier
                     }
                     $tierPrice['price'] = round($tierPrice['cost'] * $margin, 2);
                 }
-                $item['tier_prices'] = json_encode($tierPrices);
+                $item['tier_prices'] = $this->lineFormatterMulti->encode($tierPrices);
             }
         }
     }
