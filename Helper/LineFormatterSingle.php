@@ -19,9 +19,11 @@ class LineFormatterSingle
     {
         $values = [];
         foreach ($line as $key => $value) {
-            //@todo replace equal sign and comma.
-
-            $values[] = implode(self::VALUE_DELIMITER, [$key, $value]);
+            if (is_numeric($key)) {
+                $values[] = $value;
+            } else {
+                $values[] = implode(self::VALUE_DELIMITER, [$key, $value]);
+            }
         }
         return implode(self::ITEM_DELIMITER, $values);
     }
