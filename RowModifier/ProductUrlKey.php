@@ -127,6 +127,7 @@ class ProductUrlKey extends AbstractRowModifier
             $this->urlKeyFormatter->formatUrlKey($identifier . '-' . $urlKey . '-4'),
         ];
         $options = array_unique($options);
+
         foreach ($options as $option) {
             if (isset($this->urls[$option])) {
                 continue;
@@ -135,20 +136,25 @@ class ProductUrlKey extends AbstractRowModifier
             $foundKeys = $this->urlFinderInterface->findAllByData([
                 'request_path' => $option . $this->getProductUrlSuffix(0)
             ]);
+
             //The URL Key doesn't exist
             if (count($foundKeys) <= 0) {
                 $this->urls[$option] = true;
                 return $option;
             }
-            $isKeyCurrent = array_reduce($foundKeys, function ($carry, UrlRewrite $item) {
+            $isKeyCurrent = array_reduce($foundKeys, function ($carry, UrlRewrite $item) use ($identifier) {
                 if ($carry) {
                     return $carry;
                 }
-                if (isset($this->idToSku[$item->getEntityId()])) {
+
+
+                if (isset($this->idToSku[$item->getEntityId()])
+                    && $this->idToSku[$item->getEntityId()] == $identifier) {
                     return true;
                 }
                 return false;
             });
+
             if ($isKeyCurrent) {
                 $this->urls[$option] = true;
                 return $option;
@@ -173,9 +179,7 @@ class ProductUrlKey extends AbstractRowModifier
 
     /**
      * Retrieve product rewrite suffix for store
-     *
      * @param int $storeId
-     *
      * @return string
      */
     protected function getProductUrlSuffix($storeId = null)
@@ -192,7 +196,6 @@ class ProductUrlKey extends AbstractRowModifier
 
     /**
      * Reset the object to clear memory
-     *
      * @return void
      */
     protected function reset()
