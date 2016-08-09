@@ -158,6 +158,7 @@ class Importer
         foreach ($this->indexerCollection as $indexer) {
             /** @var \Magento\Indexer\Model\Indexer $indexer */
             $indexer->getState()->setStatus(StateInterface::STATUS_WORKING);
+            $indexer->getState()->save();
         }
     }
 
@@ -170,6 +171,7 @@ class Importer
         foreach ($this->indexerCollection as $indexer) {
             /** @var \Magento\Indexer\Model\Indexer $indexer */
             $indexer->getState()->setStatus(StateInterface::STATUS_VALID);
+            $indexer->getState()->save();
         }
     }
 
