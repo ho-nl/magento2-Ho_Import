@@ -107,7 +107,7 @@ class ProductCategoryMargin extends AbstractRowModifier
 
             $item['price'] = round($item['cost'] * $margin, 2);
 
-            foreach (['tier_prices','options_pricing'] as $option) {
+            foreach (['tier_prices', 'options_pricing', 'custom_options'] as $option) {
                 if (empty($item[$option])) {
                     continue;
                 }
