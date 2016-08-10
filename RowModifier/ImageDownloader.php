@@ -91,7 +91,7 @@ class ImageDownloader extends AbstractRowModifier
     public function process()
     {
         $imageFields = ['swatch_image','image', 'small_image', 'thumbnail'];
-        //$additionalFields = 'additional_images';
+        $imageArrayFields = ['additional_images'];
 
         $itemCount = count($this->items);
         $this->consoleOutput->writeln("<info>Downloading images for {$itemCount} items</info>");
@@ -102,15 +102,27 @@ class ImageDownloader extends AbstractRowModifier
         }
 
 
-        $requestGenerator = function () use ($imageFields) {
+        $requestGenerator = function () use ($imageFields, $imageArrayFields) {
             foreach ($this->items as &$item) {
                 foreach ($imageFields as $field) {
                     if (!isset($item[$field])) {
                         continue;
                     }
 
-                    if ($promise = $this->downloadAsync($item, $field)) {
+                    if ($promise = $this->downloadAsync($item[$field], $item)) {
                         yield $promise;
+                    }
+                }
+                foreach ($imageArrayFields as $imageArrayField) {
+                    if (! isset($item[$imageArrayField])) {
+                        continue;
+                    }
+
+                    $item[$imageArrayField] = array_unique(explode(',', $item[$imageArrayField]));
+                    foreach ($item[$imageArrayField] as &$value) {
+                        if ($promise = $this->downloadAsync($value, $item)) {
+                            yield $promise;
+                        }
                     }
                 }
             }
@@ -123,52 +135,74 @@ class ImageDownloader extends AbstractRowModifier
 
         $this->progressBar->finish();
         $this->consoleOutput->write("\n");
+
+        //Implode all image array fields
+        foreach ($this->items as &$item) {
+            foreach ($imageArrayFields as $imageArrayField) {
+                if (! isset($item[$imageArrayField])) {
+                    continue;
+                }
+
+                $item[$imageArrayField] = implode(',', $item[$imageArrayField]);
+            }
+        }
     }
 
     /**
      * Download the actual image async and resolve the to the new value
      *
-     * @param array &$item
-     * @param string $field
+     * @param string &$value
+     * @param array $item
      *
-     * @return Promise\PromiseInterface|null
+     * @return \Closure|Promise\PromiseInterface
      */
-    protected function downloadAsync(&$item, $field)
+    protected function downloadAsync(&$value, &$item)
     {
-        return function () use (&$item, $field) {
-            $fileName   = basename($item[$field]);
+        return function () use (&$value, &$item) {
+            $fileName   = basename($value);
             $targetPath = $this->directoryList->getPath('media') . '/import/' . $fileName;
 
             if (isset($this->cachedRequests[$fileName])) {
                 $promise = $this->cachedRequests[$fileName];
             } elseif (file_exists($targetPath)) { //@todo honor isUseExisting
-                $item[$field] = $fileName;
+                $value = $fileName;
                 return null;
             } else {
                 $this->progressBar->advance();
                 $promise = $this->httpClient
-                    ->getAsync($item[$field], [
+                    ->getAsync($value, [
                         'sink' => $targetPath,
                         'connect_timeout' => 5
                     ]);
             }
 
             $promise
-                ->then(function () use (&$item, $field, $fileName) {
-                    $item[$field] = $fileName;
+                ->then(function (\GuzzleHttp\Psr7\Response $response) use (
+                    &$value,
+                    $fileName
+                ) {
+                    $response->getBody()->close();
+                    $value = $fileName;
                 })
-                ->otherwise(function () use (&$item, $field, $fileName, $targetPath) {
+                ->otherwise(function (\GuzzleHttp\Psr7\Response $response) use (
+                    &$value,
+                    &$item,
+                    $fileName,
+                    $targetPath
+                ) {
+                    $response->getBody()->close();
                     unlink($targetPath); // clean up any remaining file pointers if the download failed
 
                     $this->consoleOutput->writeln(
-                        "\n<comment>Image can not be downloaded: {$fileName} for {$item['sku']}</comment>"
+                        "\n<comment>Image can not be downloaded: {$fileName}}</comment>"
                     );
 
-                    foreach ($item as $keyField => $value) {
-                        if ($value == $item[$field]) {
-                            $item[$keyField] = null;
+                    foreach ($item as &$itemValue) {
+                        if ($value == $itemValue) {
+                            $itemValue = null;
                         }
                     }
+                    $value = null;
                 });
 
             return $this->cachedRequests[$fileName] = $promise;
