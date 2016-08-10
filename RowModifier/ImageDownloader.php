@@ -159,7 +159,7 @@ class ImageDownloader extends AbstractRowModifier
     protected function downloadAsync(&$value, &$item)
     {
         return function () use (&$value, &$item) {
-            $fileName   = basename($value);
+            $fileName   = str_replace(' ', '', basename($value));
             $targetPath = $this->directoryList->getPath('media') . '/import/' . $fileName;
 
             if (isset($this->cachedRequests[$fileName])) {
@@ -199,6 +199,13 @@ class ImageDownloader extends AbstractRowModifier
 
                     foreach ($item as &$itemValue) {
                         if ($value == $itemValue) {
+                            if (is_array($itemValue)) {
+                                foreach ($itemValue as &$itemArrValue) {
+                                    if ($value == $itemArrValue) {
+                                        $itemArrValue = null;
+                                    }
+                                }
+                            }
                             $itemValue = null;
                         }
                     }
