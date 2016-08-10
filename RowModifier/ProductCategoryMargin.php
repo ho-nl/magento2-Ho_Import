@@ -61,7 +61,7 @@ class ProductCategoryMargin extends AbstractRowModifier
         $this->consoleOutput->writeln("<info>Calculating product margins</info>");
 
         $this->initCategoryMapping();
-        $scope = get_class();
+        $scope = 'ProductCategoryMargin';
 
         foreach ($this->items as $identifier => &$item) {
             if (empty($item['cost'])) {
