@@ -31,6 +31,8 @@ abstract class ProductMapper extends AbstractRowModifier
      */
     public function process()
     {
+        $this->consoleOutput->writeln("<info>Mapping product information</info>");
+
         foreach ($this->getSourceItems() as $item) {
             try {
                 $identifier = $this->getSku($item);

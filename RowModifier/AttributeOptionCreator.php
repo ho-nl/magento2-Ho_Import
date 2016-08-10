@@ -60,6 +60,8 @@ class AttributeOptionCreator extends AbstractRowModifier
      */
     public function process()
     {
+        $attributes = implode(', ', $this->getAttributes());
+        $this->consoleOutput->writeln("<info>Creating attribute options for: {$attributes}</info>");
         foreach ($this->getAttributes() as $attribute) {
             $this->createForAttribute($attribute);
         }

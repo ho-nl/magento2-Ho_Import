@@ -65,6 +65,8 @@ class SourceIterator extends AbstractRowModifier
      */
     public function process()
     {
+        $this->consoleOutput->writeln("<info>SourceIterator: Adding information from stream</info>");
+
         $identifier = $this->identifier;
         foreach ($this->iterator as $item) {
             $id = $identifier($item);

@@ -100,6 +100,8 @@ class ProductUrlKey extends AbstractRowModifier
      */
     public function process()
     {
+        $this->consoleOutput->writeln("<info>Checking url_keys and make sure they are unique</info>");
+
         $this->initProductToSku();
         foreach ($this->items as $identifier => &$item) {
             //check for existence.

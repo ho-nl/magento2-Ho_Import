@@ -40,6 +40,8 @@ class ItemMapper extends AbstractRowModifier
      */
     public function process()
     {
+        $this->consoleOutput->writeln("<info>Mapping item information</info>");
+
         foreach ($this->items as $identifier => $item) {
             try {
                 $errors = $this->validateItem($item, $identifier);

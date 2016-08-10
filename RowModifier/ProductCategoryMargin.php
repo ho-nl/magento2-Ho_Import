@@ -58,6 +58,8 @@ class ProductCategoryMargin extends AbstractRowModifier
      */
     public function process()
     {
+        $this->consoleOutput->writeln("<info>Calculating product margins</info>");
+
         $this->initCategoryMapping();
         $scope = get_class();
 

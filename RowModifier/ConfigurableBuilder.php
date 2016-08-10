@@ -68,6 +68,8 @@ class ConfigurableBuilder extends AbstractRowModifier
      */
     public function process()
     {
+        $this->consoleOutput->writeln("<info>Creating configurable products</info>");
+
         $skuCallback = $this->configurableSku;
         $attrCallback = $this->attributes;
         $configurables = [];

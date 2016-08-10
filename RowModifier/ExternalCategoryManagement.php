@@ -71,6 +71,8 @@ class ExternalCategoryManagement extends AbstractRowModifier
      */
     public function process()
     {
+        $this->consoleOutput->writeln("<info>Adding existing product category associations</info>");
+
         $this->initCategoryMapping();
         $this->initCategoryProductMapping();
         foreach ($this->items as $identifier => &$item) {

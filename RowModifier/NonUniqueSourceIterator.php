@@ -43,6 +43,8 @@ class NonUniqueSourceIterator extends SourceIterator
      */
     public function process()
     {
+        $this->consoleOutput->writeln("<info>NonUniqueSourceIterator: Adding information from stream</info>");
+
         $identifier = $this->identifier;
         foreach ($this->iterator as $item) {
             $id = $identifier($item);
