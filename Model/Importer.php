@@ -85,9 +85,9 @@ class Importer
             return;
         }
 
-        $this->lockIndexers();
+//        $this->lockIndexers();
         $this->importModel->importSource();
-        $this->unlockIndexers();
+//        $this->unlockIndexers();
         if (!$this->importModel->getErrorAggregator()->hasToBeTerminated()) {
             $this->importModel->invalidateIndex();
         }
