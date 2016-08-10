@@ -31,6 +31,10 @@ class LineFormatterSingle
      */
     public function decode($line)
     {
+        if (! $line) {
+            return [];
+        }
+
         $lineItems = explode(self::ITEM_DELIMITER, $line);
         $values = [];
         foreach ($lineItems as $lineItem) {

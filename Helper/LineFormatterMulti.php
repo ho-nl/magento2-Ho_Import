@@ -48,13 +48,17 @@ class LineFormatterMulti
     /**
      * Decode Lines
      *
-     * @param string $line
+     * @param string $lines
      * @return string[string[]]
      */
-    public function decode($line)
+    public function decode($lines)
     {
+        if (! $lines) {
+            return [];
+        }
+
         return array_map(function ($line) {
             return $this->lineFormatterSingle->decode($line);
-        }, explode(self::LINE_DELIMITER, $line));
+        }, explode(self::LINE_DELIMITER, $lines));
     }
 }
