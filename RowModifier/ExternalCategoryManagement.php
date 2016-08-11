@@ -224,6 +224,8 @@ class ExternalCategoryManagement extends AbstractRowModifier
      */
     private function extractCategoriesFromString($categories)
     {
-        return array_filter(array_map('trim', explode(',', trim($categories))));
+        return array_filter(array_map(function ($category) {
+            return trim($category, " \t\n\r\0\x0B/");
+        }, explode(',', trim($categories))));
     }
 }
