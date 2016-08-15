@@ -115,15 +115,15 @@ class CronScheduleCommand extends Command
      */
     protected function getJobFromName($jobName)
     {
-        $job = null;
         foreach ($this->config->getJobs() as $jobs) {
             foreach ($jobs as $job) {
                 if ($jobName == $job['name']) {
-                    break 2;
+                    return $job;
                 }
             }
         }
-        return $job;
+
+        return null;
     }
 
     /**
