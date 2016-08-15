@@ -6,12 +6,12 @@
 
 namespace Ho\Import\Model;
 
-use Ho\Import\Api\ImportProfileListInterface;
+use Ho\Import\Api\ImportProfilePoolInterface;
 
 /**
  * Class CommandList has a list of commands, which can be extended via DI configuration.
  */
-class ImportProfileList implements ImportProfileListInterface
+class ImportProfilePool implements ImportProfilePoolInterface
 {
     /**
      * List of available import profiles

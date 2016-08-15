@@ -5,6 +5,7 @@
   -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/cron_groups.xsd">
     <group id="index">
+        <!-- https://github.com/magento/magento2/issues/6004 -->
         <use_separate_process>0</use_separate_process>
     </group>
 </config>

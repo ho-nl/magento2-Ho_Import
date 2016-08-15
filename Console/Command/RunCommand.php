@@ -5,7 +5,7 @@
  */
 namespace Ho\Import\Console\Command;
 
-use Ho\Import\Api\ImportProfileListInterface;
+use Ho\Import\Api\ImportProfilePoolInterface;
 use Magento\Framework\Phrase;
 use Magento\ImportExport\Model\Import;
 use Symfony\Component\Console\Command\Command;
@@ -32,9 +32,9 @@ class RunCommand extends Command
     /**
      * List of available import profiles
      *
-     * @var ImportProfileListInterface
+     * @var ImportProfilePoolInterface
      */
-    private $importProfileList;
+    private $importProfilePool;
 
     /**
      * Measurement of timing information
@@ -56,18 +56,18 @@ class RunCommand extends Command
     /**
      * Constructor
      *
-     * @param ImportProfileListInterface $importProfileList
+     * @param ImportProfilePoolInterface $importProfilePool
      * @param Stopwatch                  $stopwatch
      * @param ConsoleOutput              $consoleOutput
      */
     public function __construct(
-        ImportProfileListInterface $importProfileList,
+        ImportProfilePoolInterface $importProfilePool,
         Stopwatch $stopwatch,
         ConsoleOutput $consoleOutput
     ) {
-        $this->importProfileList = $importProfileList;
-        $this->stopwatch = $stopwatch;
-        $this->consoleOutput = $consoleOutput;
+        $this->importProfilePool = $importProfilePool;
+        $this->stopwatch         = $stopwatch;
+        $this->consoleOutput     = $consoleOutput;
         parent::__construct();
     }
 
@@ -99,7 +99,7 @@ class RunCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $profiles = $this->importProfileList->getProfiles();
+        $profiles = $this->importProfilePool->getProfiles();
         $profile = $input->getArgument('profile');
         if (!isset($profiles[$profile])) {
             $profileList = implode(", ", array_keys($profiles));

@@ -14,7 +14,7 @@
             </argument>
         </arguments>
     </type>
-    <preference for="Ho\Import\Api\ImportProfileListInterface" type="Ho\Import\Model\ImportProfileList" />
+    <preference for="Ho\Import\Api\ImportProfilePoolInterface" type="Ho\Import\Model\ImportProfilePool" />
     <preference for="Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator" type="Ho\Import\Rewrite\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator" />
     <preference for="Magento\CatalogUrlRewrite\Observer\AfterImportDataObserver" type="Ho\Import\Rewrite\CatalogUrlRewrite\Observer\AfterImportDataObserver" />
 

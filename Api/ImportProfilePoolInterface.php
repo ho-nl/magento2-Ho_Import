@@ -6,7 +6,7 @@
 
 namespace Ho\Import\Api;
 
-interface ImportProfileListInterface
+interface ImportProfilePoolInterface
 {
 
     /**
