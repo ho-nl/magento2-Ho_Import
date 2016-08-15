@@ -120,6 +120,7 @@ class ProductUrlKey extends AbstractRowModifier
      */
     public function getUrlKey($urlKey, $identifier)
     {
+        $urlKey = mb_strtolower($urlKey);
         $options = [
             $this->urlKeyFormatter->formatUrlKey($urlKey),
             $this->urlKeyFormatter->formatUrlKey($identifier . '-' . $urlKey),
