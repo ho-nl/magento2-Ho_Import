@@ -20,7 +20,7 @@ use Symfony\Component\Stopwatch\Stopwatch;
  *
  * @package Ho\Import\Console\Command
  */
-class RunCommand extends Command
+class HoImportRunCommand extends Command
 {
     /**
      * Input argument types

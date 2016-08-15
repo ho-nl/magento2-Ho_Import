@@ -10,7 +10,8 @@
     <type name="Magento\Framework\Console\CommandList">
         <arguments>
             <argument name="commands" xsi:type="array">
-                <item name="ho_import_run" xsi:type="object">Ho\Import\Console\Command\RunCommand</item>
+                <item name="ho_import_run" xsi:type="object">Ho\Import\Console\Command\HoImportRunCommand</item>
+                <item name="cron_schedule" xsi:type="object">Ho\Import\Console\Command\CronScheduleCommand</item>
             </argument>
         </arguments>
     </type>
