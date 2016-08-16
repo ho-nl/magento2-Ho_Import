@@ -64,6 +64,8 @@ class ProductCategoryMargin extends AbstractRowModifier
         $scope = 'ProductCategoryMargin';
 
         foreach ($this->items as $identifier => &$item) {
+            $item['price'] = 0;
+
             if (empty($item['cost'])) {
                 $this->consoleOutput->writeln(
                     "<comment>{$scope}: No cost field found for product {$identifier}, disabling product.</comment>"
