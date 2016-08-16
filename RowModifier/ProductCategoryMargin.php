@@ -70,7 +70,6 @@ class ProductCategoryMargin extends AbstractRowModifier
                 $this->consoleOutput->writeln(
                     "<comment>{$scope}: No cost field found for product {$identifier}, disabling product.</comment>"
                 );
-                $item['status'] = 0;
                 $item['product_online'] = 0;
                 continue;
             }
