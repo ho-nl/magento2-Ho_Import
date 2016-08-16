@@ -98,7 +98,9 @@ class CronScheduleCommand extends Command
 
         $existingJob = $this->getExistingJob($job);
         if ($existingJob->getId()) {
-            $output->writeln("<error>".((string) new Phrase("Job is already %1", [$existingJob->getStatus()]))."</error>");
+            $output->writeln(
+                (string) new Phrase("Job is already %1", ["<error>".$existingJob->getStatus()."</error>"])
+            );
             return;
         }
 
