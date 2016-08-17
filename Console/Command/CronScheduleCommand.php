@@ -24,6 +24,7 @@ class CronScheduleCommand extends Command
      * Input argument types
      */
     const INPUT_KEY_JOB_NAME = 'jobName';
+    const INPUT_KEY_AHEAD = 'ahead';
 
     /**
      * @var \Magento\Cron\Model\ConfigInterface
@@ -73,6 +74,12 @@ class CronScheduleCommand extends Command
             'Name of cron job to run'
         );
 
+        $this->addArgument(
+            self::INPUT_KEY_AHEAD,
+            InputArgument::OPTIONAL,
+            'Plan time ahead: 2H'
+        );
+
         parent::configure();
     }
 
@@ -88,6 +95,8 @@ class CronScheduleCommand extends Command
     {
 
         $jobName = $input->getArgument(self::INPUT_KEY_JOB_NAME);
+        $ahead = $input->getArgument(self::INPUT_KEY_AHEAD);
+
         $job = $this->getJobFromName($jobName);
 
         if (! $job) {
@@ -104,7 +113,22 @@ class CronScheduleCommand extends Command
             return;
         }
 
-        $jobSchedule = $this->generateSchedule($job);
+        try {
+            $ahead = new \DateInterval($ahead ?: 'P0M');
+        } catch (\Exception $e) {
+            $output->writeln("<error>".
+                (string) new Phrase(
+                    "Ahead schedule is in the wrong format: %1 (see https://en.wikipedia.org/wiki/ISO_8601#Durations )",
+                    [$ahead]
+                )
+            ."</error>");
+            return;
+        }
+
+        $jobSchedule = $this->generateSchedule($job, $ahead);
+
+
+
         $jobSchedule->getResource()->save($jobSchedule);
         $output->writeln("<info>".((string) new Phrase("Job scheduled"))."</info>");
     }
@@ -129,17 +153,23 @@ class CronScheduleCommand extends Command
     }
 
     /**
-     * @param string[] $job
+     * @param string[]      $job
+     * @param \DateInterval $ahead
+     *
      * @return Schedule
      */
-    private function generateSchedule($job)
+    private function generateSchedule($job, \DateInterval $ahead)
     {
+        $scheduleTime = $this->timezone->scopeDate(null, null, true);
+        $scheduleTime->add($ahead);
+        $scheduleTime = $scheduleTime->format('Y-m-d H:i:s');
+
         return $this->scheduleFactory->create()
             ->setCronExpr('* * * * *')
             ->setJobCode($job['name'])
             ->setStatus(Schedule::STATUS_PENDING)
             ->setCreatedAt(strftime('%Y-%m-%d %H:%M:%S', $this->timezone->scopeTimeStamp()))
-            ->setScheduledAt(strftime('%Y-%m-%d %H:%M', $this->timezone->scopeTimeStamp()));
+            ->setScheduledAt($scheduleTime);
     }
 
     /**
