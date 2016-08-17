@@ -50,11 +50,11 @@ class ItemMapper extends AbstractRowModifier
                         return $value !== null;
                     });
 
-                    $this->items[$identifier] = array_map(function ($item) {
-                        if ($item == \Ho\Import\RowModifier\ItemMapper::FIELD_EMPTY) {
+                    $this->items[$identifier] = array_map(function ($value) {
+                        if ($value === \Ho\Import\RowModifier\ItemMapper::FIELD_EMPTY) {
                             return null;
                         }
-                        return $item;
+                        return $value;
                     }, $filteredItem);
                 } else {
                     $this->consoleOutput->writeln(
