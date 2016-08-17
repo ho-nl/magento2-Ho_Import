@@ -1,5 +1,5 @@
 {
-    "name": "ho-nl/import",
+    "name": "honl/magento2-import",
     "description": "",
     "require": {
         "php": "~7.0.0",
