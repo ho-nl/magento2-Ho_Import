@@ -81,6 +81,10 @@ class ConfigurableBuilder extends AbstractRowModifier
                 continue;
             }
 
+            if (isset($item['product_online']) && $item['product_online'] <= 0) {
+                continue;
+            }
+
             //Init the configurable
             if (! isset($configurables[$configurableSku])) {
                 $configurables[$configurableSku] = $item;
