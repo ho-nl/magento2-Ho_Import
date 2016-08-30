@@ -66,7 +66,7 @@ class Xml
         string $url,
         string $uniqueNode,
         int $limit = PHP_INT_MAX,
-        int $ttl = (24*3600)
+        int $ttl = (12*3600)
     ) {
         $this->url = $url;
         $this->uniqueNode = $uniqueNode;
@@ -77,6 +77,7 @@ class Xml
     }
 
     /**
+     * Get the source iterator
      * @return \Generator
      */
     public function getIterator()
