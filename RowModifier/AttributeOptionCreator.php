@@ -105,8 +105,15 @@ class AttributeOptionCreator extends AbstractRowModifier
     protected function getNonExistingAttributes(string $attribute)
     {
         $uniqueValues = [];
-        foreach ($this->items as $item) {
-            if (!isset($item[$attribute]) || empty($item[$attribute])) {
+        foreach ($this->items as $identifier => $item) {
+            if (empty($item[$attribute])) {
+                continue;
+            }
+
+            if (! is_string($item[$attribute])) {
+                $this->consoleOutput->writeln(
+                    "<error>AttributeOptionCreator: Invalid value for {$attribute} {$identifier}</error>"
+                );
                 continue;
             }
             $uniqueValues[$item[$attribute]] = $item[$attribute];
