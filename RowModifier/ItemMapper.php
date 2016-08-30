@@ -50,10 +50,19 @@ class ItemMapper extends AbstractRowModifier
                         return $value !== null;
                     });
 
-                    $this->items[$identifier] = array_map(function ($value) {
+                    $this->items[$identifier] = array_map(function ($value) use ($identifier, $filteredItem) {
                         if ($value === \Ho\Import\RowModifier\ItemMapper::FIELD_EMPTY) {
                             return null;
                         }
+
+                        if (is_array($value) || is_object($value)) {
+                            $val = print_r($filteredItem, true);
+                            $this->consoleOutput->writeln(
+                                "<comment>Value is a object or array for $identifier: {$val}</comment>"
+                            );
+                            return null;
+                        }
+
                         return $value;
                     }, $filteredItem);
                 } else {
