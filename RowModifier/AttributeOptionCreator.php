@@ -114,6 +114,7 @@ class AttributeOptionCreator extends AbstractRowModifier
                 $this->consoleOutput->writeln(
                     "<error>AttributeOptionCreator: Invalid value for {$attribute} {$identifier}</error>"
                 );
+                $item[$attribute] = '';
                 continue;
             }
             $uniqueValues[$item[$attribute]] = $item[$attribute];
