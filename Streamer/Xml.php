@@ -100,8 +100,10 @@ class Xml
         $stream = new \Prewk\XmlStringStreamer\Stream\Guzzle('');
 
 
-        if ($result->getHeader('X-Kevinrob-Cache')) {
+        if ($result->getHeader('X-Kevinrob-Cache') && $result->getHeader('X-Kevinrob-Cache')[0] == 'HIT') {
             $this->consoleOutput->write(" <info>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</info>");
+        } else {
+            $this->consoleOutput->write(" <comment>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</comment>");
         }
         $this->consoleOutput->write("\n");
 
