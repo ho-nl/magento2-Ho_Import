@@ -148,11 +148,14 @@ class ExternalCategoryManagement extends AbstractRowModifier
         //Get all categories that aren't managed externally.
         $categoryCollection = $this->categoryCollectionFactory->create();
         $categoryCollection->addNameToResult();
-        $categoryCollection->addAttributeToFilter('external_id', ['null' => true], 'left');
 
         $categoryMapping = [];
         foreach ($categoryCollection as $category) {
             /** @var Category $category */
+            $categories = $this->extractCategoriesFromString($category->getExternalId());
+            if (count($categories) > 0) {
+                continue;
+            }
 
             $structure = $category->getPathIds();
             $pathSize = $category->getLevel() + 1;
