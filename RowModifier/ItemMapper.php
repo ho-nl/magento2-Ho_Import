@@ -7,6 +7,9 @@
 namespace Ho\Import\RowModifier;
 
 /**
+ * @todo Make it work with a factory so that we dont have to explicitly call setMappingDefinition but use a constructor
+ *       argument
+ *
  * @package Ho\Import
  */
 class ItemMapper extends AbstractRowModifier

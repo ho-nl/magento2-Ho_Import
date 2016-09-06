@@ -64,11 +64,12 @@ class ConfigurableBuilder extends AbstractRowModifier
     }
 
     /**
+     * @todo reduce the Cyclomatic complexity and NPath complexity
      * {@inheritdoc}
      */
     public function process()
     {
-        $this->consoleOutput->writeln("<info>Creating configurable products</info>");
+        $this->consoleOutput->write("<info>Creating configurable products... </info>");
 
         $skuCallback = $this->configurableSku;
         $attrCallback = $this->attributes;
@@ -92,6 +93,7 @@ class ConfigurableBuilder extends AbstractRowModifier
                 $configurables[$configurableSku]['product_type'] = 'configurable';
                 $configurables[$configurableSku]['configurable_variations'] = [];
 
+                //@todo implement the configurable product mapper by using ItemMapper
                 foreach ($this->configurableValues as $key => $value) {
                     if (is_callable($value)) {
                         $value = $value($configurables[$configurableSku]);
@@ -129,6 +131,7 @@ class ConfigurableBuilder extends AbstractRowModifier
             foreach ($configurable['configurable_variations'] as $simpleData) {
                 $item =& $this->items[$simpleData['sku']];
 
+                //@todo implement the simple product mapper by using ItemMapper
                 foreach ($this->simpleValues as $key => $value) {
                     if (is_callable($value)) {
                         $value = $value($item);
@@ -150,6 +153,9 @@ class ConfigurableBuilder extends AbstractRowModifier
             return $configurable;
         }, $configurables);
 
+        $configCount = count($configurables);
+
+        $this->consoleOutput->writeln("<info>{$configCount} created</info>");
         $this->items += $configurables;
     }
 

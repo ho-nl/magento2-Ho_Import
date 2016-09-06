@@ -12,6 +12,12 @@ use Magento\Framework\Filesystem\Io\Ftp as IoFtp;
 use Magento\Framework\Phrase;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
+/**
+ * Class Ftp
+ *
+ * @todo implement check if file needs to be re-downloaded if not, use the existing file.
+ * @package Ho\Import\Downloader
+ */
 class Ftp extends AbstractDownloader
 {
 
