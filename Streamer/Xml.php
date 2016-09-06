@@ -5,16 +5,20 @@
  */
 namespace Ho\Import\Streamer;
 
-use Symfony\Component\Console\Output\ConsoleOutput;
-
 /**
+ * This class is made to solve the issue that we want to download XML-files and parse them as they come in.
+ * The XML parser needs some extra handling to support this scenario.
+ *
  * Get the data stream as \Generator
  * 1. Get the data stream over HTTP
- * 2. Put the data stream into the XML String Streamer
- * 3. Split the XML String in separate Nodes to get a single XML Node String
- * 4. Parse the XML Node String as an SimpleXMLElement
- * 5. Convert the SimpleXMLElement to an array
+ * 2. Use a cached version of the downloaded file if available
+ * 3. Put the data stream into the XML String Streamer
+ * 4. Split the XML String in separate Nodes to get a single XML Node String
+ * 5. Parse the XML Node String as an SimpleXMLElement
+ * 6. Convert the SimpleXMLElement to an array
  *
+ * @todo Rename to Streamer\HttpXml
+ * @todo Refactor to XmlFactory only. The factory will only return the \Generator instead of an intermediate iterator.
  */
 class Xml
 {
@@ -82,7 +86,9 @@ class Xml
      */
     public function getIterator()
     {
-        $this->consoleOutput->write("<info></info>Getting <{$this->uniqueNode}> from URL {$this->url}");
+        $this->consoleOutput->write(
+            "<info>Streamer\HttpXml: Getting <{$this->uniqueNode}> from URL {$this->url}</info>"
+        );
 
         $stack = \GuzzleHttp\HandlerStack::create();
         $stack->push(new \Kevinrob\GuzzleCache\CacheMiddleware(
@@ -109,7 +115,7 @@ class Xml
 
         $stream->setGuzzleStream($result->getBody());
 
-        $parser   = new \Prewk\XmlStringStreamer\Parser\UniqueNode([
+        $parser   = new \Prewk\XmlStringStreamer\Parser\StringWalker([
             'uniqueNode' => $this->uniqueNode,
             'checkShortClosing' => true
         ]);
