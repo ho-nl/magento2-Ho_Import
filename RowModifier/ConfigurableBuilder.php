@@ -88,7 +88,7 @@ class ConfigurableBuilder extends AbstractRowModifier
 
             //Init the configurable
             if (! isset($configurables[$configurableSku])) {
-                $this->initConfigurable($item, $configurables, $configurableSku);
+                $configurables[$configurableSku] = $this->initConfigurable($item, $configurableSku);
             }
 
             //Add the configurable simple to the configurable
@@ -191,25 +191,25 @@ class ConfigurableBuilder extends AbstractRowModifier
     /**
      * Init a configurable product
      * @param string[] $item
-     * @param array[string[]] $configurables
      * @param string $configurableSku
      *
-     * @return void
+     * @return string[]
      */
-    private function initConfigurable($item, $configurables, $configurableSku)
+    private function initConfigurable($item, $configurableSku)
     {
-        $configurables[$configurableSku] = $item;
-        $configurables[$configurableSku]['sku'] = $configurableSku;
-        $configurables[$configurableSku]['product_type'] = 'configurable';
-        $configurables[$configurableSku]['configurable_variations'] = [];
+        $configurable = $item;
+        $configurable['sku'] = $configurableSku;
+        $configurable['product_type'] = 'configurable';
+        $configurable['configurable_variations'] = [];
 
         //@todo implement the configurable product mapper by using ItemMapper
         foreach ($this->configurableValues as $key => $value) {
             if (is_callable($value)) {
-                $value = $value($configurables[$configurableSku]);
+                $value = $value($configurable);
             }
-            $configurables[$configurableSku][$key] = $value;
+            $configurable[$key] = $value;
         }
+        return $configurable;
     }
 
     /**
