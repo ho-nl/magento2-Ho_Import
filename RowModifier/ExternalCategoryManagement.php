@@ -162,7 +162,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
 
             $structure = $category->getPathIds();
             $pathSize = $category->getLevel() + 1;
-            if ($pathSize > 2) {
+            if ($pathSize > 1) {
                 $path = [];
                 for ($i = 1; $i < $pathSize; $i++) {
                     $item = $categoryCollection->getItemById($structure[$i]);
