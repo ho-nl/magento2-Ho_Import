@@ -69,7 +69,7 @@ class ConfigurableBuilder extends AbstractRowModifier
      */
     public function process()
     {
-        $this->consoleOutput->write("<info>Creating configurable products... </info>");
+        $this->consoleOutput->writeln("<info>Creating configurable products... </info>");
 
         $skuCallback = $this->configurableSku;
         $attrCallback = $this->attributes;
@@ -88,19 +88,7 @@ class ConfigurableBuilder extends AbstractRowModifier
 
             //Init the configurable
             if (! isset($configurables[$configurableSku])) {
-                $configurables[$configurableSku] = $item;
-                $configurables[$configurableSku]['sku'] = $configurableSku;
-                $configurables[$configurableSku]['product_type'] = 'configurable';
-                $configurables[$configurableSku]['configurable_variations'] = [];
-
-                //@todo implement the configurable product mapper by using ItemMapper
-                foreach ($this->configurableValues as $key => $value) {
-                    if (is_callable($value)) {
-                        $value = $value($configurables[$configurableSku]);
-                    }
-
-                    $configurables[$configurableSku][$key] = $value;
-                }
+                $this->initConfigurable($item, $configurables, $configurableSku);
             }
 
             //Add the configurable simple to the configurable
@@ -121,10 +109,7 @@ class ConfigurableBuilder extends AbstractRowModifier
             $configurables[$configurableSku]['configurable_variations'][] = $variation;
         }
 
-        //cleanup all 'empty' configurables.
-        $configurables = array_filter($configurables, function ($item) {
-            return count($item['configurable_variations']) > 1;
-        });
+        $configurables = $this->filterConfigurables($configurables);
 
         //modify the simples that are in configurables
         foreach ($configurables as $configurable) {
@@ -155,7 +140,7 @@ class ConfigurableBuilder extends AbstractRowModifier
 
         $configCount = count($configurables);
 
-        $this->consoleOutput->writeln("<info>{$configCount} created</info>");
+        $this->consoleOutput->writeln("<info>Configurable products created: {$configCount}</info>");
         $this->items += $configurables;
     }
 
@@ -201,5 +186,50 @@ class ConfigurableBuilder extends AbstractRowModifier
     public function setSimpleValues(array $simpleValues)
     {
         $this->simpleValues = $simpleValues;
+    }
+
+    /**
+     * Init a configurable product
+     * @param string[] $item
+     * @param array[string[]] $configurables
+     * @param string $configurableSku
+     *
+     * @return void
+     */
+    private function initConfigurable($item, $configurables, $configurableSku)
+    {
+        $configurables[$configurableSku] = $item;
+        $configurables[$configurableSku]['sku'] = $configurableSku;
+        $configurables[$configurableSku]['product_type'] = 'configurable';
+        $configurables[$configurableSku]['configurable_variations'] = [];
+
+        //@todo implement the configurable product mapper by using ItemMapper
+        foreach ($this->configurableValues as $key => $value) {
+            if (is_callable($value)) {
+                $value = $value($configurables[$configurableSku]);
+            }
+            $configurables[$configurableSku][$key] = $value;
+        }
+    }
+
+    /**
+     * Filter all configurables
+     * - Remove all configurables that have a price diference.
+     * - cleanup all 'empty' configurables.
+     *
+     * @param array[] $configurables
+     * @return array[]
+     */
+    private function filterConfigurables(array $configurables)
+    {
+        return array_filter($configurables, function ($item) {
+            if (count($item['configurable_variations']) <= 1) {
+//                $this->consoleOutput->writeln(
+//                    "<comment>Configurable {$item['sku']} not created: Only 1 simple found</comment>"
+//                );
+                return false;
+            }
+            return true;
+        });
     }
 }
