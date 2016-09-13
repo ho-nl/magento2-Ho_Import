@@ -105,6 +105,9 @@ class ProductUrlKey extends AbstractRowModifier
         $this->initProductToSku();
         foreach ($this->items as $identifier => &$item) {
             //check for existence.
+            if (empty($item['url_key'])) {
+                $this->consoleOutput->writeln("<comment>ProductUrlKey: url_key not found {$identifier}</comment>");
+            }
             $item['url_key'] = $this->getUrlKey($item['url_key'], $identifier);
         }
         $this->reset();
