@@ -5,6 +5,11 @@
  */
 namespace Ho\Import\Streamer;
 
+use Psr\Cache\CacheItemPoolInterface as CachePool;
+use Symfony\Component\Console\Output\ConsoleOutput;
+
+
+
 /**
  * This class is made to solve the issue that we want to download XML-files and parse them as they come in.
  * The XML parser needs some extra handling to support this scenario.
@@ -39,12 +44,12 @@ class Xml
     private $limit;
 
     /**
-     * @var \Psr\Cache\CacheItemPoolInterface
+     * @var CachePool
      */
     private $cacheItemPool;
 
     /**
-     * @var \Symfony\Component\Console\Output\ConsoleOutput
+     * @var ConsoleOutput
      */
     private $consoleOutput;
 
@@ -54,26 +59,34 @@ class Xml
     private $ttl;
 
     /**
+     * @var string
+     */
+    private $parser;
+
+    /**
      * Xml constructor.
      *
-     * @param \Psr\Cache\CacheItemPoolInterface               $cacheItemPool
-     * @param \Symfony\Component\Console\Output\ConsoleOutput $consoleOutput
+     * @param CachePool     $cacheItemPool
+     * @param ConsoleOutput $consoleOutput
      *
-     * @param string                                          $url
-     * @param string                                          $uniqueNode
-     * @param int                                             $limit
-     * @param int                                             $ttl
+     * @param string        $url
+     * @param string        $uniqueNode
+     * @param string        $parser An alternative is \Prewk\XmlStringStreamer\Parser\StringWalker::class
+     * @param int           $limit
+     * @param int           $ttl
      */
     public function __construct(
-        \Psr\Cache\CacheItemPoolInterface $cacheItemPool,
-        \Symfony\Component\Console\Output\ConsoleOutput $consoleOutput,
+        CachePool $cacheItemPool,
+        ConsoleOutput $consoleOutput,
         string $url,
         string $uniqueNode,
+        string $parser = \Prewk\XmlStringStreamer\Parser\UniqueNode::class,
         int $limit = PHP_INT_MAX,
         int $ttl = (12*3600)
     ) {
         $this->url = $url;
         $this->uniqueNode = $uniqueNode;
+        $this->parser = $parser;
         $this->limit = $limit;
         $this->cacheItemPool = $cacheItemPool;
         $this->consoleOutput = $consoleOutput;
@@ -115,7 +128,7 @@ class Xml
 
         $stream->setGuzzleStream($result->getBody());
 
-        $parser   = new \Prewk\XmlStringStreamer\Parser\StringWalker([
+        $parser   = new $this->parser([
             'uniqueNode' => $this->uniqueNode,
             'checkShortClosing' => true
         ]);
