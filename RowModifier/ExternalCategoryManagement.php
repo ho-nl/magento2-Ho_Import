@@ -43,6 +43,9 @@ class ExternalCategoryManagement extends AbstractRowModifier
      */
     private $externalCategoryPathFilter;
 
+    /**
+     * @var int[]
+     */
     private $productCategoryMapping;
 
     /**

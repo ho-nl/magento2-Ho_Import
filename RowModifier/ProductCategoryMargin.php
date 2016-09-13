@@ -53,7 +53,8 @@ class ProductCategoryMargin extends AbstractRowModifier
     }
 
     /**
-     * Add additional categories to products
+     * Add category margins to product.
+     *
      * @return void
      */
     public function process()
@@ -66,6 +67,7 @@ class ProductCategoryMargin extends AbstractRowModifier
         foreach ($this->items as $identifier => &$item) {
             $item['price'] = 0;
 
+            //Do some checks if the product is valid for adding a product margin.
             if (empty($item['cost'])) {
                 $this->consoleOutput->writeln(
                     "<comment>{$scope}: No cost field found for product {$identifier}, disabling product.</comment>"
@@ -82,6 +84,7 @@ class ProductCategoryMargin extends AbstractRowModifier
                 continue;
             }
 
+
             $categories = $this->extractCategoriesFromString($item['categories']);
             $margins = [];
 
@@ -93,8 +96,8 @@ class ProductCategoryMargin extends AbstractRowModifier
                 if ( ! $marginCategories) {
                     continue;
                 }
-
-                $margins[] = end($marginCategories);
+                $margin = end($marginCategories);
+                $margins[key($marginCategories)] = $margin;
             }
 
             if (count($margins) <= 0) {
@@ -105,7 +108,7 @@ class ProductCategoryMargin extends AbstractRowModifier
                 );
                 $margin = 1;
             } else {
-                $margin = (max($margins)) / 100 + 1;
+                $margin = end($margins) / 100 + 1;
             }
 
             $item['price'] = round($item['cost'] * $margin, 2);
@@ -155,7 +158,6 @@ class ProductCategoryMargin extends AbstractRowModifier
         $categoryCollection->setStoreId(0);
         $categoryCollection->addNameToResult();
         $categoryCollection->addAttributeToSelect('product_price_margin');
-        $categoryCollection->addAttributeToFilter('product_price_margin', ['gt' => 0]);
         $categoryCollection->addAttributeToSort('level', 'asc');
         $categoryCollection->addAttributeToSort('position', 'asc');
 
