@@ -13,7 +13,6 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
  * Convert cost fields to price fields
- * @todo Add support for options_pricing
  * @package Ho\Import\RowModifier
  */
 class ProductCategoryMargin extends AbstractRowModifier

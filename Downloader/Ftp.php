@@ -9,7 +9,6 @@ namespace Ho\Import\Downloader;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\NotFoundException;
 use Magento\Framework\Filesystem\Io\Ftp as IoFtp;
-use Magento\Framework\Phrase;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
