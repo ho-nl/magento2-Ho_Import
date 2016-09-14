@@ -26,7 +26,9 @@ class LineFormatterSingle
 
     /**
      * Decode Line for a compatible importer line
+     *
      * @param string $line
+     * @todo isn't able to handle comma's in values, this will break the explode.
      * @return string[]
      */
     public function decode($line)
