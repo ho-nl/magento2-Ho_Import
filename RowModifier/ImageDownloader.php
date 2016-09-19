@@ -51,9 +51,15 @@ class ImageDownloader extends AbstractRowModifier
     /**
      * Array to cache all requests so they don't get downloaded twice
      *
-     * @var \[]
+     * @var \GuzzleHttp\Promise\[]
      */
     protected $cachedRequests = [];
+
+    /**
+     * @var \Closure[]
+     */
+    private $cachedReject = [];
+
 
     /**
      * Use existing files or redownload alle files
@@ -63,6 +69,7 @@ class ImageDownloader extends AbstractRowModifier
     protected $useExisting = false;
 
     private $stopwatch;
+
 
     /**
      * AsyncImageDownloader constructor.
@@ -127,8 +134,15 @@ class ImageDownloader extends AbstractRowModifier
             }
         };
 
+        $rejects = [];
         $pool = new \GuzzleHttp\Pool($this->httpClient, $requestGenerator(), [
             'concurrency' => $this->getConcurrent(),
+            'rejected' => function (\GuzzleHttp\Exception\ClientException $reason) {
+                $reason->getRequest()->getBody()->close();
+                $fileName   = str_replace(' ', '', basename($reason->getRequest()->getUri()));
+
+                $this->cachedReject[$fileName]();
+            },
         ]);
         $pool->promise()->wait();
 
@@ -145,6 +159,9 @@ class ImageDownloader extends AbstractRowModifier
                 $item[$imageArrayField] = implode(',', $item[$imageArrayField]);
             }
         }
+
+        $this->cachedReject = [];
+        $this->cachedRequests = [];
     }
 
     /**
@@ -163,7 +180,8 @@ class ImageDownloader extends AbstractRowModifier
 
             if (isset($this->cachedRequests[$fileName])) {
                 $promise = $this->cachedRequests[$fileName];
-            } elseif (file_exists($targetPath)) { //@todo honor isUseExisting
+            } elseif (file_exists($targetPath)) {
+                //@todo honor isUseExisting
                 $value = $fileName;
                 return null;
             } else {
@@ -175,41 +193,43 @@ class ImageDownloader extends AbstractRowModifier
                     ]);
             }
 
-            $promise
-                ->then(function (\GuzzleHttp\Psr7\Response $response) use (
-                    &$value,
-                    $fileName
-                ) {
-                    $response->getBody()->close();
-                    $value = $fileName;
-                })
-                ->otherwise(function (\GuzzleHttp\Psr7\Response $response) use (
-                    &$value,
-                    &$item,
-                    $fileName,
-                    $targetPath
-                ) {
-                    $response->getBody()->close();
-                    unlink($targetPath); // clean up any remaining file pointers if the download failed
+            $promise->then(function (\GuzzleHttp\Psr7\Response $response) use (&$value, $fileName) {
+                $response->getBody()->close();
+                $value = $fileName;
+            });
 
-                    $this->consoleOutput->writeln(
-                        "\n<comment>Image can not be downloaded: {$fileName}}</comment>"
-                    );
+            //Save the reject
+            $this->cachedReject[$fileName] = function () use (
+                &$value,
+                &$item,
+                $fileName,
+                $targetPath
+            ) {
+                //File already deleted
+                if (! file_exists($targetPath)) {
+                    return;
+                }
 
-                    foreach ($item as &$itemValue) {
-                        if ($value == $itemValue) {
-                            if (is_array($itemValue)) {
-                                foreach ($itemValue as &$itemArrValue) {
-                                    if ($value == $itemArrValue) {
-                                        $itemArrValue = null;
-                                    }
+                unlink($targetPath); // clean up any remaining file pointers if the download failed
+
+                $this->consoleOutput->writeln(
+                    "\n<comment>Image can not be downloaded: {$value}</comment>"
+                );
+
+                foreach ($item as &$itemValue) {
+                    if ($value == $itemValue) {
+                        if (is_array($itemValue)) {
+                            foreach ($itemValue as &$itemArrValue) {
+                                if ($value == $itemArrValue) {
+                                    $itemArrValue = null;
                                 }
                             }
-                            $itemValue = null;
                         }
+                        $itemValue = null;
                     }
-                    $value = null;
-                });
+                }
+                $value = null;
+            };
 
             return $this->cachedRequests[$fileName] = $promise;
         };
