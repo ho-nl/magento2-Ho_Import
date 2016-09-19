@@ -134,7 +134,6 @@ class ImageDownloader extends AbstractRowModifier
             }
         };
 
-        $rejects = [];
         $pool = new \GuzzleHttp\Pool($this->httpClient, $requestGenerator(), [
             'concurrency' => $this->getConcurrent(),
             'rejected' => function (\GuzzleHttp\Exception\ClientException $reason) {
