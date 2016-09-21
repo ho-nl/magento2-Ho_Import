@@ -155,7 +155,7 @@ class ImageDownloader extends AbstractRowModifier
                     continue;
                 }
 
-                $item[$imageArrayField] = implode(',', $item[$imageArrayField]);
+                $item[$imageArrayField] = implode(',', array_filter($item[$imageArrayField]));
             }
         }
 
