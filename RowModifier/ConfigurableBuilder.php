@@ -32,7 +32,7 @@ class ConfigurableBuilder extends AbstractRowModifier
     /**
      * Mapping for additional configurable values
      *
-     * @var array
+     * @var \Closure[]
      */
     protected $configurableValues = [];
 
@@ -40,7 +40,7 @@ class ConfigurableBuilder extends AbstractRowModifier
     /**
      * Mapping for mapped simples who belong to configurables
      *
-     * @var array
+     * @var \Closure[]
      */
     protected $simpleValues = [];
 
@@ -50,17 +50,37 @@ class ConfigurableBuilder extends AbstractRowModifier
     private $lineFormatterMulti;
 
     /**
+     * @var \Closure
+     */
+    private $splitOnValue;
+
+    /**
      * ConfigurableBuilder constructor.
      *
      * @param ConsoleOutput      $consoleOutput
      * @param LineFormatterMulti $lineFormatterMulti
+     * @param \Closure           $configurableSku
+     * @param \Closure           $attributes
+     * @param \Closure[]         $configurableValues
+     * @param \Closure[]         $simpleValues
+     * @param \Closure           $splitOnValue
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
-        LineFormatterMulti $lineFormatterMulti
+        LineFormatterMulti $lineFormatterMulti,
+        $configurableSku,
+        $attributes,
+        $configurableValues,
+        $simpleValues,
+        $splitOnValue = null
     ) {
         parent::__construct($consoleOutput);
         $this->lineFormatterMulti = $lineFormatterMulti;
+        $this->configurableSku = $configurableSku;
+        $this->attributes = $attributes;
+        $this->configurableValues = $configurableValues;
+        $this->simpleValues = $simpleValues;
+        $this->splitOnValue = $splitOnValue;
     }
 
     /**
@@ -99,27 +119,19 @@ class ConfigurableBuilder extends AbstractRowModifier
                 unset($configurables[$configurableSku][$attribute]);
             }
 
+            if ($this->splitOnValue) {
+                $split = $this->splitOnValue;
+                $variation['split'] = $split($item);
+            }
 
             $configurables[$configurableSku]['configurable_variations'][] = $variation;
         }
 
+        $count = count($configurables);
+        $this->consoleOutput->writeln("Prepared {$count} configurables");
+        $configurables = $this->splitOnValue($configurables);
         $configurables = $this->filterConfigurables($configurables);
-
-        //modify the simples that are in configurables
-        foreach ($configurables as $configurable) {
-            foreach ($configurable['configurable_variations'] as $simpleData) {
-                $item =& $this->items[$simpleData['sku']];
-
-                //@todo implement the simple product mapper by using ItemMapper
-                foreach ($this->simpleValues as $key => $value) {
-                    if (is_callable($value)) {
-                        $value = $value($item);
-                    }
-
-                    $item[$key] = $value;
-                }
-            }
-        }
+        $this->setSimpleValues($configurables);
 
         $configurables = array_map(function ($configurable) {
             $configurable['configurable_variations'] = $this->lineFormatterMulti->encode(
@@ -129,54 +141,10 @@ class ConfigurableBuilder extends AbstractRowModifier
             return $configurable;
         }, $configurables);
 
-        $configCount = count($configurables);
+        $count = count($configurables);
+        $this->consoleOutput->writeln("<info>Created {$count} configurables</info>");
 
-        $this->consoleOutput->writeln("<info>Configurable products created: {$configCount}</info>");
         $this->items += $configurables;
-    }
-
-
-    /**
-     * Set the method to retrieve the configurable SKU
-     *
-     * @param \Closure $configurableSku
-     */
-    public function setConfigurableSku(\Closure $configurableSku)
-    {
-        $this->configurableSku = $configurableSku;
-    }
-
-
-    /**
-     * Set the method to retrieve the new attributes
-     *
-     * @param \Closure $attributes
-     */
-    public function setAttributes(\Closure $attributes)
-    {
-        $this->attributes = $attributes;
-    }
-
-
-    /**
-     * Set mapping for additional configurable values
-     *
-     * @param array $configurableValues
-     */
-    public function setConfigurableValues(array $configurableValues)
-    {
-        $this->configurableValues = $configurableValues;
-    }
-
-
-    /**
-     * Mapping for mapped simples who belong to configurables
-     *
-     * @param array $simpleValues
-     */
-    public function setSimpleValues(array $simpleValues)
-    {
-        $this->simpleValues = $simpleValues;
     }
 
     /**
@@ -205,7 +173,6 @@ class ConfigurableBuilder extends AbstractRowModifier
 
     /**
      * Filter all configurables
-     * - Remove all configurables that have a price diference.
      * - cleanup all 'empty' configurables.
      *
      * @param array[] $configurables
@@ -213,14 +180,94 @@ class ConfigurableBuilder extends AbstractRowModifier
      */
     private function filterConfigurables(array $configurables)
     {
-        return array_filter($configurables, function ($item) {
+        $count = 0;
+        $configurables = array_filter($configurables, function ($item) use (&$count) {
             if (count($item['configurable_variations']) <= 1) {
-//                $this->consoleOutput->writeln(
-//                    "<comment>Configurable {$item['sku']} not created: Only 1 simple found</comment>"
-//                );
+                $count++;
                 return false;
             }
             return true;
         });
+
+        return $configurables;
+    }
+
+    /**
+     * After creating configurables, split configurables based on this value.
+     * This is primarily used to create configurables with a consistent price (split all variations that have
+     * a different price).
+     *
+     * @param array[] $configurables
+     * @return array[]
+     */
+    private function splitOnValue($configurables)
+    {
+        if (! $this->splitOnValue) {
+            return $configurables;
+        }
+
+        $newConfigurables = [];
+        foreach ($configurables as $identifier => $configurable) {
+            $splitConfigurables = [];
+            $variations = $configurable['configurable_variations'];
+            unset($configurable['configurable_variations']);
+
+            foreach ($variations as $variation) {
+                $splitKey = $variation['split'];
+                if (!isset($splitConfigurables[$splitKey])) {
+                    //Base the new configurable on the first variation
+                    $splitConfigurables[$splitKey] =
+                        $this->initConfigurable($this->items[$variation['sku']], $identifier);
+
+                    $splitConfigurables[$splitKey]['configurable_variations'] = [];
+                }
+                unset($variation['split']);
+                $splitConfigurables[$splitKey]['configurable_variations'][] = $variation;
+            }
+
+            $splitConfigurables = $this->filterConfigurables($splitConfigurables);
+            ksort($splitConfigurables);
+            $sequence = 0;
+            foreach ($splitConfigurables as $splitConfigurable) {
+                if (! isset($newConfigurables[$identifier])) {
+                    $newConfigurables[$identifier] = $splitConfigurable;
+                } else {
+                    $newSku = $identifier.'-'.$sequence;
+                    $splitConfigurable['sku'] = $newSku;
+                    $newConfigurables[$newSku] = $splitConfigurable;
+                }
+                $sequence++;
+            }
+        }
+
+        $count = count($newConfigurables) - count($configurables);
+        if ($count > 0) {
+            $this->consoleOutput->writeln("Created {$count} extra configurables while splitting");
+        }
+
+        return $newConfigurables;
+    }
+
+    /**
+     * Set the simple product values
+     * @param array[] $configurables
+     *
+     * @return void
+     */
+    private function setSimpleValues($configurables)
+    {
+        //modify the simples that are in configurables
+        foreach ($configurables as $configurable) {
+            foreach ($configurable['configurable_variations'] as $simpleData) {
+                $item =& $this->items[$simpleData['sku']];
+                //@todo implement the simple product mapper by using ItemMapper
+                foreach ($this->simpleValues as $key => $value) {
+                    if (is_callable($value)) {
+                        $value = $value($item);
+                    }
+                    $item[$key] = $value;
+                }
+            }
+        }
     }
 }
