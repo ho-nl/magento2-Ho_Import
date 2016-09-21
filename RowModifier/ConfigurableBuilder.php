@@ -99,12 +99,6 @@ class ConfigurableBuilder extends AbstractRowModifier
                 unset($configurables[$configurableSku][$attribute]);
             }
 
-            if (! isset($configurables[$configurableSku]['_is_in_stock'])) {
-                $configurables[$configurableSku]['_is_in_stock'] = 0;
-            }
-            if (isset($item['is_in_stock']) && $item['is_in_stock'] > 0) {
-                $configurables[$configurableSku]['_is_in_stock'] = $item['is_in_stock'];
-            }
 
             $configurables[$configurableSku]['configurable_variations'][] = $variation;
         }
@@ -128,9 +122,6 @@ class ConfigurableBuilder extends AbstractRowModifier
         }
 
         $configurables = array_map(function ($configurable) {
-            $configurable['is_in_stock'] = $configurable['_is_in_stock'];
-            unset($configurable['_is_in_stock']);
-
             $configurable['configurable_variations'] = $this->lineFormatterMulti->encode(
                 $configurable['configurable_variations']
             );
