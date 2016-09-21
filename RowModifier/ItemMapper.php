@@ -10,6 +10,13 @@ namespace Ho\Import\RowModifier;
  * @todo Make it work with a factory so that we dont have to explicitly call setMappingDefinition but use a constructor
  *       argument
  *
+ * @todo Support new way to declare values. This allows us to
+ * new Value($bla, [
+ *     'store_1' => 1,
+ *     'store_2' => 2,
+ *     'store_3' => 3
+ * ]);
+ *
  * @package Ho\Import
  */
 class ItemMapper extends AbstractRowModifier
