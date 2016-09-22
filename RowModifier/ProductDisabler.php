@@ -30,21 +30,29 @@ class ProductDisabler extends AbstractRowModifier
     private $connection;
 
     /**
+     * @var bool
+     */
+    private $force;
+
+    /**
      * ProductDisabler constructor.
      *
      * @param ConsoleOutput                             $consoleOutput
      * @param \Magento\Framework\App\ResourceConnection $resource
      * @param string                                    $profile
+     * @param bool                                      $force
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         \Magento\Framework\App\ResourceConnection $resource,
-        string $profile
+        string $profile,
+        bool $force = false
     ) {
         parent::__construct($consoleOutput);
         $this->profile       = $profile;
         $this->connection    = $resource->getConnection();
         $this->consoleOutput = $consoleOutput;
+        $this->force = $force;
     }
 
     /**
@@ -54,6 +62,13 @@ class ProductDisabler extends AbstractRowModifier
      */
     public function process()
     {
+        if (count($this->items)  <= 100 && $this->force === false) {
+            $this->consoleOutput->writeln(
+                'Skipped because there is only a small set imported, set force to true to delete anyway'
+            );
+            return;
+        }
+
         $identifiers = array_map(function ($identifier) {
             return (string) $identifier;
         }, array_keys($this->items));
@@ -64,9 +79,12 @@ class ProductDisabler extends AbstractRowModifier
         $itemsToDisable = array_map(function ($identifier) {
             return [
                 'sku' => $identifier,
-                'product_online' => 0,
+                'product_online' => (string) 0,
             ];
         }, $itemsToDisable);
+
+        $count = count($itemsToDisable);
+        $this->consoleOutput->writeln("Disabling {$count} products");
 
         $this->items += $itemsToDisable;
     }
@@ -77,7 +95,7 @@ class ProductDisabler extends AbstractRowModifier
      * @param string[] $identifiers
      * @return void
      */
-    private function appendNewItemsToDb($identifiers)
+    public function appendNewItemsToDb($identifiers)
     {
         $insertData = array_map(function ($identifier) {
             return ['profile' => $this->profile, 'identifier' => $identifier];
