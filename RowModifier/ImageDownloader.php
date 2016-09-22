@@ -194,6 +194,7 @@ class ImageDownloader extends AbstractRowModifier
 
             $promise->then(function (\GuzzleHttp\Psr7\Response $response) use (&$value, $fileName) {
                 $response->getBody()->close();
+                //@todo check if the image is an actual image, else delete the image.
                 $value = $fileName;
             });
 
