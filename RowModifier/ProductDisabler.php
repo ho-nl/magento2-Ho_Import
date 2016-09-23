@@ -64,7 +64,7 @@ class ProductDisabler extends AbstractRowModifier
     {
         if (count($this->items)  <= 100 && $this->force === false) {
             $this->consoleOutput->writeln(
-                'Skipped because there is only a small set imported, set force to true to delete anyway'
+                "<info>ProductDisabler: Skipping because less then 100 products are imported, use force option to disable anyway</info>"
             );
             return;
         }
@@ -84,7 +84,7 @@ class ProductDisabler extends AbstractRowModifier
         }, $itemsToDisable);
 
         $count = count($itemsToDisable);
-        $this->consoleOutput->writeln("Disabling {$count} products");
+        $this->consoleOutput->writeln("<info>ProductDisabler: Disabling {$count} products</info>");
 
         $this->items += $itemsToDisable;
     }

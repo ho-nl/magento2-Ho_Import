@@ -96,7 +96,7 @@ class ImageDownloader extends AbstractRowModifier
      */
     public function process()
     {
-        $imageFields = ['swatch_image','image', 'small_image', 'thumbnail'];
+        $imageFields = ['image', 'small_image', 'thumbnail', 'swatch_image'];
         $imageArrayFields = ['additional_images'];
 
         $itemCount = count($this->items);
@@ -206,15 +206,12 @@ class ImageDownloader extends AbstractRowModifier
                 $targetPath
             ) {
                 //File already deleted
-                if (! file_exists($targetPath)) {
-                    return;
+                if (file_exists($targetPath)) {
+                    unlink($targetPath); // clean up any remaining file pointers if the download failed
+                    $this->consoleOutput->writeln(
+                        "\n<comment>Image can not be downloaded: {$value}</comment>"
+                    );
                 }
-
-                unlink($targetPath); // clean up any remaining file pointers if the download failed
-
-                $this->consoleOutput->writeln(
-                    "\n<comment>Image can not be downloaded: {$value}</comment>"
-                );
 
                 foreach ($item as &$itemValue) {
                     if ($value == $itemValue) {
