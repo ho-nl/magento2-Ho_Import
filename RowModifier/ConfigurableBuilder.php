@@ -213,7 +213,7 @@ class ConfigurableBuilder extends AbstractRowModifier
             unset($configurable['configurable_variations']);
 
             foreach ($variations as $variation) {
-                $splitKey = $variation['split'];
+                $splitKey = (string) $variation['split'];
                 if (!isset($splitConfigurables[$splitKey])) {
                     //Base the new configurable on the first variation
                     $splitConfigurables[$splitKey] =
