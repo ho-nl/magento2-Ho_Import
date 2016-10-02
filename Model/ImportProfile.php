@@ -75,7 +75,7 @@ abstract class ImportProfile implements ImportProfileInterface
             $this->stopwatch->start('importinstance');
             $importer->processImport($items);
             $stopwatchEvent = $this->stopwatch->stop('importinstance');
- 
+
             $this->consoleOutput->writeln((string) new Phrase(
                 '%1 items imported in %2 sec, <info>%3 items / sec</info> (%4mb used)', [
                 count($items),
@@ -92,7 +92,7 @@ abstract class ImportProfile implements ImportProfileInterface
             $this->consoleOutput->writeln($e->getMessage());
         }
     }
-    
+
     /**
      * Get all items that need to be imported
      *
@@ -104,7 +104,7 @@ abstract class ImportProfile implements ImportProfileInterface
         $this->consoleOutput->writeln('Getting item data');
         $items = $this->getItems();
         $stopwatchEvent = $this->stopwatch->stop('profileinstance');
-        
+
         if (! $stopwatchEvent->getDuration()) {
             return $items;
         }
@@ -122,7 +122,10 @@ abstract class ImportProfile implements ImportProfileInterface
 
     /**
      * Gets initialized object manager
-     *
+     *  - Loads the Admin space from the CLI
+     *  - Sets it to be a custom entry point
+     *  - Set the area code to adminhtml.
+     * @todo can this be removed?
      * @return ObjectManagerInterface
      */
     protected function getObjectManager()
