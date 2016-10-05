@@ -4,7 +4,7 @@
 
 ```BASH
 composer config repositories.honl/honl/magento2-import vcs git@github.com:ho-nl/magento2-Ho_Import.git
-composer require honl/honl/magento2-import
+composer require honl/magento2-import
 ```
 
 
