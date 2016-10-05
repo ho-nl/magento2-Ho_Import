@@ -13,6 +13,13 @@ The goal of the library is to be a swiss army knife for importing products in Ma
 
 [ExampleProfile.php](docs/examples/basic/ExampleProfile.php)
 
+## Installation
+
+```BASH
+composer config repositories.honl/honl/magento2-import vcs git@github.com:ho-nl/magento2-Ho_Import.git
+composer require honl/honl/magento2-import
+```
+
 ## Goals
 Performance: Since building imports is (really) hard and requires a lot of feedback loops to get your data right (change, check, change, check), it is absolutely essential that is as fast as possible. A developer can't work if he has to wait 10 minutes after each change. So only having to wait only a few seconds to be able to see what is going into Magento is essential.
 
