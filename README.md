@@ -1,5 +1,11 @@
 # H&O Importing library
 
+## Installation
+
+```BASH
+composer config repositories.honl/honl/magento2-import vcs git@github.com:ho-nl/magento2-Ho_Import.git
+composer require honl/honl/magento2-import
+```
 
 
 ## Console commands
