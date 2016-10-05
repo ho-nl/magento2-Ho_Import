@@ -7,5 +7,5 @@
 \Magento\Framework\Component\ComponentRegistrar::register(
     \Magento\Framework\Component\ComponentRegistrar::MODULE,
     'Ho_Import',
-    __DIR__
+    __DIR__.'/src'
 );
