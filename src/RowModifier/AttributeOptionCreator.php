@@ -10,6 +10,12 @@ use Magento\Catalog\Api\ProductAttributeOptionManagementInterface as OptionManag
 use Magento\Eav\Model\Entity\Attribute\OptionFactory;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
+/**
+ * @todo implement using Factory pattern.
+ *
+ * Class AttributeOptionCreator
+ * @package Ho\Import\RowModifier
+ */
 class AttributeOptionCreator extends AbstractRowModifier
 {
 
@@ -34,22 +40,24 @@ class AttributeOptionCreator extends AbstractRowModifier
      */
     protected $attributes;
 
-
     /**
      * AttributeOptionCreator constructor.
      *
      * @param OptionManagement $optionManagement
      * @param OptionFactory    $optionFactory
      * @param ConsoleOutput    $consoleOutput
+     * @param string[]         $attributes
      */
     public function __construct(
         OptionManagement $optionManagement,
         OptionFactory $optionFactory,
-        ConsoleOutput $consoleOutput
+        ConsoleOutput $consoleOutput,
+        $attributes = []
     ) {
         parent::__construct($consoleOutput);
         $this->optionManagement = $optionManagement;
         $this->optionFactory = $optionFactory;
+        $this->attributes = $attributes;
     }
 
 
@@ -60,9 +68,9 @@ class AttributeOptionCreator extends AbstractRowModifier
      */
     public function process()
     {
-        $attributes = implode(', ', $this->getAttributes());
+        $attributes = implode(', ', $this->attributes);
         $this->consoleOutput->writeln("<info>Creating attribute options for: {$attributes}</info>");
-        foreach ($this->getAttributes() as $attribute) {
+        foreach ($this->attributes as $attribute) {
             $this->createForAttribute($attribute);
         }
     }
@@ -124,16 +132,10 @@ class AttributeOptionCreator extends AbstractRowModifier
 
 
     /**
-     * @return array
-     */
-    public function getAttributes()
-    {
-        return $this->attributes;
-    }
-
-
-    /**
-     * @param array $attributes
+     * Sets the attributes
+     * @param string[] $attributes
+     * @deprecated Please us the factory AttributeOptionCreatorFactory to set the value.
+     * @return void
      */
     public function setAttributes(array $attributes)
     {

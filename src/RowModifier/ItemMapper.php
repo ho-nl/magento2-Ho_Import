@@ -6,6 +6,8 @@
 
 namespace Ho\Import\RowModifier;
 
+use Symfony\Component\Console\Output\ConsoleOutput;
+
 /**
  * @todo Make it work with a factory so that we dont have to explicitly call setMappingDefinition but use a constructor
  *       argument
@@ -27,8 +29,21 @@ class ItemMapper extends AbstractRowModifier
      * Mapping Definition
      * @var \Closure[]|string[]
      */
-    protected $mappingDefinition;
+    protected $mapping;
 
+    /**
+     * ItemMapper constructor.
+     *
+     * @param ConsoleOutput $consoleOutput
+     * @param array         $mapping
+     */
+    public function __construct(
+        ConsoleOutput $consoleOutput,
+        array $mapping = []
+    ) {
+        parent::__construct($consoleOutput);
+        $this->mapping = $mapping;
+    }
 
     /**
      * Check if the product can be imported
@@ -36,6 +51,7 @@ class ItemMapper extends AbstractRowModifier
      * @param array $item
      * @param string $sku
      *
+     * @todo Remove or implement from the constructor, serves no puprose right now.
      * @return bool|\string[] return true if validated, return an array of errors when not valid.
      */
     public function validateItem(array $item, $sku)
@@ -95,7 +111,7 @@ class ItemMapper extends AbstractRowModifier
     public function mapItem(array $item) : array
     {
         $product = [];
-        foreach ($this->mappingDefinition as $key => $value) {
+        foreach ($this->mapping as $key => $value) {
             if (is_callable($value)) {
                 $value = $value($item);
             }
@@ -106,14 +122,16 @@ class ItemMapper extends AbstractRowModifier
         return $product;
     }
 
-
     /**
      * Set the mapping definition of the product.
-     * @param \Closure[]|string[] $mappingDefinition
+     *
+     * @param \Closure[]|string[] $mapping
+     *
+     * @deprecated Please set the mapping defintion with the ItemMapperFactory
      * @return void
      */
-    public function setMappingDefinition($mappingDefinition)
+    public function setMappingDefinition($mapping)
     {
-        $this->mappingDefinition = $mappingDefinition;
+        $this->mapping = $mapping;
     }
 }
