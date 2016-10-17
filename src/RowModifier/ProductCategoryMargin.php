@@ -110,7 +110,7 @@ class ProductCategoryMargin extends AbstractRowModifier
                 $margin = end($margins) / 100 + 1;
             }
 
-            $item['price'] = round($item['cost'] * $margin, 2);
+            $item['price'] = $this->roundPrice($item['cost'] * $margin);
 
             foreach (['tier_prices', 'options_pricing', 'custom_options'] as $option) {
                 if (empty($item[$option])) {
@@ -125,13 +125,15 @@ class ProductCategoryMargin extends AbstractRowModifier
     }
 
     /**
+     * Apply margin to arbitrary arrays, convert cost fields to price fields with the margin.
+     *
      * @param $item
      * @param $margin
      */
     protected function applyMargin(&$item, $margin)
     {
         if (isset($item['cost'])) {
-            $item['price'] = round($item['cost'] * $margin, 2);
+            $item['price'] = $this->roundPrice($item['cost'] * $margin);
             unset($item['cost']);
             return;
         }
@@ -191,12 +193,22 @@ class ProductCategoryMargin extends AbstractRowModifier
      * Remove empty array values
      *
      * @param string $categories
-     * @todo move to helper
+     * @todo Move to a category helper
      *
      * @return string[] mixed
      */
-    protected function extractCategoriesFromString($categories)
+    private function extractCategoriesFromString($categories)
     {
         return array_filter(array_map('trim', explode(',', trim($categories))));
+    }
+
+    /**
+     * Round prices, increase precision if the price is very small (small than 0,10)
+     * @param float $price
+     * @return float
+     */
+    private function roundPrice($price) {
+        $precision = $price < 0.10 ? 3 : 2;
+        return round($price, $precision);
     }
 }

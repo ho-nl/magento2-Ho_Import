@@ -16,6 +16,8 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  *
  * @todo Implement caching strategory. We don't need to download the file each time, but would be nice if it gets
  *       downloaded once in a while.
+ * @todo Implement a method to check the image for validity. Currently it just saves the image but it will throw
+ *       an error while importing the images.
  * @package Ho\Import
  */
 class ImageDownloader extends AbstractRowModifier
