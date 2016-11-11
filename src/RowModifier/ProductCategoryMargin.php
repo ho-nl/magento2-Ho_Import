@@ -67,11 +67,13 @@ class ProductCategoryMargin extends AbstractRowModifier
             $item['price'] = 0;
 
             //Do some checks if the product is valid for adding a product margin.
-            if (empty($item['cost'])) {
-                $this->consoleOutput->writeln(
-                    "<comment>{$scope}: No cost field found for product {$identifier}, disabling product.</comment>"
-                );
-                $item['product_online'] = 0;
+            if (!isset($item['cost'])) {
+                if ($item['product_online'] > 0) {
+                    $this->consoleOutput->writeln(
+                        "<comment>{$scope}: No cost field found for product {$identifier}, disabling product.</comment>"
+                    );
+                    $item['product_online'] = (string) 0;
+                }
                 continue;
             }
 
@@ -83,6 +85,11 @@ class ProductCategoryMargin extends AbstractRowModifier
                 continue;
             }
 
+            if ($item['cost'] == 0) {
+                $this->consoleOutput->writeln(
+                    "<comment>{$scope}: Cost field set to 0 for product {$identifier}, wrong prices may be imported.</comment>"
+                );
+            }
 
             $categories = $this->extractCategoriesFromString($item['categories']);
             $margins = [];
@@ -92,7 +99,7 @@ class ProductCategoryMargin extends AbstractRowModifier
                     return strpos($category, $marginCategory) === 0;
                 }, ARRAY_FILTER_USE_KEY);
 
-                if ( ! $marginCategories) {
+                if (!$marginCategories) {
                     continue;
                 }
                 $margin = end($marginCategories);
@@ -102,8 +109,8 @@ class ProductCategoryMargin extends AbstractRowModifier
             if (count($margins) <= 0) {
                 $categoryNames = implode(',', $categories);
                 $this->consoleOutput->writeln(
-                    "<comment>{$scope}: No margin-category found for product {$identifier}, setting cost as price (categories: " .
-                    "{$categoryNames})</comment>"
+                    "<comment>{$scope}: No margin-category found for product {$identifier}, setting cost as price ".
+                    "(categories: {$categoryNames})</comment>"
                 );
                 $margin = 1;
             } else {
