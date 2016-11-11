@@ -5,6 +5,8 @@
  */
 namespace Ho\Import\Streamer;
 
+use Prewk\XmlStringStreamer\Parser\StringWalker;
+use Prewk\XmlStringStreamer\Parser\UniqueNode;
 use Psr\Cache\CacheItemPoolInterface as CachePool;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -22,27 +24,10 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  * 5. Parse the XML Node String as an SimpleXMLElement
  * 6. Convert the SimpleXMLElement to an array
  *
- * @todo Rename to Streamer\HttpXml
- * @todo Refactor to XmlFactory only. The factory will only return the \Generator instead of an intermediate iterator.
+ * @todo {Paul} implement a proper interface that can be directly picked up by the sourceIterator without requiring knowledge of the getIterator method.
  */
-class Xml
+class HttpXml
 {
-
-    /**
-     * @var string
-     */
-    private $url;
-
-    /**
-     * @var string
-     */
-    private $uniqueNode;
-
-    /**
-     * @var int
-     */
-    private $limit;
-
     /**
      * @var CachePool
      */
@@ -54,14 +39,39 @@ class Xml
     private $consoleOutput;
 
     /**
-     * @var int
+     * @var string
      */
-    private $ttl;
+    private $requestUrl;
 
     /**
      * @var string
      */
-    private $parser;
+    private $requestMethod;
+
+    /**
+     * @var []
+     */
+    private $requestOptions;
+
+    /**
+     * @var string
+     */
+    private $xmlParser;
+
+    /**
+     * @var []
+     */
+    private $xmlOptions;
+
+    /**
+     * @var int
+     */
+    private $limit;
+
+    /**
+     * @var int
+     */
+    private $ttl;
 
     /**
      * Xml constructor.
@@ -69,38 +79,47 @@ class Xml
      * @param CachePool     $cacheItemPool
      * @param ConsoleOutput $consoleOutput
      *
-     * @param string        $url
-     * @param string        $uniqueNode
-     * @param string        $parser An alternative is \Prewk\XmlStringStreamer\Parser\StringWalker::class
+     * @param string        $requestUrl
+     * @param string        $requestMethod
+     * @param array         $requestOptions
+     * @param string        $xmlParser
+     * @param array         $xmlOptions
      * @param int           $limit
      * @param int           $ttl
+     *
+     * @todo {Paul} Search for all references of options, uniqueNode, etc. So all imports are still working.
+     * @todo {Paul} Replace the $parser argument with a Factory for the ParserInterface and default to the
+     *       Parser\UniqueNode (Open/Closed Principle)
      */
     public function __construct(
         CachePool $cacheItemPool,
         ConsoleOutput $consoleOutput,
-        string $url,
-        string $uniqueNode,
-        string $parser = \Prewk\XmlStringStreamer\Parser\UniqueNode::class,
+        string $requestUrl,
+        string $requestMethod = 'get',
+        array $requestOptions = [],
+        array $xmlOptions = [],
         int $limit = PHP_INT_MAX,
-        int $ttl = (12*3600)
+        int $ttl = (12 * 3600)
     ) {
-        $this->url = $url;
-        $this->uniqueNode = $uniqueNode;
-        $this->parser = $parser;
-        $this->limit = $limit;
-        $this->cacheItemPool = $cacheItemPool;
-        $this->consoleOutput = $consoleOutput;
-        $this->ttl = $ttl;
+        $this->requestUrl     = $requestUrl;
+        $this->requestMethod  = $requestMethod;
+        $this->requestOptions = $requestOptions;
+        $this->xmlOptions     = $xmlOptions;
+        $this->limit          = $limit;
+        $this->cacheItemPool  = $cacheItemPool;
+        $this->consoleOutput  = $consoleOutput;
+        $this->ttl            = $ttl;
     }
 
     /**
+     * @todo {Paul} Refactor all direct instantiation of classes (Dependency Injection)
      * Get the source iterator
      * @return \Generator
      */
     public function getIterator()
     {
         $this->consoleOutput->write(
-            "<info>Streamer\HttpXml: Getting <{$this->uniqueNode}> from URL {$this->url}</info>"
+            "<info>Streamer\HttpXml: Getting data from URL {$this->requestUrl}</info>"
         );
 
         $stack = \GuzzleHttp\HandlerStack::create();
@@ -115,9 +134,12 @@ class Xml
 
         $httpClient = new \GuzzleHttp\Client(['handler' => $stack]);
 
-        $result = $httpClient->get($this->url, ['stream' => true]);
+        $result = $httpClient->request(
+            $this->requestMethod,
+            $this->requestUrl,
+            $this->requestOptions + ['stream' => true]
+        );
         $stream = new \Prewk\XmlStringStreamer\Stream\Guzzle('');
-
 
         if ($result->getHeader('X-Kevinrob-Cache') && $result->getHeader('X-Kevinrob-Cache')[0] == 'HIT') {
             $this->consoleOutput->write(" <info>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</info>");
@@ -128,8 +150,8 @@ class Xml
 
         $stream->setGuzzleStream($result->getBody());
 
-        $parser   = new $this->parser([
-            'uniqueNode' => $this->uniqueNode,
+        $class = isset($this->xmlOptions['uniqueNode']) ? UniqueNode::class : StringWalker::class;
+        $parser = new $class($this->xmlOptions + [
             'checkShortClosing' => true
         ]);
         $streamer = new \Prewk\XmlStringStreamer($parser, $stream);
