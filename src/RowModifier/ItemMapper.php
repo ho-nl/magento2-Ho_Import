@@ -83,7 +83,9 @@ class ItemMapper extends AbstractRowModifier
                 }
 
             } catch (\Exception $e) {
-                $this->consoleOutput->writeln("<error>ItemMapper: {$e->getMessage()} (removing product)</error>");
+                $this->consoleOutput->writeln(
+                    "<error>ItemMapper: {$e->getMessage()} (removing product {$identifier})</error>"
+                );
                 unset($this->items[$identifier]);
             }
         }
