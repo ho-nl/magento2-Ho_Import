@@ -11,7 +11,7 @@ The goal of the library is to be a swiss army knife for importing products in Ma
 - Lot's of (RowModifiers)[RowModifier]
 - Fixed importer core bugs
 
-[ExampleProfile.php](docs/examples/basic/ExampleProfile.php)
+[ExampleProfile.php](src/docs/examples/basic/ExampleProfile.php)
 
 ## Installation
 
