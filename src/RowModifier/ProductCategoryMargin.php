@@ -139,14 +139,17 @@ class ProductCategoryMargin extends AbstractRowModifier
      */
     protected function applyMargin(&$item, $margin)
     {
-        if (isset($item['cost'])) {
-            $item['price'] = $this->roundPrice($item['cost'] * $margin);
-            unset($item['cost']);
+        if (! is_array($item)) {
             return;
         }
 
-        if (! is_array($item)) {
-            return;
+        if (isset($item['fee_cost'])) {
+            $item['fee'] = $this->roundPrice($item['fee_cost'] * $margin);
+            unset($item['fee_cost']);
+        }
+        if (isset($item['cost'])) {
+            $item['price'] = $this->roundPrice($item['cost'] * $margin);
+            unset($item['cost']);
         }
 
         foreach ($item as &$subItem) {
