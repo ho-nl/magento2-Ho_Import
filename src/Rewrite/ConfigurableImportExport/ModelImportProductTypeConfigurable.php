@@ -29,4 +29,41 @@ class ModelImportProductTypeConfigurable
 
         return $this;
     }
+
+
+    /**
+     * Delete unnecessary links.
+     * @fixes PROMO-589
+     *
+     * @return $this
+     */
+    protected function _deleteData()
+    {
+        $linkTable = $this->_resource->getTableName('catalog_product_super_link');
+        $relationTable = $this->_resource->getTableName('catalog_product_relation');
+
+        if (($this->_entityModel->getBehavior() == \Magento\ImportExport\Model\Import::BEHAVIOR_APPEND)
+            && !empty($this->_productSuperData['product_id'])
+            && !empty($this->_simpleIdsToDelete)
+        ) {
+            $quoted = $this->_connection->quoteInto('IN (?)', [$this->_productSuperData['product_id']]);
+            $quotedChildren = $this->_connection->quoteInto('IN (?)', $this->_simpleIdsToDelete);
+            $this->_connection->delete($linkTable, "parent_id {$quoted} AND product_id {$quotedChildren}");
+            $this->_connection->delete($relationTable, "parent_id {$quoted} AND child_id {$quotedChildren}");
+        }
+
+        if ($this->_entityModel->getBehavior() == \Magento\ImportExport\Model\Import::BEHAVIOR_REPLACE
+            && !empty($this->_productSuperData['assoc_entity_ids']
+            && !empty($this->_productSuperData['product_id']))
+        ) {
+            $quoted = $this->_connection->quoteInto('IN (?)', [$this->_productSuperData['product_id']]);
+            $quotedChildren = $this->_connection->quoteInto('NOT IN (?)', $this->_productSuperData['assoc_entity_ids']);
+
+            $this->_connection->delete($linkTable, "parent_id {$quoted} AND product_id {$quotedChildren}");
+            $this->_connection->delete($relationTable, "parent_id {$quoted} AND child_id {$quotedChildren}");
+        }
+
+        return $this;
+    }
+
 }
