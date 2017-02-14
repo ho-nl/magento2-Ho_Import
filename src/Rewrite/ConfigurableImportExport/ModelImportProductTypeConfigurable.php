@@ -53,8 +53,8 @@ class ModelImportProductTypeConfigurable
         }
 
         if ($this->_entityModel->getBehavior() == \Magento\ImportExport\Model\Import::BEHAVIOR_REPLACE
-            && !empty($this->_productSuperData['assoc_entity_ids']
-            && !empty($this->_productSuperData['product_id']))
+            && !empty($this->_productSuperData['assoc_entity_ids'])
+            && !empty($this->_productSuperData['product_id'])
         ) {
             $quoted = $this->_connection->quoteInto('IN (?)', [$this->_productSuperData['product_id']]);
             $quotedChildren = $this->_connection->quoteInto('NOT IN (?)', $this->_productSuperData['assoc_entity_ids']);
