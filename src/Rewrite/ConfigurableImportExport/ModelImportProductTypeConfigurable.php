@@ -30,6 +30,18 @@ class ModelImportProductTypeConfigurable
         return $this;
     }
 
+    /**
+     * Fixes issue with not properly deleting link
+     *
+     * @param array $rowData
+     *
+     * @return ModelImportProductTypeConfigurable
+     */
+    protected function _collectSuperData($rowData)
+    {
+        parent::_collectSuperData($rowData);
+        return $this->_deleteData();
+    }
 
     /**
      * Delete unnecessary links.
@@ -42,15 +54,7 @@ class ModelImportProductTypeConfigurable
         $linkTable = $this->_resource->getTableName('catalog_product_super_link');
         $relationTable = $this->_resource->getTableName('catalog_product_relation');
 
-        if (($this->_entityModel->getBehavior() == \Magento\ImportExport\Model\Import::BEHAVIOR_APPEND)
-            && !empty($this->_productSuperData['product_id'])
-            && !empty($this->_simpleIdsToDelete)
-        ) {
-            $quoted = $this->_connection->quoteInto('IN (?)', [$this->_productSuperData['product_id']]);
-            $quotedChildren = $this->_connection->quoteInto('IN (?)', $this->_simpleIdsToDelete);
-            $this->_connection->delete($linkTable, "parent_id {$quoted} AND product_id {$quotedChildren}");
-            $this->_connection->delete($relationTable, "parent_id {$quoted} AND child_id {$quotedChildren}");
-        }
+        parent::_deleteData();
 
         if ($this->_entityModel->getBehavior() == \Magento\ImportExport\Model\Import::BEHAVIOR_REPLACE
             && !empty($this->_productSuperData['assoc_entity_ids'])
