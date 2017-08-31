@@ -79,8 +79,10 @@ class ProductCategoryMargin extends AbstractRowModifier
 
             if (empty($item['categories'])) {
                 $this->consoleOutput->writeln(
-                    "<comment>{$scope}: No category found for product {$identifier}, setting cost as price.</comment>"
+                    "<comment>{$scope}: No category found for product {$identifier}, disabling product.</comment>"
                 );
+                unset($item['tier_prices']);
+                $item['product_online'] = (string) 0;
                 $item['price'] = $item['cost'];
                 continue;
             }
