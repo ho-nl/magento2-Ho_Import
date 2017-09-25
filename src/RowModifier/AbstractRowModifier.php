@@ -9,6 +9,8 @@ namespace Ho\Import\RowModifier;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
+ * Base implementation of the RowModifier
+ *
  * @package Ho\Import
  */
 abstract class AbstractRowModifier
@@ -46,6 +48,7 @@ abstract class AbstractRowModifier
      * Set the data array for fields to import
      *
      * @param \[] &$items
+     * @return void
      */
     public function setItems(&$items)
     {

@@ -3,9 +3,11 @@
  * Copyright © 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
  * See LICENSE.txt for license details.
  */
+/**
+ * @todo investigate the possibility to move to a completely classless helper file.
+ *       Like used here: https://github.com/guzzle/guzzle/blob/master/src/functions.php
+ */
 namespace Ho\Import\Helper;
-
-
 
 class ItemMapperTools
 {
@@ -16,7 +18,7 @@ class ItemMapperTools
      * @param string $fieldName
      * @return \Closure
      */
-    public function getField($fieldName)
+    public static function getField($fieldName)
     {
         return function ($item) use ($fieldName) {
             return $item[$fieldName] ?? null;
@@ -31,7 +33,7 @@ class ItemMapperTools
      *
      * @return \Closure
      */
-    public function getFieldConcat($fields, $implode = ',')
+    public static function getFieldConcat($fields, $implode = ',')
     {
         return function ($item) use ($fields, $implode) {
             $values = array_filter(array_map(function ($fieldName) use ($item) {
