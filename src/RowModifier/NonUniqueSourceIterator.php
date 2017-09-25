@@ -5,11 +5,26 @@
  */
 namespace Ho\Import\RowModifier;
 
-use Closure;
-use Iterator;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
-class NonUniqueSourceIterator extends SourceIterator
+/**
+ * NonUniqueSourceIterator
+ *
+ * Create a new object with NonUniqueSourceIteratorFactory see constructor for options. Example:
+ *
+ * ```PHP
+ * $sourceIterator = $this->nonUniqueSourceIteratorFactory->create([
+ *     'nodeName' => 'printing',
+ *     'identifier' => function ($printInfo) {
+ *         return $printInfo['PRODUCT_KEY'];
+ *     },
+ *     'iterator' => $myIterator
+ * ]);
+ * ```
+ *
+ * @package Ho\Import\RowModifier
+ */
+class NonUniqueSourceIterator extends AbstractRowModifier
 {
 
     /**
@@ -19,20 +34,34 @@ class NonUniqueSourceIterator extends SourceIterator
     private $nodeName;
 
     /**
-     * NonUniqueSourceIterator constructor.
+     * @var \Closure
+     */
+    private $identifier;
+
+    /**
+     * @var \Iterator
+     */
+    private $iterator;
+
+    /**
+     * NonUniqueSourceIterator
      *
      * @param ConsoleOutput $consoleOutput
-     * @param Closure       $identifier
-     * @param Iterator      $iterator
-     * @param string        $nodeName
+     * @param \Closure      $identifier  Anonymous function (http://php.net/manual/en/functions.anonymous.php)
+     *                                   to identify the parent. Can return a String or Array.
+     *                                   First argument of the \Closure will be the $item
+     * @param \Iterator     $iterator    \Ho\Import\Streamer\FileXml or \Ho\Import\Streamer\HttpXml
+     * @param string        $nodeName    Array key where the data will be stored in the parent
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
-        Closure $identifier,
-        Iterator $iterator,
+        \Closure $identifier,
+        \Iterator $iterator,
         $nodeName
     ) {
-        parent::__construct($consoleOutput, $identifier, $iterator);
+        parent::__construct($consoleOutput);
+        $this->identifier = $identifier;
+        $this->iterator = $iterator;
         $this->nodeName = $nodeName;
     }
 
@@ -47,12 +76,18 @@ class NonUniqueSourceIterator extends SourceIterator
 
         $identifier = $this->identifier;
         foreach ($this->iterator as $item) {
-            $id = $identifier($item);
-            if (!isset($this->items[$id])) {
-                $this->consoleOutput->writeln("<comment>NonUniqueSourceIterator: Item not found for {$id}</comment>");
-                continue;
+            $ids = $identifier($item);
+            $ids = is_array($ids) ? $ids : [$ids];
+
+            foreach ($ids as $id) {
+                if (!isset($this->items[$id])) {
+                    $this->consoleOutput->writeln(
+                        "NonUniqueSourceIterator: <comment>Item not found for {$id}</comment>"
+                    );
+                    continue;
+                }
+                $this->items[$id][$this->nodeName][] = $item;
             }
-            $this->items[$id][$this->nodeName][] = $item;
         }
     }
 }

@@ -98,7 +98,7 @@ abstract class ImportProfile implements ImportProfileInterface
      *
      * @return \[]
      */
-    protected function getItemsMeasured()
+    private function getItemsMeasured()
     {
         $this->stopwatch->start('profileinstance');
         $this->consoleOutput->writeln('Getting item data');
@@ -125,10 +125,10 @@ abstract class ImportProfile implements ImportProfileInterface
      *  - Loads the Admin space from the CLI
      *  - Sets it to be a custom entry point
      *  - Set the area code to adminhtml.
-     * @todo can this be removed?
+     * @todo {Paul} Can this be removed?
      * @return ObjectManagerInterface
      */
-    protected function getObjectManager()
+    private function getObjectManager()
     {
         if (null == $this->objectManager) {
             $omParams = $_SERVER;

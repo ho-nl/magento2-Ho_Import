@@ -10,8 +10,20 @@ use Iterator;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
- * Class SourceIterator
- * 
+ * SourceIterator
+ *
+ * Create a new object with SourceIteratorFactory see constructor for options. Example:
+ *
+ * ```PHP
+ * $sourceIterator = $this->sourceIteratorFactory->create([
+ *     'identifier' => function ($printInfo) {
+ *         return $printInfo['PRODUCT_KEY'];
+ *     },
+ *     'mode' => 'create',
+ *     'iterator' => $myIterator
+ * ]);
+ * ```
+ *
  * @package Ho\Import\RowModifier
  */
 class SourceIterator extends AbstractRowModifier
@@ -24,27 +36,29 @@ class SourceIterator extends AbstractRowModifier
      *
      * @var Closure
      */
-    protected $identifier;
+    private $identifier;
 
     /**
      * The fow Iterator
      *
      * @var Iterator
      */
-    protected $iterator;
+    private $iterator;
 
     /**
      * @var string
      */
-    protected $mode;
+    private $mode;
 
     /**
      * SourceIterator constructor.
      *
      * @param ConsoleOutput $consoleOutput
-     * @param Closure       $identifier
-     * @param Iterator      $iterator
-     * @param string        $mode
+     * @param Closure       $identifier  Anonymous function (http://php.net/manual/en/functions.anonymous.php)
+     *                                   to identify the parent. Can return a String or Array.
+     *                                   First argument of the \Closure will be the item
+     * @param Iterator      $iterator    \Ho\Import\Streamer\FileXml or \Ho\Import\Streamer\HttpXml
+     * @param string        $mode        self::MODE_ADD or self::MODE_CREATE
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
@@ -65,40 +79,33 @@ class SourceIterator extends AbstractRowModifier
      */
     public function process()
     {
-        $this->consoleOutput->writeln("<info>SourceIterator: Adding information from stream</info>");
+        $this->consoleOutput->writeln("SourceIterator: <info>Adding information from stream</info>");
 
         $identifier = $this->identifier;
         foreach ($this->iterator as $item) {
-            $id = $identifier($item);
+            $ids = $identifier($item);
+            $ids = is_array($ids) ? $ids : [$ids];
 
-            switch ($this->mode) {
-                case self::MODE_CREATE:
-                    if (!isset($this->items[$id])) {
-                        $this->items[$id] = [];
-                    }
-                    $this->items[$id] += $item;
+            foreach ($ids as $id) {
+                switch ($this->mode) {
+                    case self::MODE_CREATE:
+                        if (!isset($this->items[$id])) {
+                            $this->items[$id] = [];
+                        }
+                        $this->items[$id] += $item;
 
-                    break;
-                case self::MODE_ADD:
-                    if (!isset($this->items[$id])) {
-                        $this->consoleOutput->writeln("<comment>SourceIterator: Item not found for {$id}</comment>");
-                        continue;
-                    }
-                    $this->items[$id] += $item;
-                    break;
+                        break;
+                    case self::MODE_ADD:
+                        if (!isset($this->items[$id])) {
+                            $this->consoleOutput->writeln(
+                                "SourceIterator: <comment>Item not found for {$id}</comment>"
+                            );
+                            continue;
+                        }
+                        $this->items[$id] += $item;
+                        break;
+                }
             }
-        }
-    }
-
-    /**
-     * Returns a generator of the data instead of processing the items
-     * @return \Generator
-     */
-    public function generator()
-    {
-        $identifier = $this->identifier;
-        foreach ($this->iterator as $item) {
-            yield [$identifier($item), $item];
         }
     }
 }

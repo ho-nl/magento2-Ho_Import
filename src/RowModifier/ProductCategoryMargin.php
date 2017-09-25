@@ -67,22 +67,31 @@ class ProductCategoryMargin extends AbstractRowModifier
             $item['price'] = 0;
 
             //Do some checks if the product is valid for adding a product margin.
-            if (empty($item['cost'])) {
-                $this->consoleOutput->writeln(
-                    "<comment>{$scope}: No cost field found for product {$identifier}, disabling product.</comment>"
-                );
-                $item['product_online'] = 0;
+            if (!isset($item['cost'])) {
+                if ($item['product_online'] > 0) {
+                    $this->consoleOutput->writeln(
+                        "<comment>{$scope}: No cost field found for product {$identifier}, disabling product.</comment>"
+                    );
+                    $item['product_online'] = (string) 0;
+                }
                 continue;
             }
 
             if (empty($item['categories'])) {
                 $this->consoleOutput->writeln(
-                    "<comment>{$scope}: No category found for product {$identifier}, setting cost as price.</comment>"
+                    "<comment>{$scope}: No category found for product {$identifier}, disabling product.</comment>"
                 );
+                unset($item['tier_prices']);
+                $item['product_online'] = (string) 0;
                 $item['price'] = $item['cost'];
                 continue;
             }
 
+            if ($item['cost'] == 0) {
+                $this->consoleOutput->writeln(
+                    "<comment>{$scope}: Cost field set to 0 for product {$identifier}, wrong prices may be imported.</comment>"
+                );
+            }
 
             $categories = $this->extractCategoriesFromString($item['categories']);
             $margins = [];
@@ -92,7 +101,7 @@ class ProductCategoryMargin extends AbstractRowModifier
                     return strpos($category, $marginCategory) === 0;
                 }, ARRAY_FILTER_USE_KEY);
 
-                if ( ! $marginCategories) {
+                if (!$marginCategories) {
                     continue;
                 }
                 $margin = end($marginCategories);
@@ -102,15 +111,15 @@ class ProductCategoryMargin extends AbstractRowModifier
             if (count($margins) <= 0) {
                 $categoryNames = implode(',', $categories);
                 $this->consoleOutput->writeln(
-                    "<comment>{$scope}: No margin-category found for product {$identifier}, setting cost as price (categories: " .
-                    "{$categoryNames})</comment>"
+                    "<comment>{$scope}: No margin-category found for product {$identifier}, setting cost as price ".
+                    "(categories: {$categoryNames})</comment>"
                 );
                 $margin = 1;
             } else {
                 $margin = end($margins) / 100 + 1;
             }
 
-            $item['price'] = round($item['cost'] * $margin, 2);
+            $item['price'] = $this->roundPrice($item['cost'] * $margin);
 
             foreach (['tier_prices', 'options_pricing', 'custom_options'] as $option) {
                 if (empty($item[$option])) {
@@ -125,19 +134,24 @@ class ProductCategoryMargin extends AbstractRowModifier
     }
 
     /**
+     * Apply margin to arbitrary arrays, convert cost fields to price fields with the margin.
+     *
      * @param $item
      * @param $margin
      */
     protected function applyMargin(&$item, $margin)
     {
-        if (isset($item['cost'])) {
-            $item['price'] = round($item['cost'] * $margin, 2);
-            unset($item['cost']);
+        if (! is_array($item)) {
             return;
         }
 
-        if (! is_array($item)) {
-            return;
+        if (isset($item['fee_cost'])) {
+            $item['fee'] = $this->roundPrice($item['fee_cost'] * $margin);
+            unset($item['fee_cost']);
+        }
+        if (isset($item['cost'])) {
+            $item['price'] = $this->roundPrice($item['cost'] * $margin);
+            unset($item['cost']);
         }
 
         foreach ($item as &$subItem) {
@@ -191,12 +205,22 @@ class ProductCategoryMargin extends AbstractRowModifier
      * Remove empty array values
      *
      * @param string $categories
-     * @todo move to helper
+     * @todo Move to a category helper
      *
      * @return string[] mixed
      */
-    protected function extractCategoriesFromString($categories)
+    private function extractCategoriesFromString($categories)
     {
         return array_filter(array_map('trim', explode(',', trim($categories))));
+    }
+
+    /**
+     * Round prices, increase precision if the price is very small (small than 0,10)
+     * @param float $price
+     * @return float
+     */
+    private function roundPrice($price) {
+        $precision = $price < 0.10 ? 3 : 2;
+        return round($price, $precision);
     }
 }

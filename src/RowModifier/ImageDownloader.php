@@ -16,6 +16,8 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  *
  * @todo Implement caching strategory. We don't need to download the file each time, but would be nice if it gets
  *       downloaded once in a while.
+ * @todo Implement a method to check the image for validity. Currently it just saves the image but it will throw
+ *       an error while importing the images.
  * @package Ho\Import
  */
 class ImageDownloader extends AbstractRowModifier
@@ -84,7 +86,7 @@ class ImageDownloader extends AbstractRowModifier
         parent::__construct($consoleOutput);
         $this->directoryList = $directoryList;
         $this->httpClient    = new HttpClient();
-        $this->progressBar   = new \Symfony\Component\Console\Helper\ProgressBar($this->consoleOutput);
+//        $this->progressBar   = new \Symfony\Component\Console\Helper\ProgressBar($this->consoleOutput);
         $this->stopwatch   = new \Symfony\Component\Stopwatch\Stopwatch();
     }
 
@@ -101,7 +103,7 @@ class ImageDownloader extends AbstractRowModifier
 
         $itemCount = count($this->items);
         $this->consoleOutput->writeln("<info>Downloading images for {$itemCount} items</info>");
-        $this->progressBar->start();
+//        $this->progressBar->start();
 
         if (! file_exists($this->directoryList->getPath('media') . '/import/')) {
             mkdir($this->directoryList->getPath('media') . '/import/', 0777, true);
@@ -145,7 +147,7 @@ class ImageDownloader extends AbstractRowModifier
         ]);
         $pool->promise()->wait();
 
-        $this->progressBar->finish();
+//        $this->progressBar->finish();
         $this->consoleOutput->write("\n");
 
         //Implode all image array fields
@@ -184,7 +186,7 @@ class ImageDownloader extends AbstractRowModifier
                 $value = $fileName;
                 return null;
             } else {
-                $this->progressBar->advance();
+//                $this->progressBar->advance();
                 $promise = $this->httpClient
                     ->getAsync($value, [
                         'sink' => $targetPath,

@@ -5,18 +5,18 @@
  */
 namespace Ho\Import\Streamer;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Filesystem\DirectoryList;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
  * Get the data stream as \Generator
  * 1. Get the data location from disk
- * 4. Split the XML String in separate Nodes to get a single XML Node String
- * 5. Parse the XML Node String as an SimpleXMLElement
- * 6. Convert the SimpleXMLElement to an array
+ * 2. Split the XML String in separate Nodes to get a single XML Node String
+ * 3. Parse the XML Node String as an SimpleXMLElement
+ * 4. Convert the SimpleXMLElement to an array
  *
- * @todo Implement progress bar: https://github.com/prewk/xml-string-streamer#progress-bar
+ * @todo {Paul} implement a proper interface that can be directly picked up by the sourceIterator without requiring knowledge of the getIterator method.
  */
 
 class FileXml
@@ -25,12 +25,7 @@ class FileXml
     /**
      * @var string
      */
-    private $file;
-
-    /**
-     * @var string
-     */
-    private $uniqueNode;
+    private $requestFile;
 
     /**
      * @var int
@@ -38,19 +33,9 @@ class FileXml
     private $limit;
 
     /**
-     * @var \Psr\Cache\CacheItemPoolInterface
-     */
-    private $cacheItemPool;
-
-    /**
      * @var ConsoleOutput
      */
     private $consoleOutput;
-
-    /**
-     * @var int
-     */
-    private $ttl;
 
     /**
      * @var DirectoryList
@@ -58,46 +43,53 @@ class FileXml
     private $directoryList;
 
     /**
+     * @var array
+     */
+    private $xmlOptions;
+
+    /**
      * Xml constructor.
      *
      * @param ConsoleOutput $consoleOutput
      * @param DirectoryList $directoryList
-     * @param string        $file
-     * @param string        $uniqueNode
-     * @param int           $limit
+     * @param string        $requestFile  Relative or absolute path to filename.
+     * @param array         $xmlOptions Passed trough to the XmlStringStreamer
+     * @param int           $limit Add a limit how may rows we want to parse
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         DirectoryList $directoryList,
-        string $file,
-        string $uniqueNode,
+        string $requestFile,
+        array $xmlOptions = [],
         int $limit = PHP_INT_MAX
     ) {
         $this->consoleOutput = $consoleOutput;
-        $this->file          = $file;
-        $this->uniqueNode    = $uniqueNode;
-        $this->limit         = $limit;
         $this->directoryList = $directoryList;
+        $this->requestFile   = $requestFile;
+        $this->xmlOptions    = $xmlOptions;
+        $this->limit         = $limit;
     }
 
     /**
      * Get the source iterator
+     *
      * @return \Generator
+     * @throws FileSystemException
      */
     public function getIterator()
     {
         $this->consoleOutput->writeln(
-            "<info>Streamer\FileXml: Getting <{$this->uniqueNode}> from file {$this->file}</info>"
+            "<info>Streamer\FileXml: Getting data from requestFile {$this->requestFile}</info>"
         );
 
-        $file = $this->file[0] == '/' ? $this->file : $this->directoryList->getRoot() . '/' . trim($this->file, '/');
+        $requestFile = $this->getRequestFile();
 
-        if (! file_exists($file)) {
-            throw new NotFoundException(__("File %1 not found", $this->file));
+        if (! file_exists($requestFile)) {
+            throw new FileSystemException(__("requestFile %1 not found", $requestFile));
         }
 
-        $streamer = \Prewk\XmlStringStreamer::createStringWalkerParser($file, [
-            'uniqueNode' => $this->uniqueNode,
+        $method = isset($this->xmlOptions['uniqueNode']) ? 'createUniqueNodeParser' : 'createStringWalkerParser';
+        $streamer = \Prewk\XmlStringStreamer::$method($requestFile, $this->xmlOptions + [
             'checkShortClosing' => true
         ]);
 
@@ -108,6 +100,17 @@ class FileXml
                 yield array_filter(json_decode(json_encode(new \SimpleXMLElement($node, LIBXML_NOCDATA)), true));
             }
         };
+
         return $generator($streamer);
+    }
+
+    /**
+     * @return string
+     */
+    private function getRequestFile():string
+    {
+        return $this->requestFile[0] == '/'
+            ? $this->requestFile
+            : $this->directoryList->getRoot() . '/' . trim($this->requestFile, '/');
     }
 }

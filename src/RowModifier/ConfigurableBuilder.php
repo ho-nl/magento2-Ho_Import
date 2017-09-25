@@ -128,7 +128,7 @@ class ConfigurableBuilder extends AbstractRowModifier
         }
 
         $count = count($configurables);
-        $this->consoleOutput->writeln("Prepared {$count} configurables");
+        $this->consoleOutput->writeln("{$count} potential configurables created");
         $configurables = $this->splitOnValue($configurables);
         $configurables = $this->filterConfigurables($configurables);
         $this->setSimpleValues($configurables);
