@@ -103,3 +103,7 @@ Run an import script directly (not recommended on live environments, might cause
 ### `cron:schedule jobName`
 
 Schedule a job to run immediately.
+
+
+## Credits	
+The module is written by Paul Hachmang (twitter: [@paales](https://twitter.com/paales), email: paul@reachdigital.nl) and build for Reach Digital. We make [Magento Webshops](https://www.reachdigital.nl/) (website: <https://www.reachdigital.nl/>, email: <info@reachdigital.nl>, twitter: [@ho_nl](https://twitter.com/ho_nl)).
