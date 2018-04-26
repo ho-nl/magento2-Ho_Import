@@ -2,8 +2,8 @@
     "name": "honl/magento2-import",
     "description": "",
     "require": {
-        "php": "~7.0.0",
-        "magento/product-community-edition": "2.1.x",
+        "php": "~7.1.0",
+        "magento/product-community-edition": "2.2.x",
         "guzzlehttp/guzzle": "~6.0",
         "prewk/xml-string-streamer": "^0.7.2",
         "prewk/xml-string-streamer-guzzle": "^0.1.0",
