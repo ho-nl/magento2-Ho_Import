@@ -54,10 +54,10 @@ class ProductUrlRewriteGenerator extends \Magento\CatalogUrlRewrite\Model\Produc
      *
      * @return \Magento\UrlRewrite\Service\V1\Data\UrlRewrite[]
      */
-    protected function generateForSpecificStoreView($storeId, $productCategories)
+    protected function generateForSpecificStoreView($storeId, $productCategories, $product = null, $rootCategoryId = null)
     {
         if ($this->isProductUseCategoriesEnabled($storeId)) {
-            return parent::generateForSpecificStoreView($storeId, $productCategories);
+            return parent::generateForSpecificStoreView($storeId, $productCategories, $this->product, null);
         }
         $categories = [];
         foreach ($productCategories as $category) {
