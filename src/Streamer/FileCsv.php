@@ -48,6 +48,17 @@ class FileCsv
     private $csvOptions;
 
     /**
+     * @var array
+     */
+    private $header;
+
+
+    /**
+     * @var array
+     */
+    private $file;
+
+    /**
      * Xml constructor.
      *
      * @param ConsoleOutput $consoleOutput
@@ -59,6 +70,7 @@ class FileCsv
     public function __construct(
         ConsoleOutput $consoleOutput,
         DirectoryList $directoryList,
+        array $header = [],
         string $requestFile,
         array $csvOptions = [],
         int $limit = PHP_INT_MAX
@@ -66,7 +78,8 @@ class FileCsv
         $this->consoleOutput = $consoleOutput;
         $this->directoryList = $directoryList;
         $this->requestFile   = $requestFile;
-        $this->csvOptions    = $xmlOptions;
+        $this->header = $header;
+        $this->csvOptions    = $csvOptions;
         $this->limit         = $limit;
     }
 
@@ -75,7 +88,7 @@ class FileCsv
      *
      * @return \Generator
      * @throws FileSystemException
-     */
+     */ 
     public function getIterator()
     {
         $this->consoleOutput->writeln(
@@ -83,24 +96,19 @@ class FileCsv
         );
 
         $requestFile = $this->getRequestFile();
-
         if (! file_exists($requestFile)) {
             throw new FileSystemException(__("requestFile %1 not found", $requestFile));
         }
-//        $method = isset($this->xmlOptions['uniqueNode']) ? 'createUniqueNodeParser' : 'createStringWalkerParser';
-//        $streamer = \Prewk\XmlStringStreamer::$method($requestFile, $this->xmlOptions + [
-//            'checkShortClosing' => true
-//        ]);
-//
-//        $limit = $this->limit;
-//        $generator = function (\Prewk\XmlStringStreamer $streamer) use ($limit) {
-//            while (($node = $streamer->getNode()) && $limit > 0) {
-//                $limit--;
-//                yield array_filter(json_decode(json_encode(new \SimpleXMLElement($node, LIBXML_NOCDATA)), true));
-//            }
-//        };
-//
-//        return $generator($streamer);
+        $requestFile = fopen($requestFile, 'r');
+        while (!feof($requestFile)) {
+            $row = array_map('trim', (array)fgetcsv($requestFile, 4096));
+            if (count($this->header) !== count($row)) {
+                continue;
+            }
+            $row = array_combine($this->header, $row);
+            yield $row;
+        }
+        return;
     }
 
     /**
