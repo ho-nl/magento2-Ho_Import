@@ -77,10 +77,10 @@ class FileCsv
     ) {
         $this->consoleOutput = $consoleOutput;
         $this->directoryList = $directoryList;
-        $this->requestFile   = $requestFile;
+        $this->requestFile = $requestFile;
         $this->header = $header;
-        $this->csvOptions    = $csvOptions;
-        $this->limit         = $limit;
+        $this->csvOptions = $csvOptions;
+        $this->limit = $limit;
     }
 
     /**
@@ -90,7 +90,7 @@ class FileCsv
      * @throws FileSystemException
      */ 
     public function getIterator()
-    {
+    { 
         $this->consoleOutput->writeln(
             "<info>Streamer\FileCsv: Getting data from requestFile {$this->requestFile}</info>"
         );
@@ -100,12 +100,17 @@ class FileCsv
             throw new FileSystemException(__("requestFile %1 not found", $requestFile));
         }
         $requestFile = fopen($requestFile, 'r');
+        $i=0;
         while (!feof($requestFile)) {
-            $row = array_map('trim', (array)fgetcsv($requestFile, 4096));
-            if (count($this->header) !== count($row)) {
+            $row = (array)fgetcsv($requestFile);
+            if (empty($this->header)) {
+                $i == 0 ? array_map(function ($columnHeader) {
+                    $this->header[] = $columnHeader;
+                }, $row) : false;
                 continue;
             }
             $row = array_combine($this->header, $row);
+            $i++;
             yield $row;
         }
         return;
