@@ -50,7 +50,7 @@ class FileCsv
     /**
      * @var array
      */
-    private $header;
+    private $headers;
 
 
     /**
@@ -70,7 +70,7 @@ class FileCsv
     public function __construct(
         ConsoleOutput $consoleOutput,
         DirectoryList $directoryList,
-        array $header = [],
+        array $headers = [],
         string $requestFile,
         array $csvOptions = [],
         int $limit = PHP_INT_MAX
@@ -78,7 +78,7 @@ class FileCsv
         $this->consoleOutput = $consoleOutput;
         $this->directoryList = $directoryList;
         $this->requestFile = $requestFile;
-        $this->header = $header;
+        $this->headers = $headers;
         $this->csvOptions = $csvOptions;
         $this->limit = $limit;
     }
@@ -103,13 +103,13 @@ class FileCsv
         $i=0;
         while (!feof($requestFile)) {
             $row = (array)fgetcsv($requestFile);
-            if (empty($this->header)) {
+            if (empty($this->headers)) {
                 $i == 0 ? array_map(function ($columnHeader) {
-                    $this->header[] = $columnHeader;
+                    $this->headers[] = $columnHeader;
                 }, $row) : false;
                 continue;
             }
-            $row = array_combine($this->header, $row);
+            $row = array_combine($this->headers, $row);
             $i++;
             yield $row;
         }
