@@ -143,12 +143,12 @@ class HttpCsv
         );
 
         $csvReader = \League\Csv\Reader::createFromStream(StreamWrapper::getResource($response->getBody()));
-        if (empty($this->headers)) {
+        if (empty($this->headers))
+        {
             $csvReader->setHeaderOffset(0);
-        } else {
-            foreach ($csvReader->getIterator() as $row) {
-                yield array_combine($this->headers, $row);
-            }
+        }
+        foreach ($csvReader->getIterator() as $row) {
+            yield (empty($this->headers) ? $row : array_combine($this->headers, $row));
         }
     }
 }
