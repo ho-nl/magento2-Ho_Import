@@ -3,13 +3,12 @@
  * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
+
 namespace Ho\Import\Streamer;
 
-use Prewk\XmlStringStreamer\Parser\StringWalker;
-use Prewk\XmlStringStreamer\Parser\UniqueNode;
+use Bakame\Psr7\Factory\StreamWrapper;
 use Psr\Cache\CacheItemPoolInterface as CachePool;
 use Symfony\Component\Console\Output\ConsoleOutput;
-
 
 
 /**
@@ -24,10 +23,12 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  * 5. Parse the XML Node String as an SimpleXMLElement
  * 6. Convert the SimpleXMLElement to an array
  *
- * @todo {Paul} implement a proper interface that can be directly picked up by the sourceIterator without requiring knowledge of the getIterator method.
+ * @todo {Paul} implement a proper interface that can be directly picked up by the sourceIterator without requiring
+ *       knowledge of the getIterator method.
  */
 class HttpCsv
 {
+
     /**
      * @var CachePool
      */
@@ -52,7 +53,6 @@ class HttpCsv
      * @var []
      */
     private $requestOptions;
-
 
 //
 //    /**
@@ -91,41 +91,37 @@ class HttpCsv
      * @param int           $limit
      * @param int           $ttl
      *
-     * @todo {Paul} Search for all references of options, uniqueNode, etc. So all imports are still working.
-     * @todo {Paul} Replace the $parser argument with a Factory for the ParserInterface and default to the
-     *       Parser\UniqueNode (Open/Closed Principle)
      */
     public function __construct(
         CachePool $cacheItemPool,
         ConsoleOutput $consoleOutput,
         string $requestUrl,
-        string $requestMethod = 'get',
+        string $requestMethod = 'GET',
         array $requestOptions = [],
 //        int $limit = PHP_INT_MAX,
         int $ttl = (12 * 3600),
-    array $header = []
+        array $header = []
     ) {
         $this->requestUrl     = $requestUrl;
         $this->requestMethod  = $requestMethod;
         $this->requestOptions = $requestOptions;
 //        $this->limit          = $limit;
-        $this->cacheItemPool  = $cacheItemPool;
-        $this->consoleOutput  = $consoleOutput;
-        $this->ttl            = $ttl;
-        $this->header = $header;
+        $this->cacheItemPool = $cacheItemPool;
+        $this->consoleOutput = $consoleOutput;
+        $this->ttl           = $ttl;
+        $this->header        = $header;
     }
 
     /**
-     * @todo {Paul} Refactor all direct instantiation of classes (Dependency Injection)
      * Get the source iterator
      * @return \Generator
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getIterator()
     {
         $this->consoleOutput->write(
             "<info>Streamer\HttpCsv: Getting data from URL {$this->requestUrl}</info>"
         );
-
         $stack = \GuzzleHttp\HandlerStack::create();
         $stack->push(new \Kevinrob\GuzzleCache\CacheMiddleware(
             new \Kevinrob\GuzzleCache\Strategy\GreedyCacheStrategy(
@@ -136,51 +132,16 @@ class HttpCsv
             )
         ), 'cache');
 
-//        $httpClient = new \GuzzleHttp\Client(['handler' => $stack]);
-        $httpClient = new \GuzzleHttp\Client();
-
-        $result = $httpClient->request(
+        $httpClient = new \GuzzleHttp\Client(['handler' => $stack]);
+        $response = $httpClient->request(
             $this->requestMethod,
             $this->requestUrl,
             $this->requestOptions + ['stream' => true]
         );
-        $i=0;
-        $rows = $result->getBody()->getContents();
-        foreach ($rows as $row) {
-                $i == 0 ? array_map(function ($v) {
-                    $this->header[] = $v;
-                }, $row) : false;
-                continue;
-            }
-            $row = array_combine($this->header, $row);
-            $i++;
-            yield $row;
-        }
 
-//        $stream = new \Prewk\XmlStringStreamer\Stream\Guzzle('');
-//
-//        if ($result->getHeader('X-Kevinrob-Cache') && $result->getHeader('X-Kevinrob-Cache')[0] == 'HIT') {
-//            $this->consoleOutput->write(" <info>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</info>");
-//        } else {
-//            $this->consoleOutput->write(" <comment>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</comment>");
-//        }
-//        $this->consoleOutput->write("\n");
+        $csvReader = \League\Csv\Reader::createFromStream(StreamWrapper::getResource($response->getBody()));
+        $csvReader->setHeaderOffset(0);
 
-//        $stream->setGuzzleStream($result->getBody());
-//
-//        $class = isset($this->xmlOptions['uniqueNode']) ? UniqueNode::class : StringWalker::class;
-//        $parser = new $class($this->xmlOptions + [
-//            'checkShortClosing' => true
-//        ]);
-//        $streamer = new \Prewk\XmlStringStreamer($parser, $stream);
-//
-//        $limit = $this->limit;
-//        $generator = function (\Prewk\XmlStringStreamer $streamer) use ($limit) {
-//            while (($node = $streamer->getNode()) && $limit > 0) {
-//                $limit--;
-//                yield array_filter(json_decode(json_encode(new \SimpleXMLElement($node, LIBXML_NOCDATA)), true));
-//            }
-//        };
-//        return $generator($streamer);
+        return $csvReader->getIterator();
     }
 }
