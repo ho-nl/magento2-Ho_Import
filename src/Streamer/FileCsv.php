@@ -5,6 +5,7 @@
  */
 namespace Ho\Import\Streamer;
 
+use Bakame\Psr7\Factory\StreamWrapper;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Filesystem\DirectoryList;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -84,11 +85,10 @@ class FileCsv
     }
 
     /**
-     * Get the source iterator
-     *
      * @return \Generator
      * @throws FileSystemException
-     */ 
+     * @throws \League\Csv\Exception
+     */
     public function getIterator()
     { 
         $this->consoleOutput->writeln(
@@ -100,20 +100,15 @@ class FileCsv
             throw new FileSystemException(__("requestFile %1 not found", $requestFile));
         }
         $requestFile = fopen($requestFile, 'r');
-        $i=0;
-        while (!feof($requestFile)) {
-            $row = (array)fgetcsv($requestFile);
-            if (empty($this->headers)) {
-                $i == 0 ? array_map(function ($columnHeader) {
-                    $this->headers[] = $columnHeader;
-                }, $row) : false;
-                continue;
-            }
-            $row = array_combine($this->headers, $row);
-            $i++;
-            yield $row;
+
+        $csvReader = \League\Csv\Reader::createFromStream($requestFile);
+        if (empty($this->headers))
+        {
+            $csvReader->setHeaderOffset(0);
         }
-        return;
+        foreach ($csvReader->getIterator() as $row) {
+            yield (empty($this->headers) ? $row : array_combine($this->headers, $row));
+        }
     }
 
     /**

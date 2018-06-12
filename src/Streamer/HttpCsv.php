@@ -78,7 +78,7 @@ class HttpCsv
     /**
      * @var array
      */
-    private $headers;
+    public $headers;
 
     /**
      * Xml constructor.
@@ -113,6 +113,14 @@ class HttpCsv
         $this->consoleOutput = $consoleOutput;
         $this->ttl           = $ttl;
         $this->headers = $headers;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaders()
+    {
+        return $this->headers;
     }
 
     /**
