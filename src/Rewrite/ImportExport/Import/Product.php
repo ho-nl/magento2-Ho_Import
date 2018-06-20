@@ -5,6 +5,8 @@
  */
 namespace Ho\Import\Rewrite\ImportExport\Import;
 
+use Magento\Catalog\Helper\Catalog;
+use Magento\Catalog\Model\Config as CatalogConfig;
 use Ho\Import\Helper\LineFormatterMulti;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\CatalogImportExport\Model\Import\Product\RowValidatorInterface as ValidatorInterface;
@@ -22,7 +24,12 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @var LineFormatterMulti
      */
     private $lineFormatterMulti;
-
+    /**
+     * Catalog config.
+     *
+     * @var CatalogConfig
+     */
+    private $catalogConfig;
     /**
      * Product constructor.
      *
@@ -103,6 +110,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Catalog\Model\Product\Url $productUrl,
         LineFormatterMulti $lineFormatterMulti,
+        CatalogConfig $catalogConfig,
         array $data = []
     ) {
         \Magento\CatalogImportExport\Model\Import\Product::__construct($jsonHelper, $importExportData, $importData,
@@ -113,6 +121,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
             $categoryProcessor, $validator, $objectRelationProcessor, $transactionManager, $taxClassProcessor,
             $scopeConfig, $productUrl, $data);
         $this->lineFormatterMulti = $lineFormatterMulti;
+        $this->catalogConfig = $catalogConfig;
     }
 
     /**
@@ -194,10 +203,30 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 // 1. Entity phase
                 if (isset($this->_oldSku[$rowSku])) {
                     // existing row
+                    if (isset($rowData['attribute_set_code'])) {
+                        $attributeSetId = $this->catalogConfig->getAttributeSetId(
+                            $this->getEntityTypeId(),
+                            $rowData['attribute_set_code']
+                        );
+
+                        // wrong attribute_set_code was received
+                        if (!$attributeSetId) {
+                            throw new \Magento\Framework\Exception\LocalizedException(
+                                __(
+                                    'Wrong attribute set code "%1", please correct it and try again.',
+                                    $rowData['attribute_set_code']
+                                )
+                            );
+                        }
+                    } else {
+                        $attributeSetId = $this->skuProcessor->getNewSku($rowSku)['attr_set_id'];
+                    }
+                    // existing row
                     $entityRowsUp[] = [
                         'updated_at' => (new \DateTime())->format(DateTime::DATETIME_PHP_FORMAT),
                         $this->getProductEntityLinkField()
                         => $this->_oldSku[$rowSku][$this->getProductEntityLinkField()],
+                        'attribute_set_id' => $attributeSetId,
                     ];
                 } else {
                     if (!$productLimit || $productsQty < $productLimit) {
