@@ -7,6 +7,7 @@
 namespace Ho\Import\RowModifier;
 
 use Magento\Framework\Filter\Template;
+use Magento\Framework\Message\ManagerInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 class TemplateFieldParser extends AbstractRowModifier
@@ -20,20 +21,28 @@ class TemplateFieldParser extends AbstractRowModifier
     private $templateFields;
 
     /**
+     * @var ManagerInterface
+     */
+    private $messageManager;
+
+    /**
      * TemplateFieldParser constructor.
      *
-     * @param ConsoleOutput $consoleOutput
-     * @param Template      $filterTemplate
-     * @param array         $templateFields
+     * @param ConsoleOutput    $consoleOutput
+     * @param Template         $filterTemplate
+     * @param array            $templateFields
+     * @param ManagerInterface $messageManager
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         Template $filterTemplate,
-        $templateFields = []
+        $templateFields = [],
+    ManagerInterface $messageManager
     ) {
         parent::__construct($consoleOutput);
         $this->filterTemplate = $filterTemplate;
         $this->templateFields = $templateFields;
+        $this->messageManager = $messageManager;
     }
 
     /**
@@ -41,8 +50,16 @@ class TemplateFieldParser extends AbstractRowModifier
      */
     public function process()
     {
-        exit;
-
+        foreach ($this->items as &$item) {
+            $this->filterTemplate->setVariables($item);
+            foreach ($this->templateFields as $fieldName => $template) {
+                try {
+                    $item[$fieldName] = $this->filterTemplate->filter($template);
+                } catch (\Exception $e) {
+                    $this->messageManager->addExceptionMessage($e);
+                }
+            }
+        }
     }
 
 
