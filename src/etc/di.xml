@@ -22,4 +22,6 @@
     <!-- Bug fixes in the ImportExport module -->
     <preference for="Magento\CatalogImportExport\Model\Import\Product" type="Ho\Import\Rewrite\ImportExport\Import\Product" />
     <preference for="Magento\CatalogImportExport\Model\Import\Product\Option" type="Ho\Import\Rewrite\ImportExport\Import\ProductOption" />
+    <preference for="Magento\Catalog\Model\Product\Attribute\OptionManagement"
+                type="Ho\Import\Rewrite\CatalogProductAttributeOptionManagement"></preference>
 </config>
