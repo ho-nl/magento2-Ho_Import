@@ -55,6 +55,11 @@ class ConfigurableBuilder extends AbstractRowModifier
     private $splitOnValue;
 
     /**
+     * @var bool
+     */
+    private $enableFilterConfigurable;
+
+    /**
      * ConfigurableBuilder constructor.
      *
      * @param ConsoleOutput      $consoleOutput
@@ -72,7 +77,8 @@ class ConfigurableBuilder extends AbstractRowModifier
         $attributes,
         $configurableValues,
         $simpleValues,
-        $splitOnValue = null
+        $splitOnValue = null,
+        $enableFilterConfigurable = true
     ) {
         parent::__construct($consoleOutput);
         $this->lineFormatterMulti = $lineFormatterMulti;
@@ -81,6 +87,7 @@ class ConfigurableBuilder extends AbstractRowModifier
         $this->configurableValues = $configurableValues;
         $this->simpleValues = $simpleValues;
         $this->splitOnValue = $splitOnValue;
+        $this->enableFilterConfigurable = $enableFilterConfigurable;
     }
 
     /**
@@ -130,7 +137,11 @@ class ConfigurableBuilder extends AbstractRowModifier
         $count = count($configurables);
         $this->consoleOutput->writeln("{$count} potential configurables created");
         $configurables = $this->splitOnValue($configurables);
-        $configurables = $this->filterConfigurables($configurables);
+
+        if ($this->enableFilterConfigurable) {
+            $configurables = $this->filterConfigurables($configurables);
+        }
+
         $this->setSimpleValues($configurables);
 
         $configurables = array_map(function ($configurable) {

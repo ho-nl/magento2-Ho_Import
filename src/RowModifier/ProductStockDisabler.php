@@ -90,6 +90,7 @@ class ProductStockDisabler extends AbstractRowModifier
     }
 
     /**
+     * @todo move to ProductLinkResourceModel
      * Append new items to the ho_import_link table.
      *
      * @param string[] $identifiers
@@ -108,7 +109,7 @@ class ProductStockDisabler extends AbstractRowModifier
      * Get all the items from ho_import_link table that need to be disabled
      *
      * @param string[] $identifiers
-     *
+     * @todo move to ProductLinkResourceModel
      * @todo Only find non-disabled products
      * @return string[]
      */
