@@ -24,4 +24,6 @@
     <preference for="Magento\CatalogImportExport\Model\Import\Product\Option" type="Ho\Import\Rewrite\ImportExport\Import\ProductOption" />
     <preference for="Magento\Catalog\Model\Product\Attribute\OptionManagement"
                 type="Ho\Import\Rewrite\CatalogProductAttributeOptionManagement"></preference>
+    <preference for="Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregator"
+                type="Ho\Import\Rewrite\ErrorProcessingAggregatorLogging"></preference>
 </config>
