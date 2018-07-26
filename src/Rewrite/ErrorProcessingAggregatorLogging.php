@@ -46,6 +46,7 @@ class ErrorProcessingAggregatorLogging
                 $this->logger->info('export/import error, ErrorMessage:', [$error->getErrorMessage()]);
                 /** @todo temporary output rownumber, remove var_dump when logging is finished */
                 var_dump($error->getRowNumber());
+                var_dump($error->getErrorMessage());
                 $result[$key][] = $error->getRowNumber() + 1;
             }
         }
