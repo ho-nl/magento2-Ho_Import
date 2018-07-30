@@ -48,7 +48,7 @@ class ExampleProfile extends \Ho\Import\Model\ImportProfile
         \Magento\Framework\App\ObjectManagerFactory $objectManagerFactory,
         \Symfony\Component\Stopwatch\Stopwatch $stopwatch,
         \Symfony\Component\Console\Output\ConsoleOutput $consoleOutput,
-        \Ho\Import\Streamer\XmlFactory $xmlStreamerFactory,
+        \Ho\Import\Streamer\FileXmlFactory $xmlStreamerFactory,
         \Ho\Import\RowModifier\SourceIteratorFactory $sourceIteratorFactory,
         \Ho\Import\RowModifier\ItemMapperFactory $itemMapperFactory
     ) {

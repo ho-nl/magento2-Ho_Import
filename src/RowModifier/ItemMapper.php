@@ -70,8 +70,8 @@ class ItemMapper extends AbstractRowModifier
 
         foreach ($this->items as $identifier => $item) {
             try {
-                $errors = $this->validateItem($item, $identifier);
-                if ($errors === true) {
+                $itemsValidated = $this->validateItem($item, $identifier);
+                if ($itemsValidated === true) {
                     $filteredItem = array_filter($this->mapItem($item), function ($value) {
                         return $value !== null;
                     });
@@ -94,7 +94,7 @@ class ItemMapper extends AbstractRowModifier
                 } else {
                     $this->consoleOutput->writeln(
                         sprintf("<comment>Error validating, skipping %s: %s</comment>",
-                            $identifier, implode(",", $errors))
+                            $identifier, implode(",", $itemsValidated))
                     );
                 }
 
