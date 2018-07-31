@@ -76,13 +76,14 @@ class Importer
      * Actually run the import
      *
      * @param \[] &$dataArray
-     * @return void
+     * @return string
      */
     public function processImport(&$dataArray)
     {
         $sourceAdapter = $this->loadData($dataArray);
-        if (!$this->importModel->validateSource($sourceAdapter)) {
-            return;
+        $validationResult = $this->importModel->validateSource($sourceAdapter);
+        if (!$validationResult) {
+            return $this->importModel->getFormatedLogTrace();
         }
 
 //        $this->lockIndexers();
