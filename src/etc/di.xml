@@ -1,10 +1,8 @@
 <?xml version="1.0"?>
 <!--
-/**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
- * See LICENSE.txt for license details.
- */
--->
+  ~ Copyright © Reach Digital (https://www.reachdigital.io/)
+  ~ See LICENSE.txt for license details.
+  -->
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <type name="Magento\Framework\Console\CommandList">
@@ -24,6 +22,4 @@
     <preference for="Magento\CatalogImportExport\Model\Import\Product\Option" type="Ho\Import\Rewrite\ImportExport\Import\ProductOption" />
     <preference for="Magento\Catalog\Model\Product\Attribute\OptionManagement"
                 type="Ho\Import\Rewrite\CatalogProductAttributeOptionManagement"></preference>
-    <preference for="Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregator"
-                type="Ho\Import\Rewrite\ErrorProcessingAggregatorLogging"></preference>
 </config>

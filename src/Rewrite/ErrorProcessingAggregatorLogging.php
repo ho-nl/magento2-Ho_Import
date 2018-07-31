@@ -16,6 +16,18 @@ class ErrorProcessingAggregatorLogging
     private $logger;
 
     /**
+     * ErrorProcessingAggregatorLogging constructor.
+     *
+     * @param ProcessingErrorFactory $errorFactory
+     * @param Monolog        $logger
+     */
+    public function __construct(ProcessingErrorFactory $errorFactory, LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+        parent::__construct($errorFactory);
+    }
+
+    /**
      * @param array $errorCode
      * @param array $excludedCodes
      * @param bool $replaceCodeWithMessage
@@ -52,17 +64,5 @@ class ErrorProcessingAggregatorLogging
         }
 
         return $result;
-    }
-
-    /**
-     * ErrorProcessingAggregatorLogging constructor.
-     *
-     * @param ProcessingErrorFactory $errorFactory
-     * @param Monolog        $logger
-     */
-    public function __construct(ProcessingErrorFactory $errorFactory, LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-        parent::__construct($errorFactory);
     }
 }

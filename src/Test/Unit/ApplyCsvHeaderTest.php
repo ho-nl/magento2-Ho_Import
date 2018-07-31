@@ -10,34 +10,37 @@ namespace Ho\Import\Test\Unit;
 use Ho\Import\Streamer\FileCsv;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Filesystem\DirectoryList;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\TestCase;
 
 class ApplyCsvHeaderTest extends TestCase
 {
-
+    /** @var ObjectManager */
     private $objectManager;
 
-    /**
-     * @var \Ho\Import\Streamer\FileCsv
-     */
+    /** @var FileCsv */
     private $parser;
 
+    /** @var [] */
     private $header;
 
+    /** @var String */
     private $requestFile;
 
+    /** @var  DirectoryList */
     private $directoryList;
 
     protected function setUp()
     {
         parent::setUp();
-        $this->objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $this->objectManager = new ObjectManager($this);
         $this->directoryList = $this->createMock(DirectoryList::class);
     }
 
     /**
      *
      * @test
+     * @throws \League\Csv\Exception
      */
     public function should_have_headers_as_keys_for_csv_file_without_header()
     {
@@ -68,6 +71,7 @@ class ApplyCsvHeaderTest extends TestCase
     /**
      *
      * @test
+     * @throws \League\Csv\Exception
      */
     public function should_have_headers_as_keys_for_csv_file_with_header()
     {

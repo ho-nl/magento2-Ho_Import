@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
 
@@ -73,7 +73,8 @@ abstract class ImportProfile implements ImportProfileInterface
             $importer->setConfig($this->getConfig());
 
             $this->stopwatch->start('importinstance');
-            $importer->processImport($items);
+            $items = array_values($items);
+            $errors = $importer->processImport($items);
             $stopwatchEvent = $this->stopwatch->stop('importinstance');
 
             $this->consoleOutput->writeln((string) new Phrase(
@@ -84,10 +85,7 @@ abstract class ImportProfile implements ImportProfileInterface
                 round($stopwatchEvent->getMemory() / 1024 / 1024, 1)
             ]));
 
-            $this->consoleOutput->write($importer->getLogTrace());
-            foreach ($importer->getErrorMessages() as $error) {
-                $this->consoleOutput->writeln("<error>$error</error>");
-            }
+            $this->consoleOutput->writeln("<error>$errors</error>");
         } catch (\Exception $e) {
             $this->consoleOutput->writeln($e->getMessage());
         }
