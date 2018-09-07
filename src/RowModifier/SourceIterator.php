@@ -84,7 +84,7 @@ class SourceIterator extends AbstractRowModifier
         $identifier = $this->identifier;
         foreach ($this->iterator as $item) {
             $ids = $identifier($item);
-            $ids = is_array($ids) ? $ids : [$ids];
+            $ids = \is_array($ids) ? $ids : [$ids];
 
             foreach ($ids as $id) {
                 switch ($this->mode) {

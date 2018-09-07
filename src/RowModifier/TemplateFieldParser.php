@@ -3,6 +3,7 @@
  * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Ho\Import\RowModifier;
 
@@ -12,37 +13,32 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class TemplateFieldParser extends AbstractRowModifier
 {
-    /** @var Template  */
+    /** @var Template $filterTemplate */
     private $filterTemplate;
 
-    /**
-     * @var array
-     */
+    /** @var ManagerInterface $messageManager */
+    private $messageManager;
+
+    /** @var array $templateFields */
     private $templateFields;
 
     /**
-     * @var ManagerInterface
-     */
-    private $messageManager;
-
-    /**
-     * TemplateFieldParser constructor.
-     *
      * @param ConsoleOutput    $consoleOutput
      * @param Template         $filterTemplate
-     * @param array            $templateFields
      * @param ManagerInterface $messageManager
+     * @param array            $templateFields
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         Template $filterTemplate,
-        $templateFields = [],
-    ManagerInterface $messageManager
+        ManagerInterface $messageManager,
+        $templateFields = []
     ) {
         parent::__construct($consoleOutput);
+
         $this->filterTemplate = $filterTemplate;
-        $this->templateFields = $templateFields;
         $this->messageManager = $messageManager;
+        $this->templateFields = $templateFields;
     }
 
     /**
@@ -61,6 +57,4 @@ class TemplateFieldParser extends AbstractRowModifier
             }
         }
     }
-
-
 }
