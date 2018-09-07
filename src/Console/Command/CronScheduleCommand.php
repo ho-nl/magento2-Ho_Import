@@ -5,7 +5,6 @@
  */
 namespace Ho\Import\Console\Command;
 
-use Ho\Import\Api\ImportProfileListInterface;
 use Magento\Cron\Model\Schedule;
 use Magento\Framework\Phrase;
 use Symfony\Component\Console\Command\Command;
@@ -42,14 +41,12 @@ class CronScheduleCommand extends Command
     private $timezone;
 
     /**
-     * HoImportRunCommand constructor.
-     *
-     * @param \Magento\Cron\Model\ConfigInterface                  $config
+     * @param \Magento\Cron\Model\ConfigInterface\Proxy            $config
      * @param \Magento\Cron\Model\ScheduleFactory                  $scheduleFactory
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezone
      */
     public function __construct(
-        \Magento\Cron\Model\ConfigInterface $config,
+        \Magento\Cron\Model\ConfigInterface\Proxy $config,
         \Magento\Cron\Model\ScheduleFactory $scheduleFactory,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezone
     ) {
@@ -88,6 +85,8 @@ class CronScheduleCommand extends Command
      *
      * @param InputInterface  $input
      * @param OutputInterface $output
+     *
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
      *
      * @return void
      */
@@ -155,6 +154,8 @@ class CronScheduleCommand extends Command
     /**
      * @param string[]      $job
      * @param \DateInterval $ahead
+     *
+     * @throws \Magento\Framework\Exception\CronException
      *
      * @return Schedule
      */
