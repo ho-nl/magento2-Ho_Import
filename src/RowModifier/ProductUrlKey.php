@@ -1,10 +1,12 @@
 <?php
 /**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
+
 namespace Ho\Import\RowModifier;
 
+use Ho\Import\Logger\Log;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\UrlRewrite\Model\UrlFinderInterface;
@@ -71,9 +73,8 @@ class ProductUrlKey extends AbstractRowModifier
     private $scopeConfig;
 
     /**
-     * ProductUrlKey constructor.
-     *
      * @param ConsoleOutput                      $consoleOutput
+     * @param Log                                $log
      * @param \Magento\Catalog\Model\Product\Url $urlKeyFormatter
      * @param UrlFinderInterface                 $urlFinderInterface
      * @param ScopeConfigInterface               $scopeConfig
@@ -81,16 +82,19 @@ class ProductUrlKey extends AbstractRowModifier
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
+        Log $log,
         \Magento\Catalog\Model\Product\Url $urlKeyFormatter,
         UrlFinderInterface $urlFinderInterface,
         ScopeConfigInterface $scopeConfig,
         CollectionFactory $productCollectionFactory
     ) {
-        parent::__construct($consoleOutput);
-        $this->urlKeyFormatter          = $urlKeyFormatter;
-        $this->urlFinderInterface       = $urlFinderInterface;
+        parent::__construct($consoleOutput, $log);
+
+        $this->urlKeyFormatter = $urlKeyFormatter;
+        $this->urlFinderInterface = $urlFinderInterface;
         $this->productCollectionFactory = $productCollectionFactory;
-        $this->scopeConfig              = $scopeConfig;
+        $this->scopeConfig = $scopeConfig;
+        $this->consoleOutput = $consoleOutput;
     }
 
     /**
@@ -101,15 +105,18 @@ class ProductUrlKey extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>Checking url_keys and make sure they are unique</info>");
+        $this->log->addInfo('Checking url_keys and make sure they are unique');
 
         $this->initProductToSku();
         foreach ($this->items as $identifier => &$item) {
             //check for existence.
             if (empty($item['url_key'])) {
                 $this->consoleOutput->writeln("<comment>ProductUrlKey: url_key not found {$identifier}</comment>");
+                $this->log->addInfo('ProductUrlKey: url_key not found '.$identifier);
             }
             $item['url_key'] = $this->getUrlKey($item['url_key'], $identifier);
         }
+
         $this->reset();
     }
 
@@ -167,9 +174,11 @@ class ProductUrlKey extends AbstractRowModifier
             }
             continue;
         }
+
         $this->consoleOutput->writeln(
             "<error>Can not find available URL-key for {$identifier}, you might run into trouble</error>"
         );
+        $this->log->addError("Can not find available URL-key for {$identifier}, you might run into trouble");
     }
 
     /**

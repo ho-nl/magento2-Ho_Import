@@ -1,19 +1,17 @@
 <?php
 /**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
 
 namespace Ho\Import\RowModifier;
 
 use Ho\Import\Helper\LineFormatterMulti;
-use Magento\CatalogImportExport\Model\Import\Product as ImportProduct;
-use Magento\ImportExport\Model\Import;
+use Ho\Import\Logger\Log;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 class ConfigurableBuilder extends AbstractRowModifier
 {
-
     /**
      * Method to retrieve the configurable SKU
      *
@@ -28,14 +26,12 @@ class ConfigurableBuilder extends AbstractRowModifier
      */
     protected $attributes;
 
-
     /**
      * Mapping for additional configurable values
      *
      * @var \Closure[]
      */
     protected $configurableValues = [];
-
 
     /**
      * Mapping for mapped simples who belong to configurables
@@ -60,15 +56,15 @@ class ConfigurableBuilder extends AbstractRowModifier
     private $enableFilterConfigurable;
 
     /**
-     * ConfigurableBuilder constructor.
-     *
      * @param ConsoleOutput      $consoleOutput
      * @param LineFormatterMulti $lineFormatterMulti
      * @param \Closure           $configurableSku
      * @param \Closure           $attributes
      * @param \Closure[]         $configurableValues
      * @param \Closure[]         $simpleValues
+     * @param Log                $log
      * @param \Closure           $splitOnValue
+     * @param bool               $enableFilterConfigurable
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
@@ -77,10 +73,11 @@ class ConfigurableBuilder extends AbstractRowModifier
         $attributes,
         $configurableValues,
         $simpleValues,
+        Log $log,
         $splitOnValue = null,
         $enableFilterConfigurable = true
     ) {
-        parent::__construct($consoleOutput);
+        parent::__construct($consoleOutput, $log);
         $this->lineFormatterMulti = $lineFormatterMulti;
         $this->configurableSku = $configurableSku;
         $this->attributes = $attributes;
@@ -96,7 +93,8 @@ class ConfigurableBuilder extends AbstractRowModifier
      */
     public function process()
     {
-        $this->consoleOutput->writeln("<info>Creating configurable products... </info>");
+        $this->consoleOutput->writeln("<info>Creating configurable products...</info>");
+        $this->log->addInfo('Creating configurable products...');
 
         $skuCallback = $this->configurableSku;
         $attrCallback = $this->attributes;
@@ -133,9 +131,11 @@ class ConfigurableBuilder extends AbstractRowModifier
 
             $configurables[$configurableSku]['configurable_variations'][] = $variation;
         }
+        unset($item);
 
         $count = count($configurables);
         $this->consoleOutput->writeln("{$count} potential configurables created");
+        $this->log->addInfo("{$count} potential configurables created");
         $configurables = $this->splitOnValue($configurables);
 
         if ($this->enableFilterConfigurable) {
@@ -154,6 +154,7 @@ class ConfigurableBuilder extends AbstractRowModifier
 
         $count = count($configurables);
         $this->consoleOutput->writeln("<info>Created {$count} configurables</info>");
+        $this->log->addInfo("Created {$count} configurables");
 
         $this->items += $configurables;
     }
@@ -174,7 +175,7 @@ class ConfigurableBuilder extends AbstractRowModifier
 
         //@todo implement the configurable product mapper by using ItemMapper
         foreach ($this->configurableValues as $key => $value) {
-            if (is_callable($value)) {
+            if (\is_callable($value)) {
                 $value = $value($configurable);
             }
             $configurable[$key] = $value;
@@ -254,6 +255,7 @@ class ConfigurableBuilder extends AbstractRowModifier
         $count = count($newConfigurables) - count($configurables);
         if ($count > 0) {
             $this->consoleOutput->writeln("Created {$count} extra configurables while splitting");
+            $this->log->addInfo("Created {$count} extra configurables while splitting");
         }
 
         return $newConfigurables;
@@ -273,7 +275,7 @@ class ConfigurableBuilder extends AbstractRowModifier
                 $item =& $this->items[$simpleData['sku']];
                 //@todo implement the simple product mapper by using ItemMapper
                 foreach ($this->simpleValues as $key => $value) {
-                    if (is_callable($value)) {
+                    if (\is_callable($value)) {
                         $value = $value($item);
                     }
                     $item[$key] = $value;

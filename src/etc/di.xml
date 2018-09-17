@@ -13,6 +13,20 @@
             </argument>
         </arguments>
     </type>
+    <type name="Ho\Import\Logger\Handler">
+        <arguments>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+    <type name="Ho\Import\Logger\Log">
+        <arguments>
+            <argument name="name" xsi:type="string">import_logging</argument>
+            <argument name="handlers"  xsi:type="array">
+                <item name="system" xsi:type="object">Ho\Import\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
+
     <preference for="Ho\Import\Api\ImportProfilePoolInterface" type="Ho\Import\Model\ImportProfilePool" />
     <preference for="Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator" type="Ho\Import\Rewrite\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator" />
     <preference for="Magento\CatalogUrlRewrite\Observer\AfterImportDataObserver" type="Ho\Import\Rewrite\CatalogUrlRewrite\Observer\AfterImportDataObserver" />
@@ -20,6 +34,5 @@
     <!-- Bug fixes in the ImportExport module -->
     <preference for="Magento\CatalogImportExport\Model\Import\Product" type="Ho\Import\Rewrite\ImportExport\Import\Product" />
     <preference for="Magento\CatalogImportExport\Model\Import\Product\Option" type="Ho\Import\Rewrite\ImportExport\Import\ProductOption" />
-    <preference for="Magento\Catalog\Model\Product\Attribute\OptionManagement"
-                type="Ho\Import\Rewrite\CatalogProductAttributeOptionManagement"></preference>
+    <preference for="Magento\Catalog\Model\Product\Attribute\OptionManagement" type="Ho\Import\Rewrite\CatalogProductAttributeOptionManagement"/>
 </config>

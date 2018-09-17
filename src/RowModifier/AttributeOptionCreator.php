@@ -1,11 +1,12 @@
 <?php
 /**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
 
 namespace Ho\Import\RowModifier;
 
+use Ho\Import\Logger\Log;
 use Magento\Catalog\Api\ProductAttributeOptionManagementInterface as OptionManagement;
 use Magento\Eav\Model\Entity\Attribute\OptionFactory;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -18,7 +19,6 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  */
 class AttributeOptionCreator extends AbstractRowModifier
 {
-
     /**
      * Option management interface
      *
@@ -41,28 +41,31 @@ class AttributeOptionCreator extends AbstractRowModifier
     protected $attributes;
 
     /**
-     * AttributeOptionCreator constructor.
-     *
      * @param OptionManagement $optionManagement
      * @param OptionFactory    $optionFactory
      * @param ConsoleOutput    $consoleOutput
+     * @param Log              $log
      * @param string[]         $attributes
      */
     public function __construct(
         OptionManagement $optionManagement,
         OptionFactory $optionFactory,
         ConsoleOutput $consoleOutput,
+        Log $log,
         $attributes = []
     ) {
-        parent::__construct($consoleOutput);
+        parent::__construct($consoleOutput, $log);
+
         $this->optionManagement = $optionManagement;
         $this->optionFactory = $optionFactory;
         $this->attributes = $attributes;
     }
 
-
     /**
      * Automatically create attribute options.
+     *
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\StateException
      *
      * @return void
      */
@@ -70,16 +73,21 @@ class AttributeOptionCreator extends AbstractRowModifier
     {
         $attributes = implode(', ', $this->attributes);
         $this->consoleOutput->writeln("<info>Creating attribute options for: {$attributes}</info>");
+        $this->log->addInfo('Creating attribute options for:'. $attributes);
+
         foreach ($this->attributes as $attribute) {
             $this->createForAttribute($attribute);
         }
     }
 
-
     /**
      * Create attribute options
      *
      * @param string $attributeCode
+     *
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\StateException
+     *
      * @return void
      */
     public function createForAttribute(string $attributeCode)
@@ -88,7 +96,7 @@ class AttributeOptionCreator extends AbstractRowModifier
 
         $items = $this->optionManagement->getItems($attributeCode);
         foreach ($items as $item) {
-            if (in_array($item->getLabel(), $uniqueOptions)) {
+            if (\in_array($item->getLabel(), $uniqueOptions)) {
                 unset($uniqueOptions[$item->getLabel()]);
             }
         }
@@ -118,10 +126,12 @@ class AttributeOptionCreator extends AbstractRowModifier
                 continue;
             }
 
-            if (! is_string($item[$attribute])) {
+            if (! \is_string($item[$attribute])) {
                 $this->consoleOutput->writeln(
                     "<error>AttributeOptionCreator: Invalid value for {$attribute} {$identifier}</error>"
                 );
+                $this->log->addError("AttributeOptionCreator: Invalid value for {$attribute} {$identifier}");
+
                 $item[$attribute] = '';
                 continue;
             }

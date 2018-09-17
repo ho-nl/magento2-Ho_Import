@@ -6,6 +6,7 @@
 namespace Ho\Import\RowModifier;
 
 use Closure;
+use Ho\Import\Logger\Log;
 use Iterator;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -58,15 +59,18 @@ class SourceIterator extends AbstractRowModifier
      *                                   to identify the parent. Can return a String or Array.
      *                                   First argument of the \Closure will be the item
      * @param Iterator      $iterator    \Ho\Import\Streamer\FileXml or \Ho\Import\Streamer\HttpXml
+     * @param Log           $log
      * @param string        $mode        self::MODE_ADD or self::MODE_CREATE
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         Closure $identifier,
         Iterator $iterator,
+        Log $log,
         $mode = self::MODE_CREATE
     ) {
-        parent::__construct($consoleOutput);
+        parent::__construct($consoleOutput, $log);
+
         $this->identifier = $identifier;
         $this->iterator = $iterator;
         $this->mode = $mode;
@@ -80,6 +84,7 @@ class SourceIterator extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("SourceIterator: <info>Adding information from stream</info>");
+        $this->log->addInfo('SourceIterator: Adding information from stream');
 
         $identifier = $this->identifier;
         foreach ($this->iterator as $item) {
@@ -100,6 +105,8 @@ class SourceIterator extends AbstractRowModifier
                             $this->consoleOutput->writeln(
                                 "SourceIterator: <comment>Item not found for {$id}</comment>"
                             );
+                            $this->log->addInfo("SourceIterator: Item not found for {$id}");
+
                             continue;
                         }
                         $this->items[$id] += $item;

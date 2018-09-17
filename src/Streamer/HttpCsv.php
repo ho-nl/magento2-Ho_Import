@@ -7,6 +7,7 @@
 namespace Ho\Import\Streamer;
 
 use Bakame\Psr7\Factory\StreamWrapper;
+use Ho\Import\Logger\Log;
 use Psr\Cache\CacheItemPoolInterface as CachePool;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -28,7 +29,6 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  */
 class HttpCsv
 {
-
     /**
      * @var CachePool
      */
@@ -50,26 +50,10 @@ class HttpCsv
     private $requestMethod;
 
     /**
-     * @var []
+     * @var array
      */
     private $requestOptions;
 
-//
-//    /**
-//     * @var string
-//     */
-//    private $xmlParser;
-//
-//    /**
-//     * @var []
-//     */
-//    private $xmlOptions;
-//
-//    /**
-//     * @var int
-//     */
-//    private $limit;
-//
     /**
      * @var int
      */
@@ -81,37 +65,37 @@ class HttpCsv
     public $headers;
 
     /**
-     * Xml constructor.
-     *
+     * @var Log
+     */
+    private $log;
+
+    /**
      * @param CachePool     $cacheItemPool
      * @param ConsoleOutput $consoleOutput
-     *
      * @param string        $requestUrl
+     * @param Log           $log
      * @param string        $requestMethod
      * @param array         $requestOptions
-     * @param string        $xmlParser
-     * @param array         $xmlOptions
-     * @param int           $limit
      * @param int           $ttl
-     *
+     * @param array         $headers
      */
     public function __construct(
         CachePool $cacheItemPool,
         ConsoleOutput $consoleOutput,
         string $requestUrl,
+        Log $log,
         string $requestMethod = 'GET',
         array $requestOptions = [],
-//        int $limit = PHP_INT_MAX,
-        int $ttl = (12 * 3600),
-        $headers = []
+        int $ttl = 12 * 3600,
+        array $headers = []
     ) {
-        $this->requestUrl     = $requestUrl;
-        $this->requestMethod  = $requestMethod;
-        $this->requestOptions = $requestOptions;
-//        $this->limit          = $limit;
         $this->cacheItemPool = $cacheItemPool;
         $this->consoleOutput = $consoleOutput;
-        $this->ttl           = $ttl;
+        $this->requestUrl = $requestUrl;
+        $this->log = $log;
+        $this->requestMethod = $requestMethod;
+        $this->requestOptions = $requestOptions;
+        $this->ttl = $ttl;
         $this->headers = $headers;
     }
 
@@ -124,15 +108,18 @@ class HttpCsv
     }
 
     /**
-     * Get the source iterator
-     * @return \Generator
      * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \League\Csv\Exception
+     *
+     * @return \Generator
      */
     public function getIterator()
     {
         $this->consoleOutput->write(
             "<info>Streamer\HttpCsv: Getting data from URL {$this->requestUrl}</info>"
         );
+        $this->log->addInfo('Streamer\HttpCsv: Getting data from URL '.$this->requestUrl);
+
         $stack = \GuzzleHttp\HandlerStack::create();
         $stack->push(new \Kevinrob\GuzzleCache\CacheMiddleware(
             new \Kevinrob\GuzzleCache\Strategy\GreedyCacheStrategy(
@@ -151,10 +138,10 @@ class HttpCsv
         );
 
         $csvReader = \League\Csv\Reader::createFromStream(StreamWrapper::getResource($response->getBody()));
-        if (empty($this->headers))
-        {
+        if (empty($this->headers)) {
             $csvReader->setHeaderOffset(0);
         }
+
         foreach ($csvReader->getIterator() as $row) {
             yield (empty($this->headers) ? $row : array_combine($this->headers, $row));
         }

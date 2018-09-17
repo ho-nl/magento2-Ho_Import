@@ -1,11 +1,12 @@
 <?php
 /**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
 
 namespace Ho\Import\RowModifier;
 
+use Ho\Import\Logger\Log;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
@@ -29,19 +30,17 @@ class ItemMapper extends AbstractRowModifier
      * Mapping Definition
      * @var \Closure[]|string[]
      */
-    protected $mapping;
+    private $mapping;
 
     /**
-     * ItemMapper constructor.
-     *
      * @param ConsoleOutput $consoleOutput
+     * @param Log           $log
      * @param array         $mapping
      */
-    public function __construct(
-        ConsoleOutput $consoleOutput,
-        array $mapping = []
-    ) {
-        parent::__construct($consoleOutput);
+    public function __construct(ConsoleOutput $consoleOutput, Log $log, array $mapping = [])
+    {
+        parent::__construct($consoleOutput, $log);
+
         $this->mapping = $mapping;
     }
 
@@ -67,6 +66,7 @@ class ItemMapper extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>Mapping item information</info>");
+        $this->log->addInfo('Mapping item information');
 
         foreach ($this->items as $identifier => $item) {
             try {
@@ -81,27 +81,31 @@ class ItemMapper extends AbstractRowModifier
                             return null;
                         }
 
-                        if (is_array($value) || is_object($value)) {
+                        if (\is_array($value) || \is_object($value)) {
                             $val = print_r($filteredItem, true);
                             $this->consoleOutput->writeln(
                                 "<comment>Value is a object or array for $identifier: {$val}</comment>"
                             );
+                            $this->log->addInfo("Value is a object or array for $identifier: {$val}");
+
                             return null;
                         }
 
                         return $value;
                     }, $filteredItem);
                 } else {
-                    $this->consoleOutput->writeln(
-                        sprintf("<comment>Error validating, skipping %s: %s</comment>",
-                            $identifier, implode(",", $itemsValidated))
-                    );
+                    $output = sprintf('Error validating, skipping %s: %s', $identifier, implode(',', $itemsValidated));
+
+                    $this->consoleOutput->writeln(sprintf('<comment>%s</comment>', $output));
+                    $this->log->addError($output);
                 }
 
             } catch (\Exception $e) {
                 $this->consoleOutput->writeln(
                     "<error>ItemMapper: {$e->getMessage()} (removing product {$identifier})</error>"
                 );
+                $this->log->addError("ItemMapper: {$e->getMessage()} (removing product {$identifier})");
+
                 unset($this->items[$identifier]);
             }
         }
@@ -114,7 +118,7 @@ class ItemMapper extends AbstractRowModifier
     {
         $product = [];
         foreach ($this->mapping as $key => $value) {
-            if (is_callable($value)) {
+            if (\is_callable($value)) {
                 $value = $value($item);
             }
 

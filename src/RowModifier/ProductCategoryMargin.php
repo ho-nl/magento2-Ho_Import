@@ -7,6 +7,7 @@
 namespace Ho\Import\RowModifier;
 
 use Ho\Import\Helper\LineFormatterMulti;
+use Ho\Import\Logger\Log;
 use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -35,18 +36,19 @@ class ProductCategoryMargin extends AbstractRowModifier
     private $lineFormatterMulti;
 
     /**
-     * ExternalCategoryManagement constructor.
-     *
      * @param ConsoleOutput             $consoleOutput
+     * @param Log                       $log
      * @param CategoryCollectionFactory $categoryCollectionFactory
      * @param LineFormatterMulti        $lineFormatterMulti
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
+        Log $log,
         CategoryCollectionFactory $categoryCollectionFactory,
         LineFormatterMulti $lineFormatterMulti
     ) {
-        parent::__construct($consoleOutput);
+        parent::__construct($consoleOutput, $log);
+
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->lineFormatterMulti = $lineFormatterMulti;
     }

@@ -7,13 +7,10 @@
 namespace Ho\Import\Model;
 
 use Ho\Import\Api\ImportProfileInterface;
+use Ho\Import\Logger\Log;
 use Magento\Framework\Phrase;
 use Magento\Framework\ObjectManagerInterface;
-
-
-use Magento\Framework\App\ObjectManager\ConfigLoader;
 use Magento\Framework\App\ObjectManagerFactory;
-use Magento\Framework\App\State as AppState;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Stopwatch\Stopwatch;
 
@@ -40,22 +37,27 @@ abstract class ImportProfile implements ImportProfileInterface
      */
     private $objectManagerFactory;
 
+    /**
+     * @var Log
+     */
+    protected $log;
 
     /**
-     * ImportProfile constructor.
-     *
-     * @param ObjectManagerFactory                            $objectManagerFactory
-     * @param Stopwatch          $stopwatch
-     * @param ConsoleOutput $consoleOutput
+     * @param ObjectManagerFactory $objectManagerFactory
+     * @param Stopwatch            $stopwatch
+     * @param ConsoleOutput        $consoleOutput
+     * @param Log                  $log
      */
     public function __construct(
         ObjectManagerFactory $objectManagerFactory,
         Stopwatch $stopwatch,
-        ConsoleOutput $consoleOutput
+        ConsoleOutput $consoleOutput,
+        Log $log
     ) {
         $this->objectManagerFactory = $objectManagerFactory;
         $this->stopwatch = $stopwatch;
         $this->consoleOutput = $consoleOutput;
+        $this->log = $log;
     }
 
 
@@ -78,19 +80,24 @@ abstract class ImportProfile implements ImportProfileInterface
             $errors = $importer->processImport($items);
             $stopwatchEvent = $this->stopwatch->stop('importinstance');
 
-            $this->consoleOutput->writeln((string) new Phrase(
+            $output = (string) new Phrase(
                 '%1 items imported in %2 sec, <info>%3 items / sec</info> (%4mb used)', [
                 count($items),
                 round($stopwatchEvent->getDuration() / 1000, 1),
                 round(count($items) / ($stopwatchEvent->getDuration() / 1000), 1),
                 round($stopwatchEvent->getMemory() / 1024 / 1024, 1)
-            ]));
+            ]);
+
+            $this->consoleOutput->writeln($output);
+            $this->log->addInfo($output);
 
             $this->consoleOutput->writeln("<error>$errors</error>");
+            $this->log->addError($errors);
 
             return \Magento\Framework\Console\Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
             $this->consoleOutput->writeln($e->getMessage());
+            $this->log->addCritical($e->getMessage());
 
             return \Magento\Framework\Console\Cli::RETURN_FAILURE;
         }
@@ -99,12 +106,13 @@ abstract class ImportProfile implements ImportProfileInterface
     /**
      * Get all items that need to be imported
      *
-     * @return \[]
+     * @return array
      */
     private function getItemsMeasured()
     {
         $this->stopwatch->start('profileinstance');
         $this->consoleOutput->writeln('Getting item data');
+        $this->log->addInfo('Getting item data');
         $items = $this->getItems();
         $stopwatchEvent = $this->stopwatch->stop('profileinstance');
 
@@ -112,13 +120,17 @@ abstract class ImportProfile implements ImportProfileInterface
             return $items;
         }
 
-        $this->consoleOutput->writeln((string)new Phrase('%1 items processed in %2 sec, <info>%3 items / sec</info> (%4mb used)',
+        $output = (string) new Phrase('%1 items processed in %2 sec, <info>%3 items / sec</info> (%4mb used)',
             [
                 count($items),
                 round($stopwatchEvent->getDuration() / 1000, 1),
                 round(count($items) / ($stopwatchEvent->getDuration() / 1000), 1),
                 round($stopwatchEvent->getMemory() / 1024 / 1024, 1)
-            ]));
+            ]);
+
+        $this->consoleOutput->writeln($output);
+        $this->log->addInfo($output);
+
         return $items;
     }
 

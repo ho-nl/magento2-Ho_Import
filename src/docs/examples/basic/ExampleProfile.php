@@ -1,9 +1,14 @@
 <?php
 /**
- * Copyright © 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
+
 namespace Company\ImportModule\Import;
+
+use Magento\Framework\App\ObjectManagerFactory;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
  * Example class how to create your own basic importer
@@ -12,7 +17,6 @@ namespace Company\ImportModule\Import;
  */
 class ExampleProfile extends \Ho\Import\Model\ImportProfile
 {
-
     /**
      * Steam XML over the web without memory usage, see class for more details
      *
@@ -40,7 +44,8 @@ class ExampleProfile extends \Ho\Import\Model\ImportProfile
      * @param \Magento\Framework\App\ObjectManagerFactory     $objectManagerFactory
      * @param \Symfony\Component\Stopwatch\Stopwatch          $stopwatch
      * @param \Symfony\Component\Console\Output\ConsoleOutput $consoleOutput
-     * @param \Ho\Import\Streamer\XmlFactory                  $xmlStreamerFactory
+     * @param \Ho\Import\Logger\Log                           $log
+     * @param \Ho\Import\Streamer\FileXmlFactory              $xmlStreamerFactory
      * @param \Ho\Import\RowModifier\SourceIteratorFactory    $sourceIteratorFactory
      * @param \Ho\Import\RowModifier\ItemMapperFactory        $itemMapperFactory
      */
@@ -48,14 +53,16 @@ class ExampleProfile extends \Ho\Import\Model\ImportProfile
         \Magento\Framework\App\ObjectManagerFactory $objectManagerFactory,
         \Symfony\Component\Stopwatch\Stopwatch $stopwatch,
         \Symfony\Component\Console\Output\ConsoleOutput $consoleOutput,
+        \Ho\Import\Logger\Log $log,
         \Ho\Import\Streamer\FileXmlFactory $xmlStreamerFactory,
         \Ho\Import\RowModifier\SourceIteratorFactory $sourceIteratorFactory,
         \Ho\Import\RowModifier\ItemMapperFactory $itemMapperFactory
     ) {
-        parent::__construct($objectManagerFactory, $stopwatch, $consoleOutput);
-        $this->xmlStreamerFactory    = $xmlStreamerFactory;
+        parent::__construct($objectManagerFactory, $stopwatch, $consoleOutput, $log);
+
+        $this->xmlStreamerFactory = $xmlStreamerFactory;
         $this->sourceIteratorFactory = $sourceIteratorFactory;
-        $this->itemMapperFactory     = $itemMapperFactory;
+        $this->itemMapperFactory = $itemMapperFactory;
     }
 
     /**

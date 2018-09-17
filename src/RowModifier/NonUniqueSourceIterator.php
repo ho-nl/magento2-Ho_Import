@@ -5,6 +5,7 @@
  */
 namespace Ho\Import\RowModifier;
 
+use Ho\Import\Logger\Log;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
@@ -52,14 +53,17 @@ class NonUniqueSourceIterator extends AbstractRowModifier
      *                                   First argument of the \Closure will be the $item
      * @param \Iterator     $iterator    \Ho\Import\Streamer\FileXml or \Ho\Import\Streamer\HttpXml
      * @param string        $nodeName    Array key where the data will be stored in the parent
+     * @param Log           $log
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         \Closure $identifier,
         \Iterator $iterator,
-        $nodeName
+        $nodeName,
+        Log $log
     ) {
-        parent::__construct($consoleOutput);
+        parent::__construct($consoleOutput, $log);
+
         $this->identifier = $identifier;
         $this->iterator = $iterator;
         $this->nodeName = $nodeName;
@@ -73,6 +77,7 @@ class NonUniqueSourceIterator extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>NonUniqueSourceIterator: Adding information from stream</info>");
+        $this->log->addInfo('NonUniqueSourceIterator: Adding information from stream');
 
         $identifier = $this->identifier;
         foreach ($this->iterator as $item) {
@@ -84,6 +89,8 @@ class NonUniqueSourceIterator extends AbstractRowModifier
                     $this->consoleOutput->writeln(
                         "NonUniqueSourceIterator: <comment>Item not found for {$id}</comment>"
                     );
+                    $this->log->addInfo("NonUniqueSourceIterator: Item not found for {$id}");
+
                     continue;
                 }
                 $this->items[$id][$this->nodeName][] = $item;

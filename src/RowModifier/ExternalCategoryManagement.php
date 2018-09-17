@@ -1,21 +1,17 @@
 <?php
 /**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
 
 namespace Ho\Import\RowModifier;
 
+use Ho\Import\Logger\Log;
 use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
-/**
- * Class ExternalCategoryManagement
- *
- * @package Ho\Import\RowModifier
- */
 class ExternalCategoryManagement extends AbstractRowModifier
 {
     /**
@@ -47,20 +43,21 @@ class ExternalCategoryManagement extends AbstractRowModifier
     private $productCategoryMapping;
 
     /**
-     * ExternalCategoryManagement constructor.
-     *
      * @param ConsoleOutput             $consoleOutput
      * @param CategoryCollectionFactory $categoryCollectionFactory
      * @param ProductCollectionFactory  $productCollectionFactory
+     * @param Log                       $log
      * @param string[]                  $externalCategoryPathFilter
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         CategoryCollectionFactory $categoryCollectionFactory,
         ProductCollectionFactory $productCollectionFactory,
+        Log $log,
         $externalCategoryPathFilter = []
     ) {
-        parent::__construct($consoleOutput);
+        parent::__construct($consoleOutput, $log);
+
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->externalCategoryPathFilter = $externalCategoryPathFilter;
@@ -73,6 +70,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>Adding existing product category associations</info>");
+        $this->log->addInfo('Adding existing product category associations');
 
         $this->initCategoryMapping();
         $this->initCategoryProductMapping();

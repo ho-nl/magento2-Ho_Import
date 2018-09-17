@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
 
@@ -8,6 +8,7 @@ namespace Ho\Import\RowModifier;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Promise;
+use Ho\Import\Logger\Log;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -62,7 +63,6 @@ class ImageDownloader extends AbstractRowModifier
      */
     private $cachedReject = [];
 
-
     /**
      * Use existing files or redownload alle files
      *
@@ -70,24 +70,20 @@ class ImageDownloader extends AbstractRowModifier
      */
     protected $useExisting = false;
 
-    private $stopwatch;
-
-
     /**
-     * AsyncImageDownloader constructor.
-     *
      * @param DirectoryList $directoryList
      * @param ConsoleOutput $consoleOutput
+     * @param Log           $log
      */
     public function __construct(
         DirectoryList $directoryList,
-        ConsoleOutput $consoleOutput
+        ConsoleOutput $consoleOutput,
+        Log $log
     ) {
-        parent::__construct($consoleOutput);
+        parent::__construct($consoleOutput, $log);
+
         $this->directoryList = $directoryList;
-        $this->httpClient    = new HttpClient();
-//        $this->progressBar   = new \Symfony\Component\Console\Helper\ProgressBar($this->consoleOutput);
-        $this->stopwatch   = new \Symfony\Component\Stopwatch\Stopwatch();
+        $this->httpClient = new HttpClient();
     }
 
     /**

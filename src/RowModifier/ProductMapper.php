@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
 
@@ -32,6 +32,7 @@ abstract class ProductMapper extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>Mapping product information</info>");
+        $this->log->addInfo('Mapping product information');
 
         foreach ($this->getSourceItems() as $item) {
             try {
@@ -49,14 +50,15 @@ abstract class ProductMapper extends AbstractRowModifier
                         return $item;
                     }, $filteredItem);
                 } else {
-                    $this->consoleOutput->writeln(
-                        sprintf("<comment>Error validating, skipping %s: %s</comment>",
-                            $identifier, implode(",", $errors))
-                    );
+                    $output = sprintf('Error validating, skipping %s: %s', $identifier, implode(',', $errors));
+
+                    $this->consoleOutput->writeln(sprintf('<comment>%s</comment>', $output));
+                    $this->log->addInfo($output);
                 }
 
             } catch (\Exception $e) {
                 $this->consoleOutput->writeln("<error>{$e->getMessage()}</error>");
+                $this->log->addError($e->getMessage());
             }
         }
     }
@@ -68,7 +70,7 @@ abstract class ProductMapper extends AbstractRowModifier
     {
         $product = [];
         foreach ($this->getMappingDefinition() as $key => $value) {
-            if (is_callable($value)) {
+            if (\is_callable($value)) {
                 $value = $value($item);
             }
 

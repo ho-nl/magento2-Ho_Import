@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Ho\Import\RowModifier;
 
+use Ho\Import\Logger\Log;
 use Magento\Framework\Filter\Template;
 use Magento\Framework\Message\ManagerInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -26,15 +27,17 @@ class TemplateFieldParser extends AbstractRowModifier
      * @param ConsoleOutput    $consoleOutput
      * @param Template         $filterTemplate
      * @param ManagerInterface $messageManager
+     * @param Log              $log
      * @param array            $templateFields
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         Template $filterTemplate,
         ManagerInterface $messageManager,
+        Log $log,
         $templateFields = []
     ) {
-        parent::__construct($consoleOutput);
+        parent::__construct($consoleOutput, $log);
 
         $this->filterTemplate = $filterTemplate;
         $this->messageManager = $messageManager;
@@ -52,6 +55,7 @@ class TemplateFieldParser extends AbstractRowModifier
                 try {
                     $item[$fieldName] = $this->filterTemplate->filter($template);
                 } catch (\Exception $e) {
+                    $this->log->addError($e->getMessage());
                     $this->messageManager->addExceptionMessage($e);
                 }
             }

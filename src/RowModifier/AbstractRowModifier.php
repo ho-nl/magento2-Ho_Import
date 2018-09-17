@@ -6,6 +6,7 @@
 
 namespace Ho\Import\RowModifier;
 
+use Ho\Import\Logger\Log;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
@@ -15,7 +16,6 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  */
 abstract class AbstractRowModifier
 {
-
     /**
      * Log items to the console.
      *
@@ -23,7 +23,10 @@ abstract class AbstractRowModifier
      */
     protected $consoleOutput;
 
-
+    /**
+     * @var Log
+     */
+    protected $log;
 
     /**
      * Item array with all items to import
@@ -33,16 +36,14 @@ abstract class AbstractRowModifier
     protected $items;
 
     /**
-     * AbstractRowModifier constructor.
-     *
      * @param ConsoleOutput $consoleOutput
+     * @param Log           $log
      */
-    public function __construct(
-        ConsoleOutput $consoleOutput
-    ) {
+    public function __construct(ConsoleOutput $consoleOutput, Log $log)
+    {
         $this->consoleOutput = $consoleOutput;
+        $this->log = $log;
     }
-
 
     /**
      * Set the data array for fields to import

@@ -1,17 +1,16 @@
 <?php
 /**
- * Copyright © 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
 
 namespace Ho\Import\RowModifier;
 
-
+use Ho\Import\Logger\Log;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 class ProductDisabler extends AbstractRowModifier
 {
-
     /**
      * @var \Magento\Framework\App\ResourceConnection
      */
@@ -35,22 +34,23 @@ class ProductDisabler extends AbstractRowModifier
     private $force;
 
     /**
-     * ProductDisabler constructor.
-     *
      * @param ConsoleOutput                             $consoleOutput
      * @param \Magento\Framework\App\ResourceConnection $resource
      * @param string                                    $profile
+     * @param Log                                       $log
      * @param bool                                      $force
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
         \Magento\Framework\App\ResourceConnection $resource,
         string $profile,
+        Log $log,
         bool $force = false
     ) {
-        parent::__construct($consoleOutput);
-        $this->profile       = $profile;
-        $this->connection    = $resource->getConnection();
+        parent::__construct($consoleOutput, $log);
+
+        $this->profile = $profile;
+        $this->connection  = $resource->getConnection();
         $this->consoleOutput = $consoleOutput;
         $this->force = $force;
     }
@@ -85,6 +85,7 @@ class ProductDisabler extends AbstractRowModifier
 
         $count = count($itemsToDisable);
         $this->consoleOutput->writeln("<info>ProductDisabler: Disabling {$count} products</info>");
+        $this->log->addInfo("ProductDisabler: Disabling {$count} products");
 
         $this->items += $itemsToDisable;
     }
