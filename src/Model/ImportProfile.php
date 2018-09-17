@@ -61,7 +61,8 @@ abstract class ImportProfile implements ImportProfileInterface
 
     /**
      * Run the actual import
-     * @return void
+     *
+     * @return bool
      */
     public function run()
     {
@@ -86,8 +87,12 @@ abstract class ImportProfile implements ImportProfileInterface
             ]));
 
             $this->consoleOutput->writeln("<error>$errors</error>");
+
+            return \Magento\Framework\Console\Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
             $this->consoleOutput->writeln($e->getMessage());
+
+            return \Magento\Framework\Console\Cli::RETURN_FAILURE;
         }
     }
 
