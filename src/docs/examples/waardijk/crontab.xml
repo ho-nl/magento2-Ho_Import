@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--
+  ~ Copyright © Reach Digital (https://www.reachdigital.io/)
+  ~ See LICENSE.txt for license details.
+  -->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="index">
+        <job name="reachdigital_waardijk_aca_product_import" instance="ReachDigital\Waardijk\Import\ProductImport" method="run">
+            <schedule>0 0 * * *</schedule>
+        </job>
+    </group>
+</config>
