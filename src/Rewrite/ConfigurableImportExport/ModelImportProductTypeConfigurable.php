@@ -1,14 +1,12 @@
 <?php
 /**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
 namespace Ho\Import\Rewrite\ConfigurableImportExport;
 
-class ModelImportProductTypeConfigurable
-    extends \Magento\ConfigurableImportExport\Model\Import\Product\Type\Configurable
+class ModelImportProductTypeConfigurable extends \Magento\ConfigurableImportExport\Model\Import\Product\Type\Configurable
 {
-
     /**
      * Collect super data labels.
      * @fixme https://github.com/magento/magento2/issues/5993
@@ -69,5 +67,4 @@ class ModelImportProductTypeConfigurable
 
         return $this;
     }
-
 }

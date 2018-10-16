@@ -64,7 +64,7 @@ abstract class ImportProfile implements ImportProfileInterface
     /**
      * Run the actual import
      *
-     * @return bool
+     * @return int
      */
     public function run()
     {

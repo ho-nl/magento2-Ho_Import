@@ -8,7 +8,11 @@ namespace Ho\Import\RowModifier;
 
 use Ho\Import\Logger\Log;
 use Magento\Catalog\Api\ProductAttributeOptionManagementInterface as OptionManagement;
+use Magento\Catalog\Api\ProductAttributeRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute\OptionFactory;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Exception\StateException;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
@@ -27,6 +31,11 @@ class AttributeOptionCreator extends AbstractRowModifier
     protected $optionManagement;
 
     /**
+     * @var ProductAttributeRepositoryInterface
+     */
+    private $attributeRepository;
+
+    /**
      * Entity attribute option model factory
      *
      * @var OptionFactory
@@ -41,14 +50,16 @@ class AttributeOptionCreator extends AbstractRowModifier
     protected $attributes;
 
     /**
-     * @param OptionManagement $optionManagement
-     * @param OptionFactory    $optionFactory
-     * @param ConsoleOutput    $consoleOutput
-     * @param Log              $log
-     * @param string[]         $attributes
+     * @param OptionManagement                    $optionManagement
+     * @param ProductAttributeRepositoryInterface $attributeRepository
+     * @param OptionFactory                       $optionFactory
+     * @param ConsoleOutput                       $consoleOutput
+     * @param Log                                 $log
+     * @param string[]                            $attributes
      */
     public function __construct(
         OptionManagement $optionManagement,
+        ProductAttributeRepositoryInterface $attributeRepository,
         OptionFactory $optionFactory,
         ConsoleOutput $consoleOutput,
         Log $log,
@@ -57,6 +68,7 @@ class AttributeOptionCreator extends AbstractRowModifier
         parent::__construct($consoleOutput, $log);
 
         $this->optionManagement = $optionManagement;
+        $this->attributeRepository = $attributeRepository;
         $this->optionFactory = $optionFactory;
         $this->attributes = $attributes;
     }
@@ -64,8 +76,9 @@ class AttributeOptionCreator extends AbstractRowModifier
     /**
      * Automatically create attribute options.
      *
-     * @throws \Magento\Framework\Exception\InputException
-     * @throws \Magento\Framework\Exception\StateException
+     * @throws InputException
+     * @throws StateException
+     * @throws NoSuchEntityException
      *
      * @return void
      */
@@ -85,19 +98,23 @@ class AttributeOptionCreator extends AbstractRowModifier
      *
      * @param string $attributeCode
      *
-     * @throws \Magento\Framework\Exception\InputException
-     * @throws \Magento\Framework\Exception\StateException
+     * @throws InputException
+     * @throws NoSuchEntityException
+     * @throws StateException
      *
      * @return void
      */
-    public function createForAttribute(string $attributeCode)
+    public function createForAttribute(string $attributeCode): void
     {
         $uniqueOptions = $this->getNonExistingAttributes($attributeCode);
+        $attribute = $this->attributeRepository->get($attributeCode);
+        $attribute->setStoreId(0); // Load option values from adminhtml.
 
-        $items = $this->optionManagement->getItems($attributeCode);
-        foreach ($items as $item) {
-            if (\in_array($item->getLabel(), $uniqueOptions)) {
-                unset($uniqueOptions[$item->getLabel()]);
+        foreach ($attribute->getOptions() as $option) {
+            /** @var \Magento\Eav\Api\Data\AttributeOptionInterface $option */
+
+            if (\in_array($option->getLabel(), $uniqueOptions, false)) {
+                unset($uniqueOptions[$option->getLabel()]);
             }
         }
 
@@ -110,7 +127,6 @@ class AttributeOptionCreator extends AbstractRowModifier
         }
     }
 
-
     /**
      * Get a list of attributes that need to be created.
      *
@@ -118,7 +134,7 @@ class AttributeOptionCreator extends AbstractRowModifier
      *
      * @return array
      */
-    protected function getNonExistingAttributes(string $attribute)
+    protected function getNonExistingAttributes(string $attribute): array
     {
         $uniqueValues = [];
         foreach ($this->items as $identifier => $item) {
@@ -135,8 +151,10 @@ class AttributeOptionCreator extends AbstractRowModifier
                 $item[$attribute] = '';
                 continue;
             }
+
             $uniqueValues[$item[$attribute]] = $item[$attribute];
         }
+
         return $uniqueValues;
     }
 
@@ -147,7 +165,7 @@ class AttributeOptionCreator extends AbstractRowModifier
      * @deprecated Please us the factory AttributeOptionCreatorFactory to set the value.
      * @return void
      */
-    public function setAttributes(array $attributes)
+    public function setAttributes(array $attributes): void
     {
         $this->attributes = $attributes;
     }
