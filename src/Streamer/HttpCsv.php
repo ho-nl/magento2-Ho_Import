@@ -137,7 +137,7 @@ class HttpCsv
             $this->requestOptions + ['stream' => true]
         );
 
-        $csvReader = \League\Csv\Reader::createFromStream(StreamWrapper::getResource($response->getBody()));
+        $csvReader = \League\Csv\Reader::createFromStream(StreamWrapper::getResource($response->getBody(), 'r'));
         if (empty($this->headers)) {
             $csvReader->setHeaderOffset(0);
         }
