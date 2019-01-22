@@ -6,7 +6,7 @@
 
 namespace Ho\Import\Streamer;
 
-use Bakame\Psr7\Factory\StreamWrapper;
+use Bakame\Psr7\Adapter\StreamWrapper;
 use Ho\Import\Logger\Log;
 use Psr\Cache\CacheItemPoolInterface as CachePool;
 use Symfony\Component\Console\Output\ConsoleOutput;
