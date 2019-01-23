@@ -163,24 +163,29 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+     * @throws LocalizedException
      */
     protected function _saveProducts()
     {
         $priceIsGlobal = $this->_catalogData->isPriceGlobal();
-        $productLimit  = null;
-        $productsQty   = null;
+        $productLimit = null;
+        $productsQty = null;
+        $entityLinkField = $this->getProductEntityLinkField();
+
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
-            $entityRowsIn          = [];
-            $entityRowsUp          = [];
-            $attributes            = [];
-            $this->websitesCache   = [];
+            $entityRowsIn = [];
+            $entityRowsUp = [];
+            $attributes = [];
+            $this->websitesCache = [];
             $this->categoriesCache = [];
-            $tierPrices            = [];
-            $mediaGallery          = [];
-            $uploadedImages        = [];
-            $previousType          = null;
-            $prevAttributeSet      = null;
-            $existingImages        = $this->getExistingImages($bunch);
+            $tierPrices = [];
+            $mediaGallery = [];
+            $labelsForUpdate = [];
+            $uploadedImages = [];
+            $previousType = null;
+            $prevAttributeSet = null;
+            $existingImages = $this->getExistingImages($bunch);
+
             foreach ($bunch as $rowNum => $rowData) {
                 if (!$this->validateRow($rowData, $rowNum)) {
                     continue;
@@ -191,15 +196,17 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 }
                 $rowScope = $this->getRowScope($rowData);
                 $rowSku = $rowData[self::COL_SKU];
+
                 if (null === $rowSku) {
                     $this->getErrorAggregator()->addRowToSkip($rowNum);
                     continue;
                 } elseif (self::SCOPE_STORE == $rowScope) {
                     // set necessary data from SCOPE_DEFAULT row
-                    $rowData[self::COL_TYPE]     = $this->skuProcessor->getNewSku($rowSku)['type_id'];
+                    $rowData[self::COL_TYPE] = $this->skuProcessor->getNewSku($rowSku)['type_id'];
                     $rowData['attribute_set_id'] = $this->skuProcessor->getNewSku($rowSku)['attr_set_id'];
                     $rowData[self::COL_ATTR_SET] = $this->skuProcessor->getNewSku($rowSku)['attr_set_code'];
                 }
+
                 // 1. Entity phase
                 if (isset($this->_oldSku[$rowSku])) {
                     // existing row
@@ -230,7 +237,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                     ];
                 } else {
                     if (!$productLimit || $productsQty < $productLimit) {
-                        $entityRowsIn[$rowSku] = [
+                        $entityRowsIn[strtolower($rowSku)] = [
                             'attribute_set_id' => $this->skuProcessor->getNewSku($rowSku)['attr_set_id'],
                             'type_id' => $this->skuProcessor->getNewSku($rowSku)['type_id'],
                             'sku' => $rowSku,
@@ -246,6 +253,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                         continue;
                     }
                 }
+
                 if (!array_key_exists($rowSku, $this->websitesCache)) {
                     $this->websitesCache[$rowSku] = [];
                 }
@@ -253,20 +261,22 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 if (!empty($rowData[self::COL_PRODUCT_WEBSITES])) {
                     $websiteCodes = explode($this->getMultipleValueSeparator(), $rowData[self::COL_PRODUCT_WEBSITES]);
                     foreach ($websiteCodes as $websiteCode) {
-                        $websiteId                                = $this->storeResolver->getWebsiteCodeToId($websiteCode);
+                        $websiteId = $this->storeResolver->getWebsiteCodeToId($websiteCode);
                         $this->websitesCache[$rowSku][$websiteId] = true;
                     }
                 }
+
                 // 3. Categories phase
                 if (!array_key_exists($rowSku, $this->categoriesCache)) {
                     $this->categoriesCache[$rowSku] = [];
                 }
                 $rowData['rowNum'] = $rowNum;
-                $categoryIds       = $this->processRowCategories($rowData);
+                $categoryIds = $this->processRowCategories($rowData);
                 foreach ($categoryIds as $id) {
                     $this->categoriesCache[$rowSku][$id] = true;
                 }
                 unset($rowData['rowNum']);
+
                 // 4.1. Tier prices phase
                 //_getMultiRowFormat
                 if (!empty($rowData['tier_prices'])) {
@@ -283,20 +293,36 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                         ];
                     }
                 }
+
                 if (!$this->validateRow($rowData, $rowNum)) {
                     continue;
                 }
+
                 // 5. Media gallery phase
                 $disabledImages = [];
                 list($rowImages, $rowLabels) = $this->getImagesFromRow($rowData);
-                if (isset($rowData['_media_is_disabled'])) {
+                $storeId = !empty($rowData[self::COL_STORE])
+                    ? $this->getStoreIdByCode($rowData[self::COL_STORE])
+                    : Store::DEFAULT_STORE_ID;
+                if (isset($rowData['_media_is_disabled']) && strlen(trim($rowData['_media_is_disabled']))) {
                     $disabledImages = array_flip(
                         explode($this->getMultipleValueSeparator(), $rowData['_media_is_disabled'])
                     );
+                    if (empty($rowImages)) {
+                        foreach (array_keys($disabledImages) as $disabledImage) {
+                            $rowImages[self::COL_MEDIA_IMAGE][] = $disabledImage;
+                        }
+                    }
                 }
                 $rowData[self::COL_MEDIA_IMAGE] = [];
+
+                /*
+                 * Note: to avoid problems with undefined sorting, the value of media gallery items positions
+                 * must be unique in scope of one product.
+                 */
+                $position = 0;
                 foreach ($rowImages as $column => $columnImages) {
-                    foreach ($columnImages as $position => $columnImage) {
+                    foreach ($columnImages as $columnImageKey => $columnImage) {
                         if (!isset($uploadedImages[$columnImage])) {
                             $uploadedFile = $this->uploadMediaFiles(trim($columnImage), true);
                             if ($uploadedFile) {
@@ -313,6 +339,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                         } else {
                             $uploadedFile = $uploadedImages[$columnImage];
                         }
+
                         if ($uploadedFile && $column !== self::COL_MEDIA_IMAGE) {
                             $rowData[$column] = $uploadedFile;
                         }
@@ -321,10 +348,10 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                             if ($column == self::COL_MEDIA_IMAGE) {
                                 $rowData[$column][] = $uploadedFile;
                             }
-                            $mediaGallery[$rowSku][]                = [
+                            $mediaGallery[$storeId][$rowSku][$uploadedFile] = [
                                 'attribute_id' => $this->getMediaGalleryAttributeId(),
                                 'label' => isset($rowLabels[$column][$position]) ? $rowLabels[$column][$position] : '',
-                                'position' => $position + 1,
+                                'position' => ++$position,
                                 'disabled' => isset($disabledImages[$columnImage]) ? '1' : '0',
                                 'value' => $uploadedFile,
                             ];
@@ -332,8 +359,9 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                         }
                     }
                 }
+
                 // 6. Attributes phase
-                $rowStore    = (self::SCOPE_STORE == $rowScope)
+                $rowStore = (self::SCOPE_STORE == $rowScope)
                     ? $this->storeResolver->getStoreCodeToId($rowData[self::COL_STORE])
                     : 0;
                 $productType = isset($rowData[self::COL_TYPE]) ? $rowData[self::COL_TYPE] : null;
@@ -355,32 +383,46 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                         continue;
                     }
                 }
+
                 $productTypeModel = $this->_productTypeModels[$productType];
                 if (!empty($rowData['tax_class_name'])) {
-                    $rowData['tax_class_id']
-                        = $this->taxClassProcessor->upsertTaxClass($rowData['tax_class_name'], $productTypeModel);
+                    $rowData['tax_class_id'] =
+                        $this->taxClassProcessor->upsertTaxClass($rowData['tax_class_name'], $productTypeModel);
                 }
-                if ($this->getBehavior() == Import::BEHAVIOR_APPEND
-                    || empty($rowData[self::COL_SKU])
+
+                if ($this->getBehavior() == Import::BEHAVIOR_APPEND ||
+                    empty($rowData[self::COL_SKU])
                 ) {
                     $rowData = $productTypeModel->clearEmptyData($rowData);
                 }
+
                 $rowData = $productTypeModel->prepareAttributesWithDefaultValueForSave(
                     $rowData,
                     !isset($this->_oldSku[$rowSku])
                 );
                 $product = $this->_proxyProdFactory->create(['data' => $rowData]);
+
                 foreach ($rowData as $attrCode => $attrValue) {
                     $attribute = $this->retrieveAttributeByCode($attrCode);
+
                     if ('multiselect' != $attribute->getFrontendInput() && self::SCOPE_NULL == $rowScope) {
                         // skip attribute processing for SCOPE_NULL rows
                         continue;
                     }
-                    $attrId    = $attribute->getId();
+                    $attrId = $attribute->getId();
                     $backModel = $attribute->getBackendModel();
                     $attrTable = $attribute->getBackend()->getTable();
-                    $storeIds  = [0];
-                    if ('datetime' == $attribute->getBackendType() && strtotime($attrValue)) {
+                    $storeIds = [0];
+
+                    if (
+                        'datetime' == $attribute->getBackendType()
+                        && (
+                            in_array($attribute->getAttributeCode(), $this->dateAttrCodes)
+                            || $attribute->getIsUserDefined()
+                        )
+                    ) {
+                        $attrValue = $this->dateTime->formatDate($attrValue, false);
+                    } elseif ('datetime' == $attribute->getBackendType() && strtotime($attrValue)) {
                         $attrValue = $this->dateTime->gmDate(
                             'Y-m-d H:i:s',
                             $this->_localeDate->date($attrValue)->getTimestamp()
@@ -411,11 +453,13 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                     $attribute->setBackendModel($backModel);
                 }
             }
+
             foreach ($bunch as $rowNum => $rowData) {
                 if ($this->getErrorAggregator()->isRowInvalid($rowNum)) {
                     unset($bunch[$rowNum]);
                 }
             }
+
             $this->saveProductEntity(
                 $entityRowsIn,
                 $entityRowsUp
@@ -430,11 +474,13 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
             )->_saveProductAttributes(
                 $attributes
             );
+
             $this->_eventManager->dispatch(
                 'catalog_product_import_bunch_save_after',
                 ['adapter' => $this, 'bunch' => $bunch]
             );
         }
+
         return $this;
     }
 
