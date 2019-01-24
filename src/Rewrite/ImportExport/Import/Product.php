@@ -31,6 +31,8 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @var CatalogConfig
      */
     private $catalogConfig;
+
+    protected $productIdsToReindex = [];
     /**
      * Product constructor.
      *
@@ -151,6 +153,9 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         } else {
             $this->_saveProductsData();
         }
+
+        $this->forceReindexProducts($this->productIdsToReindex);
+
         $this->_eventManager->dispatch('catalog_product_import_finish_before', ['adapter' => $this]);
         return true;
     }
@@ -232,9 +237,9 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                     // existing row
                     $entityRowsUp[] = [
                         'updated_at' => (new \DateTime())->format(DateTime::DATETIME_PHP_FORMAT),
+                        'attribute_set_id' => $attributeSetId,
                         $this->getProductEntityLinkField()
                         => $this->_oldSku[$rowSku][$this->getProductEntityLinkField()],
-                        'attribute_set_id' => $attributeSetId,
                     ];
                 } else {
                     if (!$productLimit || $productsQty < $productLimit) {
@@ -511,16 +516,16 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
     {
         /** @var $stockResource \Magento\CatalogInventory\Model\ResourceModel\Stock\Item */
         $stockResource = $this->_stockResItemFac->create();
-        $entityTable   = $stockResource->getMainTable();
+        $entityTable = $stockResource->getMainTable();
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
-            $stockData           = [];
+            $stockData = [];
             $productIdsToReindex = [];
             // Format bunch to stock data rows
             foreach ($bunch as $rowNum => $rowData) {
                 if (!$this->isRowAllowedToImport($rowData, $rowNum)) {
                     continue;
                 }
-                $row                   = [];
+                $row = [];
                 $row['product_id']     = $this->skuProcessor->getNewSku($rowData[self::COL_SKU])['entity_id'];
                 $productIdsToReindex[] = $row['product_id'];
                 $row['website_id'] = $this->stockConfiguration->getDefaultScopeId();
@@ -559,7 +564,11 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 $this->_connection->insertOnDuplicate($entityTable, array_values($stockData));
             }
 
-            $this->reindexProducts($productIdsToReindex);
+            //$this->reindexProducts($productIdsToReindex);
+
+            foreach ($productIdsToReindex as $key => $productId) {
+                $this->productIdsToReindex[$productId] = $productId;
+            }
         }
         return $this;
     }
@@ -570,10 +579,10 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @param array $productIdsToReindex
      * @return void
      */
-    private function reindexProducts($productIdsToReindex = [])
+    private function forceReindexProducts($productIdsToReindex = [])
     {
         $indexer = $this->indexerRegistry->get('catalog_product_category');
-        if (is_array($productIdsToReindex) && count($productIdsToReindex) > 0 && !$indexer->isScheduled()) {
+        if (is_array($productIdsToReindex) && count($productIdsToReindex) > 0) {
             $indexer->reindexList($productIdsToReindex);
         }
     }
@@ -583,8 +592,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      *
      * @fixme https://github.com/magento/magento2/issues/5993
      * @param array $rowData
-     * @param int   $rowNum
-     *
+     * @param int $rowNum
      * @return boolean
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
@@ -597,7 +605,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
             return !$this->getErrorAggregator()->isRowInvalid($rowNum);
         }
         $this->_validatedRows[$rowNum] = true;
-        $rowScope                      = $this->getRowScope($rowData);
+        $rowScope = $this->getRowScope($rowData);
         // BEHAVIOR_DELETE use specific validation logic
         if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
             if (self::SCOPE_DEFAULT == $rowScope && !isset($this->_oldSku[$rowData[self::COL_SKU]])) {
@@ -643,8 +651,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 $this->addRowError(ValidatorInterface::ERROR_INVALID_TYPE, $rowNum);
             } elseif (!isset(
                     $rowData[self::COL_ATTR_SET]
-                )
-                || !isset(
+                ) || !isset(
                     $this->_attrSetNameToId[$rowData[self::COL_ATTR_SET]]
                 )
             ) {
@@ -670,7 +677,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
             $newSku = $this->skuProcessor->getNewSku($sku);
             // set attribute set code into row data for followed attribute validation in type model
             $rowData[self::COL_ATTR_SET] = $newSku['attr_set_code'];
-            $rowAttributesValid          = $this->_productTypeModels[$newSku['type_id']]->isRowValid(
+            $rowAttributesValid = $this->_productTypeModels[$newSku['type_id']]->isRowValid(
                 $rowData,
                 $rowNum,
                 !isset($this->_oldSku[$sku])
@@ -683,18 +690,18 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         // validate custom options
         $this->getOptionEntity()->validateRow($rowData, $rowNum);
         if ($this->isNeedToValidateUrlKey($rowData)) {
-            $urlKey     = $this->getUrlKey($rowData);
+            $urlKey = $this->getUrlKey($rowData);
             $storeCodes = empty($rowData[self::COL_STORE_VIEW_CODE])
                 ? array_flip($this->storeResolver->getStoreCodeToId())
                 : explode($this->getMultipleValueSeparator(), $rowData[self::COL_STORE_VIEW_CODE]);
             foreach ($storeCodes as $storeCode) {
-                $storeId          = $this->storeResolver->getStoreCodeToId($storeCode);
+                $storeId = $this->storeResolver->getStoreCodeToId($storeCode);
                 $productUrlSuffix = $this->getProductUrlSuffix($storeId);
-                $urlPath          = $urlKey . $productUrlSuffix;
+                $urlPath = $urlKey . $productUrlSuffix;
                 if (empty($this->urlKeys[$storeId][$urlPath])
                     || ($this->urlKeys[$storeId][$urlPath] == $rowData[self::COL_SKU])
                 ) {
-                    $this->urlKeys[$storeId][$urlPath]    = $rowData[self::COL_SKU];
+                    $this->urlKeys[$storeId][$urlPath] = $rowData[self::COL_SKU];
                     $this->rowNumbers[$storeId][$urlPath] = $rowNum;
                 } else {
                     $this->addRowError(ValidatorInterface::ERROR_DUPLICATE_URL_KEY, $rowNum);
@@ -706,13 +713,12 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
 
     /**
      * @param array $rowData
-     *
      * @return bool
      */
     private function isNeedToValidateUrlKey($rowData)
     {
         return (!empty($rowData[self::URL_KEY]) || !empty($rowData[self::COL_NAME]))
-        && (empty($rowData[self::COL_VISIBILITY])
+            && (empty($rowData[self::COL_VISIBILITY])
             || $rowData[self::COL_VISIBILITY]
             !== (string)Visibility::getOptionArray()[Visibility::VISIBILITY_NOT_VISIBLE]);
     }
@@ -722,7 +728,6 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * Prepare new SKU data
      *
      * @param string $sku
-     *
      * @return array
      */
     private function prepareNewSkuData($sku)
