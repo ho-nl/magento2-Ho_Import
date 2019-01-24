@@ -558,8 +558,24 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
             if (!empty($stockData)) {
                 $this->_connection->insertOnDuplicate($entityTable, array_values($stockData));
             }
+
+            $this->reindexProducts($productIdsToReindex);
         }
         return $this;
+    }
+
+    /**
+     * Initiate product reindex by product ids
+     *
+     * @param array $productIdsToReindex
+     * @return void
+     */
+    private function reindexProducts($productIdsToReindex = [])
+    {
+        $indexer = $this->indexerRegistry->get('catalog_product_category');
+        if (is_array($productIdsToReindex) && count($productIdsToReindex) > 0 && !$indexer->isScheduled()) {
+            $indexer->reindexList($productIdsToReindex);
+        }
     }
 
     /**
