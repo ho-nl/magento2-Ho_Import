@@ -20,22 +20,16 @@ use Magento\Store\Model\Store;
 
 class Product extends \Magento\CatalogImportExport\Model\Import\Product
 {
-
-    /**
-     * @var LineFormatterMulti
-     */
+    /** @var LineFormatterMulti $lineFormatterMulti */
     private $lineFormatterMulti;
-    /**
-     * Catalog config.
-     *
-     * @var CatalogConfig
-     */
+
+    /** @var CatalogConfig $catalogConfig */
     private $catalogConfig;
 
-    protected $productIdsToReindex = [];
+    /** @var string $productEntityLinkField */
+    private $productEntityLinkField;
+
     /**
-     * Product constructor.
-     *
      * @param \Magento\Framework\Json\Helper\Data                                          $jsonHelper
      * @param \Magento\ImportExport\Helper\Data                                            $importExportData
      * @param \Magento\ImportExport\Model\ResourceModel\Import\Data                        $importData
@@ -73,7 +67,10 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @param \Magento\Framework\App\Config\ScopeConfigInterface                           $scopeConfig
      * @param \Magento\Catalog\Model\Product\Url                                           $productUrl
      * @param LineFormatterMulti                                                           $lineFormatterMulti
+     * @param CatalogConfig                                                                $catalogConfig
      * @param array                                                                        $data
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function __construct(
         \Magento\Framework\Json\Helper\Data $jsonHelper,
@@ -128,13 +125,6 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
     }
 
     /**
-     * Product entity link field
-     *
-     * @var string
-     */
-    private $productEntityLinkField;
-
-    /**
      * Create Product entity from raw data.
      * @fixme https://github.com/magento/magento2/issues/5993
      *
@@ -153,8 +143,6 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         } else {
             $this->_saveProductsData();
         }
-
-        $this->forceReindexProducts($this->productIdsToReindex);
 
         $this->_eventManager->dispatch('catalog_product_import_finish_before', ['adapter' => $this]);
         return true;
@@ -564,12 +552,9 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 $this->_connection->insertOnDuplicate($entityTable, array_values($stockData));
             }
 
-            //$this->reindexProducts($productIdsToReindex);
-
-            foreach ($productIdsToReindex as $key => $productId) {
-                $this->productIdsToReindex[$productId] = $productId;
-            }
+            $this->reindexProducts($productIdsToReindex);
         }
+
         return $this;
     }
 
@@ -579,10 +564,10 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @param array $productIdsToReindex
      * @return void
      */
-    private function forceReindexProducts($productIdsToReindex = [])
+    private function reindexProducts($productIdsToReindex = [])
     {
         $indexer = $this->indexerRegistry->get('catalog_product_category');
-        if (is_array($productIdsToReindex) && count($productIdsToReindex) > 0) {
+        if (\is_array($productIdsToReindex) && count($productIdsToReindex) > 0 && !$indexer->isScheduled()) {
             $indexer->reindexList($productIdsToReindex);
         }
     }
