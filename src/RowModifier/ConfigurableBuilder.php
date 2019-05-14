@@ -101,7 +101,7 @@ class ConfigurableBuilder extends AbstractRowModifier
         $configurables = [];
 
         foreach ($this->items as $identifier => &$item) {
-            $configurableSku = $skuCallback($item);
+            $configurableSku = $skuCallback($item); //@todo add array support and loop this
 
             if (! $configurableSku) {
                 continue;
@@ -117,7 +117,7 @@ class ConfigurableBuilder extends AbstractRowModifier
             }
 
             //Add the configurable simple to the configurable
-            $attributes = $attrCallback($item);
+            $attributes = $attrCallback($item, $configurableSku);
             $variation = ['sku' => $identifier];
             foreach ($attributes as $attribute) {
                 $variation[$attribute] = $item[$attribute];
@@ -174,6 +174,7 @@ class ConfigurableBuilder extends AbstractRowModifier
         $configurable['configurable_variations'] = [];
 
         //@todo implement the configurable product mapper by using ItemMapper
+        //@todo configurableValues can be a function which will return an array.
         foreach ($this->configurableValues as $key => $value) {
             if (\is_callable($value)) {
                 $value = $value($configurable);
