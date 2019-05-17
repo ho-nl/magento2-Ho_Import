@@ -48,7 +48,7 @@ class CronScheduleCommand extends Command
     public function __construct(
         \Magento\Cron\Model\ConfigInterface\Proxy $config,
         \Magento\Cron\Model\ScheduleFactory $scheduleFactory,
-        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezone
+        \Magento\Framework\Stdlib\DateTime\TimezoneInterface\Proxy $timezone
     ) {
         parent::__construct();
         $this->config = $config;
