@@ -101,35 +101,41 @@ class ConfigurableBuilder extends AbstractRowModifier
         $configurables = [];
 
         foreach ($this->items as $identifier => &$item) {
-            $configurableSku = $skuCallback($item);
-
-            if (! $configurableSku) {
-                continue;
-            }
-
             if (isset($item['product_online']) && $item['product_online'] <= 0) {
                 continue;
             }
 
-            //Init the configurable
-            if (! isset($configurables[$configurableSku])) {
-                $configurables[$configurableSku] = $this->initConfigurable($item, $configurableSku);
+            $configurableSkus = $skuCallback($item);
+
+            if (! $configurableSkus) {
+                continue;
             }
 
-            //Add the configurable simple to the configurable
-            $attributes = $attrCallback($item);
-            $variation = ['sku' => $identifier];
-            foreach ($attributes as $attribute) {
-                $variation[$attribute] = $item[$attribute];
-                unset($configurables[$configurableSku][$attribute]);
-            }
+            $configurableSkus = is_array($configurableSkus) ? $configurableSkus : [$configurableSkus];
 
-            if ($this->splitOnValue) {
-                $split = $this->splitOnValue;
-                $variation['split'] = $split($item);
-            }
+            foreach ($configurableSkus as $configurableSku) {
+                //Init the configurable
+                if (! isset($configurables[$configurableSku])) {
+                    $configurables[$configurableSku] = $this->initConfigurable($item, $configurableSku);
+                }
 
-            $configurables[$configurableSku]['configurable_variations'][] = $variation;
+                $variation = ['sku' => $identifier];
+
+                //Add the configurable simple to the configurable
+                $attributes = $attrCallback($item, $configurableSku);
+
+                foreach ($attributes as $attribute) {
+                    $variation[$attribute] = $item[$attribute];
+                    unset($configurables[$configurableSku][$attribute]);
+                }
+
+                if ($this->splitOnValue) {
+                    $split = $this->splitOnValue;
+                    $variation['split'] = $split($item);
+                }
+
+                $configurables[$configurableSku]['configurable_variations'][] = $variation;
+            }
         }
         unset($item);
 
@@ -156,7 +162,7 @@ class ConfigurableBuilder extends AbstractRowModifier
         $this->consoleOutput->writeln("<info>Created {$count} configurables</info>");
         $this->log->addInfo("Created {$count} configurables");
 
-        $this->items += $configurables;
+        $this->items = array_replace($this->items, $configurables);
     }
 
     /**
@@ -168,6 +174,10 @@ class ConfigurableBuilder extends AbstractRowModifier
      */
     private function initConfigurable($item, $configurableSku)
     {
+        if (isset($this->items[$configurableSku])) {
+            return $this->items[$configurableSku];
+        }
+
         $configurable = $item;
         $configurable['sku'] = $configurableSku;
         $configurable['product_type'] = 'configurable';
