@@ -20,6 +20,8 @@ use Magento\Store\Model\Store;
 
 class Product extends \Magento\CatalogImportExport\Model\Import\Product
 {
+    const SKIP_ATTRIBUTES_WHEN_UPDATING = '_import_skip_attributes_when_updating';
+
     /** @var LineFormatterMulti $lineFormatterMulti */
     private $lineFormatterMulti;
 
@@ -399,6 +401,10 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 foreach ($rowData as $attrCode => $attrValue) {
                     $attribute = $this->retrieveAttributeByCode($attrCode);
 
+                    if ($this->skipUpdatingAttribute($rowSku, $attrCode)) {
+                        continue;
+                    }
+
                     if ('multiselect' != $attribute->getFrontendInput() && self::SCOPE_NULL == $rowScope) {
                         // skip attribute processing for SCOPE_NULL rows
                         continue;
@@ -476,6 +482,11 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         }
 
         return $this;
+    }
+
+    public function skipUpdatingAttribute($rowSku, $attrCode)
+    {
+        return isset($this->_oldSku[$rowSku]) && \array_key_exists(self::SKIP_ATTRIBUTES_WHEN_UPDATING, $this->_parameters) && \array_key_exists($attrCode, $this->_parameters[self::SKIP_ATTRIBUTES_WHEN_UPDATING]);
     }
 
     /**
