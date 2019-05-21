@@ -131,13 +131,21 @@ class HttpCsv
         ), 'cache');
 
         $httpClient = new \GuzzleHttp\Client(['handler' => $stack]);
-        $response = $httpClient->request(
+
+        $result = $httpClient->request(
             $this->requestMethod,
             $this->requestUrl,
             $this->requestOptions + ['stream' => true]
         );
 
-        $csvReader = \League\Csv\Reader::createFromStream(StreamWrapper::getResource($response->getBody(), 'r'));
+        if ($result->getHeader('X-Kevinrob-Cache') && $result->getHeader('X-Kevinrob-Cache')[0] === 'HIT') {
+            $this->consoleOutput->write(" <info>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</info>");
+        } else {
+            $this->consoleOutput->write(" <comment>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</comment>");
+        }
+        $this->consoleOutput->write("\n");
+
+        $csvReader = \League\Csv\Reader::createFromStream(StreamWrapper::getResource($result->getBody(), 'r'));
         if (empty($this->headers)) {
             $csvReader->setHeaderOffset(0);
         }
