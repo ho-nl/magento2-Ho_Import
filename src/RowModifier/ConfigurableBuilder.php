@@ -114,6 +114,14 @@ class ConfigurableBuilder extends AbstractRowModifier
             $configurableSkus = is_array($configurableSkus) ? $configurableSkus : [$configurableSkus];
 
             foreach ($configurableSkus as $configurableSku) {
+                if (isset($this->items[$configurableSku])) {
+                    continue 2;
+                }
+
+                if ($item['product_type'] == 'configurable') {
+                    continue 2;
+                }
+
                 //Init the configurable
                 if (! isset($configurables[$configurableSku])) {
                     $configurables[$configurableSku] = $this->initConfigurable($item, $configurableSku);
