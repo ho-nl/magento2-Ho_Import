@@ -53,6 +53,7 @@ class ProductDisabler extends AbstractRowModifier
         $this->connection  = $resource->getConnection();
         $this->consoleOutput = $consoleOutput;
         $this->force = $force;
+        $this->resource = $resource;
     }
 
     /**
@@ -121,7 +122,7 @@ class ProductDisabler extends AbstractRowModifier
             ->where('profile = ?', $this->profile)
             ->where('identifier NOT IN(?)', $identifiers)
             ->join(
-                $this->connection->getTableName('catalog_product_entity'),
+                $this->resource->getTableName('catalog_product_entity'),
                 'ho_import_link.identifier = catalog_product_entity.sku'
             );
 
