@@ -134,7 +134,8 @@ class ConfigurableBuilder extends AbstractRowModifier
 
                 foreach ($attributes as $attribute) {
                     $variation[$attribute] = $item[$attribute];
-                    unset($configurables[$configurableSku][$attribute]);
+                    // Empty the value for the import, even if it was imported previously. Otherwise it can go wrong with the value for the first variation for the configurable
+                    $configurables[$configurableSku][$attribute] == '';
                 }
 
                 if ($this->splitOnValue) {
