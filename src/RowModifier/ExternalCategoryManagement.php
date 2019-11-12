@@ -75,7 +75,10 @@ class ExternalCategoryManagement extends AbstractRowModifier
         $this->initCategoryMapping();
         $this->initCategoryProductMapping();
         foreach ($this->items as $identifier => &$item) {
-            $categories = $this->extractCategoriesFromString($item['categories']);
+            $categories = [];
+            if (isset($item['categories'])) {
+                $categories = $this->extractCategoriesFromString($item['categories']);
+            }
 
             foreach ($categories as $category) {
                 if (isset($this->categoryMapping[$category])) {
