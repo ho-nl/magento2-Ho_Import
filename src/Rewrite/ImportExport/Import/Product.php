@@ -204,7 +204,9 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 }
 
                 // 1. Entity phase
-                if (isset($this->_oldSku[$rowSku])) {
+                if ($this->isSkuExist($rowSku)) {
+                    $existingSku = $this->getExistingSku($rowSku);
+                    
                     // existing row
                     if (isset($rowData['attribute_set_code'])) {
                         $attributeSetId = $this->catalogConfig->getAttributeSetId(
@@ -229,7 +231,8 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                         'updated_at' => (new \DateTime())->format(DateTime::DATETIME_PHP_FORMAT),
                         'attribute_set_id' => $attributeSetId,
                         $this->getProductEntityLinkField()
-                        => $this->_oldSku[$rowSku][$this->getProductEntityLinkField()],
+                        => $existingSku[$this->getProductEntityLinkField()],
+                        'attribute_set_id' => $existingSku['attr_set_id']
                     ];
                 } else {
                     if (!$productLimit || $productsQty < $productLimit) {
@@ -394,7 +397,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
 
                 $rowData = $productTypeModel->prepareAttributesWithDefaultValueForSave(
                     $rowData,
-                    !isset($this->_oldSku[$rowSku])
+                    !$this->isSkuExist($rowSku)
                 );
                 $product = $this->_proxyProdFactory->create(['data' => $rowData]);
 
@@ -440,7 +443,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                         } elseif (self::SCOPE_STORE == $attribute->getIsGlobal()) {
                             $storeIds = [$rowStore];
                         }
-                        if (!isset($this->_oldSku[$rowSku])) {
+                        if (!$this->isSkuExist($rowSku)) {
                             $storeIds[] = 0;
                         }
                     }
@@ -604,7 +607,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         $rowScope = $this->getRowScope($rowData);
         // BEHAVIOR_DELETE use specific validation logic
         if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
-            if (self::SCOPE_DEFAULT == $rowScope && !isset($this->_oldSku[$rowData[self::COL_SKU]])) {
+            if (self::SCOPE_DEFAULT == $rowScope && !($this->isSkuExist($rowData[self::COL_SKU]))) {
                 $this->addRowError(ValidatorInterface::ERROR_SKU_NOT_FOUND_FOR_DELETE, $rowNum);
                 return false;
             }
@@ -628,10 +631,10 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         // SKU is specified, row is SCOPE_DEFAULT, new product block begins
         $this->_processedEntitiesCount++;
         $sku = $rowData[self::COL_SKU];
-        if (isset($this->_oldSku[$sku])) {
+        if ($this->isSkuExist($sku)) {
             // can we get all necessary data from existent DB product?
             // check for supported type of existing product
-            if (isset($this->_productTypeModels[$this->_oldSku[$sku]['type_id']])) {
+            if (isset($this->_productTypeModels[$this->getExistingSku($sku)['type_id']])) {
                 $this->skuProcessor->addNewSku(
                     $sku,
                     $this->prepareNewSkuData($sku)
@@ -676,7 +679,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
             $rowAttributesValid = $this->_productTypeModels[$newSku['type_id']]->isRowValid(
                 $rowData,
                 $rowNum,
-                !isset($this->_oldSku[$sku])
+                !$this->isSkuExist($sku)
             );
             if (!$rowAttributesValid && self::SCOPE_DEFAULT == $rowScope) {
                 // mark SCOPE_DEFAULT row as invalid for future child rows if product not in DB already
@@ -729,11 +732,36 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
     private function prepareNewSkuData($sku)
     {
         $data = [];
-        foreach ($this->_oldSku[$sku] as $key => $value) {
+        
+        foreach ($this->getExistingSku($sku) as $key => $value) {
             $data[$key] = $value;
         }
-        $data['attr_set_code'] = $this->_attrSetIdToName[$this->_oldSku[$sku]['attr_set_id']];
+
+        $data['attr_set_code'] = $this->_attrSetIdToName[$this->getExistingSku($sku)['attr_set_id']];
+
         return $data;
     }
 
+    /**
+     * Check if product exists for specified SKU
+     *
+     * @param string $sku
+     * @return bool
+     */
+    private function isSkuExist($sku)
+    {
+        $sku = strtolower($sku);
+        return isset($this->_oldSku[$sku]);
+    }
+
+    /**
+     * Get existing product data for specified SKU
+     *
+     * @param string $sku
+     * @return array
+     */
+    private function getExistingSku($sku)
+    {
+        return $this->_oldSku[strtolower($sku)];
+    }
 }
