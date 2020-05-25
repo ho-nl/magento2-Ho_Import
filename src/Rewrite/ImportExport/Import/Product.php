@@ -5,11 +5,18 @@
  */
 namespace Ho\Import\Rewrite\ImportExport\Import;
 
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Helper\Catalog;
 use Magento\Catalog\Model\Config as CatalogConfig;
 use Ho\Import\Helper\LineFormatterMulti;
 use Magento\Catalog\Model\Product\Visibility;
+use Magento\CatalogImportExport\Model\Import\Product\ImageTypeProcessor;
+use Magento\CatalogImportExport\Model\Import\Product\MediaGalleryProcessor;
 use Magento\CatalogImportExport\Model\Import\Product\RowValidatorInterface as ValidatorInterface;
+use Magento\CatalogImportExport\Model\Import\Product\StatusProcessor;
+use Magento\CatalogImportExport\Model\Import\Product\StockProcessor;
+use Magento\CatalogImportExport\Model\StockItemImporterInterface;
+use Magento\Framework\Intl\DateTimeFactory;
 use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
 use Magento\Framework\Model\ResourceModel\Db\TransactionManagerInterface;
 use Magento\Framework\Stdlib\DateTime;
@@ -88,42 +95,49 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration,
         \Magento\CatalogInventory\Model\Spi\StockStateProviderInterface $stockStateProvider,
         \Magento\Catalog\Helper\Data $catalogData,
-        \Magento\ImportExport\Model\Import\Config $importConfig,
+        Import\Config $importConfig,
         \Magento\CatalogImportExport\Model\Import\Proxy\Product\ResourceModelFactory $resourceFactory,
-        \Magento\CatalogImportExport\Model\Import\Product\OptionFactory $optionFactory,
+        \Magento\CatalogImportExport\Model\Import\Product $optionFactory,
         \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory $setColFactory,
-        \Magento\CatalogImportExport\Model\Import\Product\Type\Factory $productTypeFactory,
+        \Magento\CatalogImportExport\Model\Import\Product $productTypeFactory,
         \Magento\Catalog\Model\ResourceModel\Product\LinkFactory $linkFactory,
         \Magento\CatalogImportExport\Model\Import\Proxy\ProductFactory $proxyProdFactory,
         \Magento\CatalogImportExport\Model\Import\UploaderFactory $uploaderFactory,
         \Magento\Framework\Filesystem $filesystem,
         \Magento\CatalogInventory\Model\ResourceModel\Stock\ItemFactory $stockResItemFac,
-        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
+        DateTime\TimezoneInterface $localeDate,
         DateTime $dateTime,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Indexer\IndexerRegistry $indexerRegistry,
-        \Magento\CatalogImportExport\Model\Import\Product\StoreResolver $storeResolver,
-        \Magento\CatalogImportExport\Model\Import\Product\SkuProcessor $skuProcessor,
-        \Magento\CatalogImportExport\Model\Import\Product\CategoryProcessor $categoryProcessor,
-        \Magento\CatalogImportExport\Model\Import\Product\Validator $validator,
+        \Magento\CatalogImportExport\Model\Import\Product $storeResolver,
+        \Magento\CatalogImportExport\Model\Import\Product $skuProcessor,
+        \Magento\CatalogImportExport\Model\Import\Product $categoryProcessor,
+        \Magento\CatalogImportExport\Model\Import\Product $validator,
         ObjectRelationProcessor $objectRelationProcessor,
         TransactionManagerInterface $transactionManager,
-        \Magento\CatalogImportExport\Model\Import\Product\TaxClassProcessor $taxClassProcessor,
+        \Magento\CatalogImportExport\Model\Import\Product $taxClassProcessor,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Catalog\Model\Product\Url $productUrl,
         LineFormatterMulti $lineFormatterMulti,
-        CatalogConfig $catalogConfig,
-        array $data = []
+        array $data = [],
+        array $dateAttrCodes = [],
+        CatalogConfig $catalogConfig = null,
+        ImageTypeProcessor $imageTypeProcessor = null,
+        MediaGalleryProcessor $mediaProcessor = null,
+        $stockItemImporter = null,
+        DateTimeFactory $dateTimeFactory = null,
+        $productRepository = null,
+        $statusProcessor = null,
+        $stockProcessor = null
     ) {
-        \Magento\CatalogImportExport\Model\Import\Product::__construct($jsonHelper, $importExportData, $importData,
-            $config, $resource, $resourceHelper, $string, $errorAggregator, $eventManager, $stockRegistry,
-            $stockConfiguration, $stockStateProvider, $catalogData, $importConfig, $resourceFactory, $optionFactory,
-            $setColFactory, $productTypeFactory, $linkFactory, $proxyProdFactory, $uploaderFactory, $filesystem,
-            $stockResItemFac, $localeDate, $dateTime, $logger, $indexerRegistry, $storeResolver, $skuProcessor,
-            $categoryProcessor, $validator, $objectRelationProcessor, $transactionManager, $taxClassProcessor,
-            $scopeConfig, $productUrl, $data);
-        $this->lineFormatterMulti = $lineFormatterMulti;
-        $this->catalogConfig = $catalogConfig;
+        parent::__construct($jsonHelper, $importExportData, $importData, $config, $resource, $resourceHelper, $string,
+            $errorAggregator, $eventManager, $stockRegistry, $stockConfiguration, $stockStateProvider, $catalogData,
+            $importConfig, $resourceFactory, $optionFactory, $setColFactory, $productTypeFactory, $linkFactory,
+            $proxyProdFactory, $uploaderFactory, $filesystem, $stockResItemFac, $localeDate, $dateTime, $logger,
+            $indexerRegistry, $storeResolver, $skuProcessor, $categoryProcessor, $validator, $objectRelationProcessor,
+            $transactionManager, $taxClassProcessor, $scopeConfig, $productUrl, $data, $dateAttrCodes, $catalogConfig,
+            $imageTypeProcessor, $mediaProcessor, $stockItemImporter, $dateTimeFactory, $productRepository,
+            $statusProcessor, $stockProcessor);
     }
 
     /**
