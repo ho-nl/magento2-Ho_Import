@@ -54,9 +54,9 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @param \Magento\Catalog\Helper\Data                                                 $catalogData
      * @param Import\Config                                                                $importConfig
      * @param \Magento\CatalogImportExport\Model\Import\Proxy\Product\ResourceModelFactory $resourceFactory
-     * @param \Magento\CatalogImportExport\Model\Import\Product\OptionFactory              $optionFactory
+     * @param \Magento\CatalogImportExport\Model\Import\Product                            $optionFactory
      * @param \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory      $setColFactory
-     * @param \Magento\CatalogImportExport\Model\Import\Product\Type\Factory               $productTypeFactory
+     * @param \Magento\CatalogImportExport\Model\Import\Product                            $productTypeFactory
      * @param \Magento\Catalog\Model\ResourceModel\Product\LinkFactory                     $linkFactory
      * @param \Magento\CatalogImportExport\Model\Import\Proxy\ProductFactory               $proxyProdFactory
      * @param \Magento\CatalogImportExport\Model\Import\UploaderFactory                    $uploaderFactory
@@ -66,19 +66,27 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @param DateTime                                                                     $dateTime
      * @param \Psr\Log\LoggerInterface                                                     $logger
      * @param \Magento\Framework\Indexer\IndexerRegistry                                   $indexerRegistry
-     * @param \Magento\CatalogImportExport\Model\Import\Product\StoreResolver              $storeResolver
-     * @param \Magento\CatalogImportExport\Model\Import\Product\SkuProcessor               $skuProcessor
-     * @param \Magento\CatalogImportExport\Model\Import\Product\CategoryProcessor          $categoryProcessor
-     * @param \Magento\CatalogImportExport\Model\Import\Product\Validator                  $validator
+     * @param \Magento\CatalogImportExport\Model\Import\Product                            $storeResolver
+     * @param \Magento\CatalogImportExport\Model\Import\Product                            $skuProcessor
+     * @param \Magento\CatalogImportExport\Model\Import\Product                            $categoryProcessor
+     * @param \Magento\CatalogImportExport\Model\Import\Product                            $validator
      * @param ObjectRelationProcessor                                                      $objectRelationProcessor
      * @param TransactionManagerInterface                                                  $transactionManager
-     * @param \Magento\CatalogImportExport\Model\Import\Product\TaxClassProcessor          $taxClassProcessor
+     * @param \Magento\CatalogImportExport\Model\Import\Product                            $taxClassProcessor
      * @param \Magento\Framework\App\Config\ScopeConfigInterface                           $scopeConfig
      * @param \Magento\Catalog\Model\Product\Url                                           $productUrl
-     * @param LineFormatterMulti                                                           $lineFormatterMulti
-     * @param CatalogConfig                                                                $catalogConfig
      * @param array                                                                        $data
+     * @param array                                                                        $dateAttrCodes
+     * @param CatalogConfig|null                                                           $catalogConfig
+     * @param ImageTypeProcessor|null                                                      $imageTypeProcessor
+     * @param MediaGalleryProcessor|null                                                   $mediaProcessor
+     * @param StockItemImporterInterface|null                                              $stockItemImporter
+     * @param DateTimeFactory|null                                                         $dateTimeFactory
+     * @param ProductRepositoryInterface|null                                              $productRepository
+     * @param StatusProcessor|null                                                         $statusProcessor
+     * @param StockProcessor|null                                                          $stockProcessor
      *
+     * @throws \Magento\Framework\Exception\FileSystemException
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function __construct(
@@ -97,9 +105,9 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         \Magento\Catalog\Helper\Data $catalogData,
         Import\Config $importConfig,
         \Magento\CatalogImportExport\Model\Import\Proxy\Product\ResourceModelFactory $resourceFactory,
-        \Magento\CatalogImportExport\Model\Import\Product $optionFactory,
+        \Magento\CatalogImportExport\Model\Import\Product\OptionFactory $optionFactory,
         \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory $setColFactory,
-        \Magento\CatalogImportExport\Model\Import\Product $productTypeFactory,
+        \Magento\CatalogImportExport\Model\Import\Product\Type\Factory $productTypeFactory,
         \Magento\Catalog\Model\ResourceModel\Product\LinkFactory $linkFactory,
         \Magento\CatalogImportExport\Model\Import\Proxy\ProductFactory $proxyProdFactory,
         \Magento\CatalogImportExport\Model\Import\UploaderFactory $uploaderFactory,
@@ -109,26 +117,25 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         DateTime $dateTime,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Indexer\IndexerRegistry $indexerRegistry,
-        \Magento\CatalogImportExport\Model\Import\Product $storeResolver,
-        \Magento\CatalogImportExport\Model\Import\Product $skuProcessor,
-        \Magento\CatalogImportExport\Model\Import\Product $categoryProcessor,
-        \Magento\CatalogImportExport\Model\Import\Product $validator,
+        \Magento\CatalogImportExport\Model\Import\Product\StoreResolver $storeResolver,
+        \Magento\CatalogImportExport\Model\Import\Product\SkuProcessor $skuProcessor,
+        \Magento\CatalogImportExport\Model\Import\Product\CategoryProcessor $categoryProcessor,
+        \Magento\CatalogImportExport\Model\Import\Product\Validator $validator,
         ObjectRelationProcessor $objectRelationProcessor,
         TransactionManagerInterface $transactionManager,
-        \Magento\CatalogImportExport\Model\Import\Product $taxClassProcessor,
+        \Magento\CatalogImportExport\Model\Import\Product\TaxClassProcessor $taxClassProcessor,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Catalog\Model\Product\Url $productUrl,
-        LineFormatterMulti $lineFormatterMulti,
         array $data = [],
         array $dateAttrCodes = [],
         CatalogConfig $catalogConfig = null,
         ImageTypeProcessor $imageTypeProcessor = null,
         MediaGalleryProcessor $mediaProcessor = null,
-        $stockItemImporter = null,
+        StockItemImporterInterface $stockItemImporter = null,
         DateTimeFactory $dateTimeFactory = null,
-        $productRepository = null,
-        $statusProcessor = null,
-        $stockProcessor = null
+        ProductRepositoryInterface $productRepository = null,
+        StatusProcessor $statusProcessor = null,
+        StockProcessor $stockProcessor = null
     ) {
         parent::__construct($jsonHelper, $importExportData, $importData, $config, $resource, $resourceHelper, $string,
             $errorAggregator, $eventManager, $stockRegistry, $stockConfiguration, $stockStateProvider, $catalogData,
