@@ -1,14 +1,15 @@
 <?php
+
 /**
- * Copyright (c) 2016 H&O E-commerce specialisten B.V. (http://www.h-o.nl/)
+ * Copyright © Reach Digital (https://www.reachdigital.io/)
  * See LICENSE.txt for license details.
  */
+
 namespace Ho\Import\Rewrite\ImportExport\Import;
 
-use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Catalog\Helper\Catalog;
-use Magento\Catalog\Model\Config as CatalogConfig;
 use Ho\Import\Helper\LineFormatterMulti;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Config as CatalogConfig;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\CatalogImportExport\Model\Import\Product\ImageTypeProcessor;
 use Magento\CatalogImportExport\Model\Import\Product\MediaGalleryProcessor;
@@ -16,6 +17,7 @@ use Magento\CatalogImportExport\Model\Import\Product\RowValidatorInterface as Va
 use Magento\CatalogImportExport\Model\Import\Product\StatusProcessor;
 use Magento\CatalogImportExport\Model\Import\Product\StockProcessor;
 use Magento\CatalogImportExport\Model\StockItemImporterInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Intl\DateTimeFactory;
 use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
 use Magento\Framework\Model\ResourceModel\Db\TransactionManagerInterface;
@@ -126,6 +128,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         \Magento\CatalogImportExport\Model\Import\Product\TaxClassProcessor $taxClassProcessor,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Catalog\Model\Product\Url $productUrl,
+        LineFormatterMulti $lineFormatterMulti,
         array $data = [],
         array $dateAttrCodes = [],
         CatalogConfig $catalogConfig = null,
@@ -137,14 +140,57 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         StatusProcessor $statusProcessor = null,
         StockProcessor $stockProcessor = null
     ) {
-        parent::__construct($jsonHelper, $importExportData, $importData, $config, $resource, $resourceHelper, $string,
-            $errorAggregator, $eventManager, $stockRegistry, $stockConfiguration, $stockStateProvider, $catalogData,
-            $importConfig, $resourceFactory, $optionFactory, $setColFactory, $productTypeFactory, $linkFactory,
-            $proxyProdFactory, $uploaderFactory, $filesystem, $stockResItemFac, $localeDate, $dateTime, $logger,
-            $indexerRegistry, $storeResolver, $skuProcessor, $categoryProcessor, $validator, $objectRelationProcessor,
-            $transactionManager, $taxClassProcessor, $scopeConfig, $productUrl, $data, $dateAttrCodes, $catalogConfig,
-            $imageTypeProcessor, $mediaProcessor, $stockItemImporter, $dateTimeFactory, $productRepository,
-            $statusProcessor, $stockProcessor);
+        parent::__construct(
+            $jsonHelper,
+            $importExportData,
+            $importData,
+            $config,
+            $resource,
+            $resourceHelper,
+            $string,
+            $errorAggregator,
+            $eventManager,
+            $stockRegistry,
+            $stockConfiguration,
+            $stockStateProvider,
+            $catalogData,
+            $importConfig,
+            $resourceFactory,
+            $optionFactory,
+            $setColFactory,
+            $productTypeFactory,
+            $linkFactory,
+            $proxyProdFactory,
+            $uploaderFactory,
+            $filesystem,
+            $stockResItemFac,
+            $localeDate,
+            $dateTime,
+            $logger,
+            $indexerRegistry,
+            $storeResolver,
+            $skuProcessor,
+            $categoryProcessor,
+            $validator,
+            $objectRelationProcessor,
+            $transactionManager,
+            $taxClassProcessor,
+            $scopeConfig,
+            $productUrl,
+            $data,
+            $dateAttrCodes,
+            $catalogConfig,
+            $imageTypeProcessor,
+            $mediaProcessor,
+            $stockItemImporter,
+            $dateTimeFactory,
+            $productRepository,
+            $statusProcessor,
+            $stockProcessor
+        );
+
+        $this->lineFormatterMulti = $lineFormatterMulti;
+        $this->catalogConfig = $catalogConfig ?: ObjectManager::getInstance()->get(CatalogConfig::class);
     }
 
     /**
@@ -249,8 +295,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                     $entityRowsUp[] = [
                         'updated_at' => (new \DateTime())->format(DateTime::DATETIME_PHP_FORMAT),
                         'attribute_set_id' => $attributeSetId,
-                        $this->getProductEntityLinkField()
-                        => $this->_oldSku[$rowSku][$this->getProductEntityLinkField()],
+                        $this->getProductEntityLinkField() => $this->_oldSku[$rowSku][$this->getProductEntityLinkField()],
                     ];
                 } else {
                     if (!$productLimit || $productsQty < $productLimit) {
@@ -756,5 +801,4 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         $data['attr_set_code'] = $this->_attrSetIdToName[$this->_oldSku[$sku]['attr_set_id']];
         return $data;
     }
-
 }
