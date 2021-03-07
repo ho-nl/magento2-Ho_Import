@@ -5,10 +5,10 @@ of Magento's internal Import/Export modules.
 
 The goal of the library is to be a swiss army knife for importing products in Magento 2. Features include:
 
-- Steam XML over HTTP and from disk
+- Stream XML over HTTP and from disk
 - Download files from HTTP(s)/FTP
 - Map items from source file to Magento format
-- Lot's of (RowModifiers)[RowModifier]
+- Lot's of [RowModifiers](https://github.com/ho-nl/magento2-Ho_Import/tree/master/src/RowModifier)
 - Fixed importer core bugs
 
 [ExampleProfile.php](src/docs/examples/basic/ExampleProfile.php)
