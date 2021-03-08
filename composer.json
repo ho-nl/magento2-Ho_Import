@@ -13,7 +13,6 @@
         "league/csv": "^9.1"
     },
     "type": "magento2-module",
-    "version": "0.4.2",
     "autoload": {
         "files": [
             "registration.php"
