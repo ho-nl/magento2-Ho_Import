@@ -75,7 +75,7 @@ class FileCsv
      * @return \Generator
      */
     public function getIterator()
-    { 
+    {
         $this->consoleOutput->writeln(
             "<info>Streamer\FileCsv: Getting data from requestFile {$this->requestFile}</info>"
         );
@@ -93,7 +93,7 @@ class FileCsv
             $csvReader->setHeaderOffset(0);
         }
         foreach ($csvReader->getIterator() as $row) {
-            yield (empty($this->headers) ? $row : array_combine($this->headers, $row));
+            yield (empty($this->headers) ? $row : \array_combine($this->headers, \array_map('utf8_encode', $row)));
         }
     }
 
