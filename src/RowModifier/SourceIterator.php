@@ -107,7 +107,7 @@ class SourceIterator extends AbstractRowModifier
                             );
                             $this->log->addInfo("SourceIterator: Item not found for {$id}");
 
-                            continue;
+                            continue 2;
                         }
                         $this->items[$id] += $item;
                         break;
