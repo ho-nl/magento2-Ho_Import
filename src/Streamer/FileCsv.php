@@ -89,6 +89,7 @@ class FileCsv
         $requestFile = fopen($requestFile, 'r');
 
         $csvReader = \League\Csv\Reader::createFromStream($requestFile);
+        $csvReader->setEscape('');
         if (empty($this->headers)) {
             $csvReader->setHeaderOffset(0);
         }
