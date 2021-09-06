@@ -299,7 +299,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                     ];
                 } else {
                     if (!$productLimit || $productsQty < $productLimit) {
-                        $entityRowsIn[strtolower($rowSku)] = [
+                        $entityRowsIn[mb_strtolower($rowSku)] = [
                             'attribute_set_id' => $this->skuProcessor->getNewSku($rowSku)['attr_set_id'],
                             'type_id' => $this->skuProcessor->getNewSku($rowSku)['type_id'],
                             'sku' => $rowSku,
