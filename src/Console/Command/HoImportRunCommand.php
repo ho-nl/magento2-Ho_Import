@@ -61,9 +61,9 @@ class HoImportRunCommand extends Command
      * @param ConsoleOutput              $consoleOutput
      */
     public function __construct(
-        ImportProfilePoolInterface $importProfilePool,
-        Stopwatch $stopwatch,
-        ConsoleOutput $consoleOutput
+        ImportProfilePoolInterface\Proxy $importProfilePool,
+        Stopwatch\Proxy $stopwatch,
+        ConsoleOutput\Proxy $consoleOutput
     ) {
         $this->importProfilePool = $importProfilePool;
         $this->stopwatch         = $stopwatch;
