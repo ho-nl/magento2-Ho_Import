@@ -30,4 +30,9 @@ interface ImportProfileInterface
      * @return mixed
      */
     public function run();
+
+    /**
+     * @return \Exception
+     */
+    public function getException();
 }
