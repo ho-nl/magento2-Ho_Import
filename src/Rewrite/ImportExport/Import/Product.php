@@ -616,7 +616,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         // SKU is specified, row is SCOPE_DEFAULT, new product block begins
         $this->_processedEntitiesCount++;
         $sku = $rowData[self::COL_SKU];
-        if (isset($this->_oldSku[$sku])) {
+        if (isset($this->_oldSku[\strtolower($sku)])) {
             // can we get all necessary data from existent DB product?
             // check for supported type of existing product
             if (isset($this->_productTypeModels[$this->_oldSku[$sku]['type_id']])) {
