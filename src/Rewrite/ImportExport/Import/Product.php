@@ -619,7 +619,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         if (isset($this->_oldSku[\strtolower($sku)])) {
             // can we get all necessary data from existent DB product?
             // check for supported type of existing product
-            if (isset($this->_productTypeModels[$this->_oldSku[$sku]['type_id']])) {
+            if (isset($this->_productTypeModels[$this->_oldSku[\strtolower($sku)]['type_id']])) {
                 $this->skuProcessor->addNewSku(
                     $sku,
                     $this->prepareNewSkuData($sku)
@@ -632,6 +632,8 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         } else {
             // validate new product type and attribute set
             if (!isset($rowData[self::COL_TYPE]) || !isset($this->_productTypeModels[$rowData[self::COL_TYPE]])) {
+                echo 'product_type: ' . (isset($rowData[self::COL_TYPE]) ? $rowData[self::COL_TYPE] : 'null') . "\n";
+                echo 'sku: ' . $sku . "\n";
                 $this->addRowError(ValidatorInterface::ERROR_INVALID_TYPE, $rowNum);
             } elseif (!isset(
                     $rowData[self::COL_ATTR_SET]
@@ -664,7 +666,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
             $rowAttributesValid = $this->_productTypeModels[$newSku['type_id']]->isRowValid(
                 $rowData,
                 $rowNum,
-                !isset($this->_oldSku[$sku])
+                !isset($this->_oldSku[\strtolower($sku)])
             );
             if (!$rowAttributesValid && self::SCOPE_DEFAULT == $rowScope) {
                 // mark SCOPE_DEFAULT row as invalid for future child rows if product not in DB already
@@ -717,10 +719,10 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
     private function prepareNewSkuData($sku)
     {
         $data = [];
-        foreach ($this->_oldSku[$sku] as $key => $value) {
+        foreach ($this->_oldSku[\strtolower($sku)] as $key => $value) {
             $data[$key] = $value;
         }
-        $data['attr_set_code'] = $this->_attrSetIdToName[$this->_oldSku[$sku]['attr_set_id']];
+        $data['attr_set_code'] = $this->_attrSetIdToName[$this->_oldSku[\strtolower($sku)]['attr_set_id']];
         return $data;
     }
 }
