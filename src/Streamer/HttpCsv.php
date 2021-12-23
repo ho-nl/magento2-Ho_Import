@@ -75,6 +75,11 @@ class HttpCsv
     private $delimiter;
 
     /**
+     * @var string
+     */
+    private $encodingConversion;
+
+    /**
      * @param CachePool     $cacheItemPool
      * @param ConsoleOutput $consoleOutput
      * @param string        $requestUrl
@@ -90,6 +95,7 @@ class HttpCsv
         string $requestUrl,
         Log $log,
         string $delimiter,
+        string $encodingConversion = '',
         string $requestMethod = 'GET',
         array $requestOptions = [],
         int $ttl = 12 * 3600,
@@ -104,6 +110,7 @@ class HttpCsv
         $this->ttl = $ttl;
         $this->headers = $headers;
         $this->delimiter = $delimiter;
+        $this->encodingConversion = $encodingConversion;
     }
 
     /**
@@ -153,6 +160,9 @@ class HttpCsv
         $this->consoleOutput->write("\n");
 
         $csvReader = \League\Csv\Reader::createFromStream(StreamWrapper::streamToResource($result->getBody()));
+        if ($this->encodingConversion) {
+            $csvReader->addStreamFilter($this->encodingConversion);
+        }
         if ($this->delimiter) {
             $csvReader->setDelimiter($this->delimiter);
         }
