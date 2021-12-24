@@ -43,6 +43,11 @@ class FileCsv
     private $log;
 
     /**
+     * @var string
+     */
+    private $delimiter;
+
+    /**
      * @var array
      */
     private $headers;
@@ -59,6 +64,7 @@ class FileCsv
         DirectoryList $directoryList,
         string $requestFile,
         Log $log,
+        string $delimiter,
         array $headers = []
     ) {
         $this->consoleOutput = $consoleOutput;
@@ -66,6 +72,7 @@ class FileCsv
         $this->requestFile = $requestFile;
         $this->log = $log;
         $this->headers = $headers;
+        $this->delimiter = $delimiter;
     }
 
     /**
@@ -92,6 +99,9 @@ class FileCsv
         $csvReader->setEscape('');
         if (empty($this->headers)) {
             $csvReader->setHeaderOffset(0);
+        }
+        if ($this->delimiter) {
+            $csvReader->setDelimiter($this->delimiter);
         }
         foreach ($csvReader->getIterator() as $row) {
             yield (empty($this->headers) ? $row : \array_combine($this->headers, \array_map('utf8_encode', $row)));
