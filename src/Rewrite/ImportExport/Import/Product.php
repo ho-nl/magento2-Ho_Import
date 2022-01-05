@@ -632,8 +632,6 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         } else {
             // validate new product type and attribute set
             if (!isset($rowData[self::COL_TYPE]) || !isset($this->_productTypeModels[$rowData[self::COL_TYPE]])) {
-                echo 'product_type: ' . (isset($rowData[self::COL_TYPE]) ? $rowData[self::COL_TYPE] : 'null') . "\n";
-                echo 'sku: ' . $sku . "\n";
                 $this->addRowError(ValidatorInterface::ERROR_INVALID_TYPE, $rowNum);
             } elseif (!isset(
                     $rowData[self::COL_ATTR_SET]

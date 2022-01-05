@@ -101,7 +101,6 @@ abstract class ImportProfile implements ImportProfileInterface
 
             return \Magento\Framework\Console\Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
-            echo 'error: ' . $e->getTraceAsString();
             $this->consoleOutput->writeln($e->getMessage());
             $this->log->addCritical($e->getMessage());
 
