@@ -271,7 +271,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 }
 
                 // 1. Entity phase
-                if (isset($this->_oldSku[$rowSku])) {
+                if (isset($this->_oldSku[\strtolower($rowSku)])) {
                     // existing row
                     if (isset($rowData['attribute_set_code'])) {
                         $attributeSetId = $this->catalogConfig->getAttributeSetId(
