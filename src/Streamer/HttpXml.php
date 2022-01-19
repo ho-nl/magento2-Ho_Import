@@ -72,20 +72,24 @@ class HttpXml
      * @var int
      */
     private $ttl;
+    /**
+     * @var array|null
+     */
+    private $auth;
 
     /**
      * Xml constructor.
      *
-     * @param CachePool     $cacheItemPool
+     * @param CachePool $cacheItemPool
      * @param ConsoleOutput $consoleOutput
      *
-     * @param string        $requestUrl
-     * @param string        $requestMethod
-     * @param array         $requestOptions
-     * @param string        $xmlParser
-     * @param array         $xmlOptions
-     * @param int           $limit
-     * @param int           $ttl
+     * @param string $requestUrl
+     * @param array|null $auth
+     * @param string $requestMethod
+     * @param array $requestOptions
+     * @param array $xmlOptions
+     * @param int $limit
+     * @param int $ttl
      *
      * @todo {Paul} Search for all references of options, uniqueNode, etc. So all imports are still working.
      * @todo {Paul} Replace the $parser argument with a Factory for the ParserInterface and default to the
@@ -99,7 +103,8 @@ class HttpXml
         array $requestOptions = [],
         array $xmlOptions = [],
         int $limit = PHP_INT_MAX,
-        int $ttl = (12 * 3600)
+        int $ttl = (12 * 3600),
+        ?array $auth = null
     ) {
         $this->requestUrl     = $requestUrl;
         $this->requestMethod  = $requestMethod;
@@ -109,6 +114,7 @@ class HttpXml
         $this->cacheItemPool  = $cacheItemPool;
         $this->consoleOutput  = $consoleOutput;
         $this->ttl            = $ttl;
+        $this->auth = $auth;
     }
 
     /**
@@ -137,7 +143,7 @@ class HttpXml
         $result = $httpClient->request(
             $this->requestMethod,
             $this->requestUrl,
-            $this->requestOptions + ['stream' => true]
+            $this->requestOptions + ['stream' => true, 'auth' => $this->auth]
         );
         $stream = new \Prewk\XmlStringStreamer\Stream\Guzzle('');
 
