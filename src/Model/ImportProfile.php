@@ -43,6 +43,11 @@ abstract class ImportProfile implements ImportProfileInterface
     protected $log;
 
     /**
+     * @var \Exception
+     */
+    private $exception;
+
+    /**
      * @param ObjectManagerFactory $objectManagerFactory
      * @param Stopwatch            $stopwatch
      * @param ConsoleOutput        $consoleOutput
@@ -99,8 +104,16 @@ abstract class ImportProfile implements ImportProfileInterface
             $this->consoleOutput->writeln($e->getMessage());
             $this->log->addCritical($e->getMessage());
 
+            // Store the exception in case a calling class wants to inspect it.
+            $this->exception = $e;
+
             return \Magento\Framework\Console\Cli::RETURN_FAILURE;
         }
+    }
+
+    public function getException(): \Exception
+    {
+        return $this->exception;
     }
 
     /**

@@ -13,20 +13,17 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 
 /**
- * This class is made to solve the issue that we want to download XML-files and parse them as they come in.
- * The XML parser needs some extra handling to support this scenario.
+ * This class is made to solve the issue that we want to download Json-files and parse them as they come in.
+ * The Json parser needs some extra handling to support this scenario.
  *
  * Get the data stream as \Generator
  * 1. Get the data stream over HTTP
  * 2. Use a cached version of the downloaded file if available
- * 3. Put the data stream into the XML String Streamer
- * 4. Split the XML String in separate Nodes to get a single XML Node String
- * 5. Parse the XML Node String as an SimpleXMLElement
- * 6. Convert the SimpleXMLElement to an array
+ * 3. Convert the json blob to a php array
  *
- * @todo {Paul} implement a proper interface that can be directly picked up by the sourceIterator without requiring knowledge of the getIterator method.
+ * @todo Currently the json is parsed entirely. Preferably we would like to stream it as it comes in.
  */
-class HttpXml
+class HttpJson
 {
     /**
      * @var CachePool
@@ -73,7 +70,7 @@ class HttpXml
      */
     private $ttl;
     /**
-     * @var array|null
+     * @var array
      */
     private $auth;
 
@@ -84,16 +81,13 @@ class HttpXml
      * @param ConsoleOutput $consoleOutput
      *
      * @param string $requestUrl
-     * @param array|null $auth
      * @param string $requestMethod
      * @param array $requestOptions
      * @param array $xmlOptions
      * @param int $limit
      * @param int $ttl
+     * @param array|null $auth
      *
-     * @todo {Paul} Search for all references of options, uniqueNode, etc. So all imports are still working.
-     * @todo {Paul} Replace the $parser argument with a Factory for the ParserInterface and default to the
-     *       Parser\UniqueNode (Open/Closed Principle)
      */
     public function __construct(
         CachePool $cacheItemPool,
@@ -118,7 +112,6 @@ class HttpXml
     }
 
     /**
-     * @todo {Paul} Refactor all direct instantiation of classes (Dependency Injection)
      * Get the source iterator
      * @return \Generator
      */
@@ -145,30 +138,14 @@ class HttpXml
             $this->requestUrl,
             $this->requestOptions + ['stream' => true, 'auth' => $this->auth]
         );
-        $stream = new \Prewk\XmlStringStreamer\Stream\Guzzle('');
 
-        if ($result->getHeader('X-Kevinrob-Cache') && $result->getHeader('X-Kevinrob-Cache')[0] == 'HIT') {
-            $this->consoleOutput->write(" <info>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</info>");
-        } else {
-            $this->consoleOutput->write(" <comment>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</comment>");
-        }
-        $this->consoleOutput->write("\n");
+        $json = \json_decode($result->getBody(), true);
 
-        $stream->setGuzzleStream($result->getBody());
-
-        $class = isset($this->xmlOptions['uniqueNode']) ? UniqueNode::class : StringWalker::class;
-        $parser = new $class($this->xmlOptions + [
-            'checkShortClosing' => true
-        ]);
-        $streamer = new \Prewk\XmlStringStreamer($parser, $stream);
-
-        $limit = $this->limit;
-        $generator = function (\Prewk\XmlStringStreamer $streamer) use ($limit) {
-            while (($node = $streamer->getNode()) && $limit > 0) {
-                $limit--;
-                yield array_filter(json_decode(json_encode(new \SimpleXMLElement($node, LIBXML_NOCDATA)), true));
+        $generator = function (array $json) {
+            foreach ($json as $item) {
+                yield $item;
             }
         };
-        return $generator($streamer);
+        return $generator($json);
     }
 }
