@@ -35,4 +35,11 @@
     </type>
     <preference for="Magento\CatalogImportExport\Model\Import\Product" type="Ho\Import\Rewrite\ImportExport\Import\Product" />
     <preference for="Magento\CatalogImportExport\Model\Import\Product\Option" type="Ho\Import\Rewrite\ImportExport\Import\ProductOption" />
+
+    <type name="Ho\Import\Rewrite\ImportExport\Import\Product">
+        <arguments>
+            <argument name="statusProcessor" xsi:type="object">Magento\CatalogImportExport\Model\Import\Product\StatusProcessor</argument>
+            <argument name="stockProcessor" xsi:type="object">Magento\CatalogImportExport\Model\Import\Product\StockProcessor</argument>
+        </arguments>
+    </type>
 </config>
