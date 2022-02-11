@@ -14,8 +14,6 @@ use Magento\Catalog\Model\Product\Visibility;
 use Magento\CatalogImportExport\Model\Import\Product\ImageTypeProcessor;
 use Magento\CatalogImportExport\Model\Import\Product\MediaGalleryProcessor;
 use Magento\CatalogImportExport\Model\Import\Product\RowValidatorInterface as ValidatorInterface;
-use Magento\CatalogImportExport\Model\Import\Product\StatusProcessor;
-use Magento\CatalogImportExport\Model\Import\Product\StockProcessor;
 use Magento\CatalogImportExport\Model\StockItemImporterInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Intl\DateTimeFactory;
@@ -85,8 +83,6 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      * @param StockItemImporterInterface|null                                              $stockItemImporter
      * @param DateTimeFactory|null                                                         $dateTimeFactory
      * @param ProductRepositoryInterface|null                                              $productRepository
-     * @param StatusProcessor|null                                                         $statusProcessor
-     * @param StockProcessor|null                                                          $stockProcessor
      *
      * @throws \Magento\Framework\Exception\FileSystemException
      * @throws \Magento\Framework\Exception\LocalizedException
@@ -137,57 +133,106 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         StockItemImporterInterface $stockItemImporter = null,
         DateTimeFactory $dateTimeFactory = null,
         ProductRepositoryInterface $productRepository = null,
-        StatusProcessor $statusProcessor = null,
-        StockProcessor $stockProcessor = null
+        $statusProcessor = null,
+        $stockProcessor = null
     ) {
-        parent::__construct(
-            $jsonHelper,
-            $importExportData,
-            $importData,
-            $config,
-            $resource,
-            $resourceHelper,
-            $string,
-            $errorAggregator,
-            $eventManager,
-            $stockRegistry,
-            $stockConfiguration,
-            $stockStateProvider,
-            $catalogData,
-            $importConfig,
-            $resourceFactory,
-            $optionFactory,
-            $setColFactory,
-            $productTypeFactory,
-            $linkFactory,
-            $proxyProdFactory,
-            $uploaderFactory,
-            $filesystem,
-            $stockResItemFac,
-            $localeDate,
-            $dateTime,
-            $logger,
-            $indexerRegistry,
-            $storeResolver,
-            $skuProcessor,
-            $categoryProcessor,
-            $validator,
-            $objectRelationProcessor,
-            $transactionManager,
-            $taxClassProcessor,
-            $scopeConfig,
-            $productUrl,
-            $data,
-            $dateAttrCodes,
-            $catalogConfig,
-            $imageTypeProcessor,
-            $mediaProcessor,
-            $stockItemImporter,
-            $dateTimeFactory,
-            $productRepository,
-            $statusProcessor,
-            $stockProcessor
-        );
+        if ($statusProcessor) {
+            parent::__construct(
+                $jsonHelper,
+                $importExportData,
+                $importData,
+                $config,
+                $resource,
+                $resourceHelper,
+                $string,
+                $errorAggregator,
+                $eventManager,
+                $stockRegistry,
+                $stockConfiguration,
+                $stockStateProvider,
+                $catalogData,
+                $importConfig,
+                $resourceFactory,
+                $optionFactory,
+                $setColFactory,
+                $productTypeFactory,
+                $linkFactory,
+                $proxyProdFactory,
+                $uploaderFactory,
+                $filesystem,
+                $stockResItemFac,
+                $localeDate,
+                $dateTime,
+                $logger,
+                $indexerRegistry,
+                $storeResolver,
+                $skuProcessor,
+                $categoryProcessor,
+                $validator,
+                $objectRelationProcessor,
+                $transactionManager,
+                $taxClassProcessor,
+                $scopeConfig,
+                $productUrl,
+                $data,
+                $dateAttrCodes,
+                $catalogConfig,
+                $imageTypeProcessor,
+                $mediaProcessor,
+                $stockItemImporter,
+                $dateTimeFactory,
+                $productRepository,
+                $statusProcessor,
+                $stockProcessor
+            );
+        } else {
+            parent::__construct(
+                $jsonHelper,
+                $importExportData,
+                $importData,
+                $config,
+                $resource,
+                $resourceHelper,
+                $string,
+                $errorAggregator,
+                $eventManager,
+                $stockRegistry,
+                $stockConfiguration,
+                $stockStateProvider,
+                $catalogData,
+                $importConfig,
+                $resourceFactory,
+                $optionFactory,
+                $setColFactory,
+                $productTypeFactory,
+                $linkFactory,
+                $proxyProdFactory,
+                $uploaderFactory,
+                $filesystem,
+                $stockResItemFac,
+                $localeDate,
+                $dateTime,
+                $logger,
+                $indexerRegistry,
+                $storeResolver,
+                $skuProcessor,
+                $categoryProcessor,
+                $validator,
+                $objectRelationProcessor,
+                $transactionManager,
+                $taxClassProcessor,
+                $scopeConfig,
+                $productUrl,
+                $data,
+                $dateAttrCodes,
+                $catalogConfig,
+                $imageTypeProcessor,
+                $mediaProcessor,
+                $stockItemImporter,
+                $dateTimeFactory,
+                $productRepository
+            );
+        }
 
         $this->lineFormatterMulti = $lineFormatterMulti;
         $this->catalogConfig = $catalogConfig ?: ObjectManager::getInstance()->get(CatalogConfig::class);
