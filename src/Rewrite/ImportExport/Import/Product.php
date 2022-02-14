@@ -340,7 +340,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                     $entityRowsUp[] = [
                         'updated_at' => (new \DateTime())->format(DateTime::DATETIME_PHP_FORMAT),
                         'attribute_set_id' => $attributeSetId,
-                        $this->getProductEntityLinkField() => $this->_oldSku[$rowSku][$this->getProductEntityLinkField()],
+                        $this->getProductEntityLinkField() => $this->_oldSku[\strtolower($rowSku)][$this->getProductEntityLinkField()],
                     ];
                 } else {
                     if (!$productLimit || $productsQty < $productLimit) {
