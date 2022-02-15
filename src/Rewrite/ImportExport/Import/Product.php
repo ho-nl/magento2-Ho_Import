@@ -136,7 +136,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         $statusProcessor = null,
         $stockProcessor = null
     ) {
-        if ($statusProcessor) {
+        if ($statusProcessor && \is_a($statusProcessor, 'Magento\CatalogImportExport\Model\Import\Product\StatusProcessor')) {
             parent::__construct(
                 $jsonHelper,
                 $importExportData,
