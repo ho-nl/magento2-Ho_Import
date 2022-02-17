@@ -103,6 +103,12 @@ abstract class ImportProfile implements ImportProfileInterface
         } catch (\Exception $e) {
             $this->consoleOutput->writeln($e->getMessage());
             $this->log->addCritical($e->getMessage());
+            $innerExceptionIterator = $e->getPrevious();
+            while ($innerExceptionIterator !== null) {
+                $this->consoleOutput->writeln($innerExceptionIterator->getMessage());
+                $this->log->addCritical($innerExceptionIterator->getMessage());
+                $innerExceptionIterator = $innerExceptionIterator->getPrevious();
+            }
 
             // Store the exception in case a calling class wants to inspect it.
             $this->exception = $e;
