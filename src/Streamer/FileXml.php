@@ -97,7 +97,11 @@ class FileXml
         $generator = function (\Prewk\XmlStringStreamer $streamer) use ($limit) {
             while (($node = $streamer->getNode()) && $limit > 0) {
                 $limit--;
-                yield array_filter(json_decode(json_encode(new \SimpleXMLElement($node, LIBXML_NOCDATA)), true));
+                yield array_filter(json_decode(json_encode(new \SimpleXMLElement($node, LIBXML_NOCDATA)), true),
+                    function($value) {
+                        return (is_array($value) ? count($value) > 0 : strlen($value));
+                    }
+                );
             }
         };
 
