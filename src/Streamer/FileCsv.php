@@ -22,42 +22,35 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  */
 class FileCsv
 {
-    /**
-     * @var string
-     */
+    /** @var string $requestFile */
     private $requestFile;
 
-    /**
-     * @var ConsoleOutput
-     */
+    /** @var ConsoleOutput $consoleOutput */
     private $consoleOutput;
 
-    /**
-     * @var DirectoryList
-     */
+    /** @var DirectoryList $directoryList */
     private $directoryList;
 
-    /**
-     * @var Log
-     */
+    /** @var Log $log */
     private $log;
 
-    /**
-     * @var string
-     */
+    /** @var string $delimiter */
     private $delimiter;
 
-    /**
-     * @var array
-     */
+    /** @var array $headers */
     private $headers;
+
+    /** @var string $escapeCharacter */
+    private $escapeCharacter;
 
     /**
      * @param ConsoleOutput $consoleOutput
      * @param DirectoryList $directoryList
      * @param string        $requestFile Relative or absolute path to filename.
      * @param Log           $log
+     * @param string        $delimiter
      * @param array         $headers
+     * @param string        $escapeCharacter
      */
     public function __construct(
         ConsoleOutput $consoleOutput,
@@ -65,7 +58,8 @@ class FileCsv
         string $requestFile,
         Log $log,
         string $delimiter,
-        array $headers = []
+        array $headers = [],
+        string $escapeCharacter = ''
     ) {
         $this->consoleOutput = $consoleOutput;
         $this->directoryList = $directoryList;
@@ -96,7 +90,7 @@ class FileCsv
         $requestFile = fopen($requestFile, 'r');
 
         $csvReader = \League\Csv\Reader::createFromStream($requestFile);
-        $csvReader->setEscape('');
+        $csvReader->setEscape($this->escapeCharacter);
         if (empty($this->headers)) {
             $csvReader->setHeaderOffset(0);
         }
