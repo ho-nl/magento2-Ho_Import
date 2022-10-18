@@ -70,7 +70,7 @@ class HttpCsv
     private $log;
 
     /**
-     * @var string
+     * @var ?string
      */
     private $delimiter;
 
@@ -94,7 +94,7 @@ class HttpCsv
         ConsoleOutput $consoleOutput,
         string $requestUrl,
         Log $log,
-        string $delimiter,
+        ?string $delimiter = null,
         string $encodingConversion = '',
         string $requestMethod = 'GET',
         array $requestOptions = [],

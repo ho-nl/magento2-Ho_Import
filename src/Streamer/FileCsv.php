@@ -34,7 +34,7 @@ class FileCsv
     /** @var Log $log */
     private $log;
 
-    /** @var string $delimiter */
+    /** @var ?string $delimiter */
     private $delimiter;
 
     /** @var array $headers */
@@ -57,7 +57,7 @@ class FileCsv
         DirectoryList $directoryList,
         string $requestFile,
         Log $log,
-        string $delimiter,
+        ?string $delimiter = null,
         array $headers = [],
         string $escapeCharacter = ''
     ) {
