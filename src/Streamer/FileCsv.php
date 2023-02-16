@@ -67,6 +67,7 @@ class FileCsv
         $this->log = $log;
         $this->headers = $headers;
         $this->delimiter = $delimiter;
+        $this->escapeCharacter = $escapeCharacter;
     }
 
     /**
