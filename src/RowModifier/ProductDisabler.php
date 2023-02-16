@@ -86,7 +86,7 @@ class ProductDisabler extends AbstractRowModifier
 
         $count = count($itemsToDisable);
         $this->consoleOutput->writeln("<info>ProductDisabler: Disabling {$count} products</info>");
-        $this->log->addInfo("ProductDisabler: Disabling {$count} products");
+        $this->log->info("ProductDisabler: Disabling {$count} products");
 
         $this->items += $itemsToDisable;
     }

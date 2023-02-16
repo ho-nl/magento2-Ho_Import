@@ -84,7 +84,7 @@ class SourceIterator extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("SourceIterator: <info>Adding information from stream</info>");
-        $this->log->addInfo('SourceIterator: Adding information from stream');
+        $this->log->info('SourceIterator: Adding information from stream');
 
         $identifier = $this->identifier;
         foreach ($this->iterator as $item) {
@@ -105,7 +105,7 @@ class SourceIterator extends AbstractRowModifier
                             $this->consoleOutput->writeln(
                                 "SourceIterator: <comment>Item not found for {$id}</comment>"
                             );
-                            $this->log->addInfo("SourceIterator: Item not found for {$id}");
+                            $this->log->info("SourceIterator: Item not found for {$id}");
 
                             continue 2;
                         }

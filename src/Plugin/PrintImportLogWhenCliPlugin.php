@@ -34,6 +34,6 @@ class PrintImportLogWhenCliPlugin
     ) {
         $debugData = is_array($debugData) ? implode(', ', $debugData) : $debugData;
         $this->consoleOutput->writeln("<info>{$debugData}</info>");
-        $this->log->addInfo((string)$debugData);
+        $this->log->info((string)$debugData);
     }
 }

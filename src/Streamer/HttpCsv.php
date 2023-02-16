@@ -132,7 +132,7 @@ class HttpCsv
         $this->consoleOutput->write(
             "<info>Streamer\HttpCsv: Getting data from URL {$this->requestUrl}</info>"
         );
-        $this->log->addInfo('Streamer\HttpCsv: Getting data from URL '.$this->requestUrl);
+        $this->log->info('Streamer\HttpCsv: Getting data from URL '.$this->requestUrl);
 
         $stack = \GuzzleHttp\HandlerStack::create();
         $stack->push(new \Kevinrob\GuzzleCache\CacheMiddleware(

@@ -94,19 +94,19 @@ abstract class ImportProfile implements ImportProfileInterface
             ]);
 
             $this->consoleOutput->writeln($output);
-            $this->log->addInfo($output);
+            $this->log->info($output);
 
             $this->consoleOutput->writeln("<error>$errors</error>");
-            $this->log->addError($errors);
+            $this->log->error($errors);
 
             return \Magento\Framework\Console\Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
             $this->consoleOutput->writeln($e->getMessage());
-            $this->log->addCritical($e->getMessage());
+            $this->log->critical($e->getMessage());
             $innerExceptionIterator = $e->getPrevious();
             while ($innerExceptionIterator !== null) {
                 $this->consoleOutput->writeln($innerExceptionIterator->getMessage());
-                $this->log->addCritical($innerExceptionIterator->getMessage());
+                $this->log->critical($innerExceptionIterator->getMessage());
                 $innerExceptionIterator = $innerExceptionIterator->getPrevious();
             }
 
@@ -131,7 +131,7 @@ abstract class ImportProfile implements ImportProfileInterface
     {
         $this->stopwatch->start('profileinstance');
         $this->consoleOutput->writeln('Getting item data');
-        $this->log->addInfo('Getting item data');
+        $this->log->info('Getting item data');
         $items = $this->getItems();
         $stopwatchEvent = $this->stopwatch->stop('profileinstance');
 
@@ -148,7 +148,7 @@ abstract class ImportProfile implements ImportProfileInterface
             ]);
 
         $this->consoleOutput->writeln($output);
-        $this->log->addInfo($output);
+        $this->log->info($output);
 
         return $items;
     }

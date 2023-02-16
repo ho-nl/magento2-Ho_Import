@@ -32,7 +32,7 @@ abstract class ProductMapper extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>Mapping product information</info>");
-        $this->log->addInfo('Mapping product information');
+        $this->log->info('Mapping product information');
 
         foreach ($this->getSourceItems() as $item) {
             try {
@@ -53,12 +53,12 @@ abstract class ProductMapper extends AbstractRowModifier
                     $output = sprintf('Error validating, skipping %s: %s', $identifier, implode(',', $errors));
 
                     $this->consoleOutput->writeln(sprintf('<comment>%s</comment>', $output));
-                    $this->log->addInfo($output);
+                    $this->log->info($output);
                 }
 
             } catch (\Exception $e) {
                 $this->consoleOutput->writeln("<error>{$e->getMessage()}</error>");
-                $this->log->addError($e->getMessage());
+                $this->log->error($e->getMessage());
             }
         }
     }

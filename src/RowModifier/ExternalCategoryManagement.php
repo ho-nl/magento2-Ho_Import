@@ -70,7 +70,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>Adding existing product category associations</info>");
-        $this->log->addInfo('Adding existing product category associations');
+        $this->log->info('Adding existing product category associations');
 
         $this->initCategoryMapping();
         $this->initCategoryProductMapping();
@@ -85,7 +85,7 @@ class ExternalCategoryManagement extends AbstractRowModifier
                     $categories = array_merge($categories, $this->categoryMapping[$category]);
                 }
             }
-            
+
             if (isset($this->productCategoryMapping[$identifier])) {
                 $categories = array_merge($categories, $this->productCategoryMapping[$identifier]);
             }

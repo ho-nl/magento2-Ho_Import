@@ -55,7 +55,7 @@ class TemplateFieldParser extends AbstractRowModifier
                 try {
                     $item[$fieldName] = $this->filterTemplate->filter($template);
                 } catch (\Exception $e) {
-                    $this->log->addError($e->getMessage());
+                    $this->log->error($e->getMessage());
                     $this->messageManager->addExceptionMessage($e);
                 }
             }
