@@ -44,7 +44,7 @@ class AssignAllWebsites extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>Assigning all products to all websites...</info>");
-        $this->log->addInfo('Assigning all products to all websites...');
+        $this->log->info('Assigning all products to all websites...');
 
         $allWebsites = $this->allWebsites();
 

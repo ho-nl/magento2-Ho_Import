@@ -105,14 +105,14 @@ class ProductUrlKey extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>Checking url_keys and make sure they are unique</info>");
-        $this->log->addInfo('Checking url_keys and make sure they are unique');
+        $this->log->info('Checking url_keys and make sure they are unique');
 
         $this->initProductToSku();
         foreach ($this->items as $identifier => &$item) {
             //check for existence.
             if (empty($item['url_key'])) {
                 $this->consoleOutput->writeln("<comment>ProductUrlKey: url_key not found {$identifier}</comment>");
-                $this->log->addInfo('ProductUrlKey: url_key not found '.$identifier);
+                $this->log->info('ProductUrlKey: url_key not found '.$identifier);
             }
             $item['url_key'] = $this->getUrlKey($item['url_key'], $identifier);
         }
@@ -178,7 +178,7 @@ class ProductUrlKey extends AbstractRowModifier
         $this->consoleOutput->writeln(
             "<error>Can not find available URL-key for {$identifier}, you might run into trouble</error>"
         );
-        $this->log->addError("Can not find available URL-key for {$identifier}, you might run into trouble");
+        $this->log->error("Can not find available URL-key for {$identifier}, you might run into trouble");
     }
 
     /**

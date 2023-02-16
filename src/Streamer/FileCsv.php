@@ -80,11 +80,11 @@ class FileCsv
         $this->consoleOutput->writeln(
             "<info>Streamer\FileCsv: Getting data from requestFile {$this->requestFile}</info>"
         );
-        $this->log->addInfo('Streamer\FileCsv: Getting data from requestFile '.$this->requestFile);
+        $this->log->info('Streamer\FileCsv: Getting data from requestFile '.$this->requestFile);
 
         $requestFile = $this->getRequestFile();
         if (! file_exists($requestFile)) {
-            $this->log->addCritical(sprintf('requestFile %s not found', $requestFile));
+            $this->log->critical(sprintf('requestFile %s not found', $requestFile));
             throw new FileSystemException(__('requestFile %1 not found', $requestFile));
         }
         $requestFile = fopen($requestFile, 'r');

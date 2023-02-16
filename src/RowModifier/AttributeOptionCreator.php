@@ -86,7 +86,7 @@ class AttributeOptionCreator extends AbstractRowModifier
     {
         $attributes = implode(', ', $this->attributes);
         $this->consoleOutput->writeln("<info>Creating attribute options for: {$attributes}</info>");
-        $this->log->addInfo('Creating attribute options for:'. $attributes);
+        $this->log->info('Creating attribute options for:'. $attributes);
 
         foreach ($this->attributes as $attribute) {
             $this->createForAttribute($attribute);
@@ -146,7 +146,7 @@ class AttributeOptionCreator extends AbstractRowModifier
                 $this->consoleOutput->writeln(
                     "<error>AttributeOptionCreator: Invalid value for {$attribute} {$identifier}</error>"
                 );
-                $this->log->addError("AttributeOptionCreator: Invalid value for {$attribute} {$identifier}");
+                $this->log->error("AttributeOptionCreator: Invalid value for {$attribute} {$identifier}");
 
                 $item[$attribute] = '';
                 continue;

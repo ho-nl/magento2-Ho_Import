@@ -66,7 +66,7 @@ class ItemMapper extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>Mapping item information</info>");
-        $this->log->addInfo('Mapping item information');
+        $this->log->info('Mapping item information');
 
         foreach ($this->items as $identifier => $item) {
             try {
@@ -86,7 +86,7 @@ class ItemMapper extends AbstractRowModifier
                             $this->consoleOutput->writeln(
                                 "<comment>Value is a object or array for $identifier: {$val}</comment>"
                             );
-                            $this->log->addInfo("Value is a object or array for $identifier: {$val}");
+                            $this->log->info("Value is a object or array for $identifier: {$val}");
 
                             return null;
                         }
@@ -97,14 +97,14 @@ class ItemMapper extends AbstractRowModifier
                     $output = sprintf('Error validating, skipping %s: %s', $identifier, implode(',', $itemsValidated));
 
                     $this->consoleOutput->writeln(sprintf('<comment>%s</comment>', $output));
-                    $this->log->addError($output);
+                    $this->log->error($output);
                 }
 
             } catch (\Exception $e) {
                 $this->consoleOutput->writeln(
                     "<error>ItemMapper: {$e->getMessage()} (removing product {$identifier})</error>"
                 );
-                $this->log->addError("ItemMapper: {$e->getMessage()} (removing product {$identifier})");
+                $this->log->error("ItemMapper: {$e->getMessage()} (removing product {$identifier})");
 
                 unset($this->items[$identifier]);
             }

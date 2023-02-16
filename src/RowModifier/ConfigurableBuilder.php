@@ -94,7 +94,7 @@ class ConfigurableBuilder extends AbstractRowModifier
     public function process()
     {
         $this->consoleOutput->writeln("<info>Creating configurable products...</info>");
-        $this->log->addInfo('Creating configurable products...');
+        $this->log->info('Creating configurable products...');
 
         $skuCallback = $this->configurableSku;
         $attrCallback = $this->attributes;
@@ -146,7 +146,7 @@ class ConfigurableBuilder extends AbstractRowModifier
 
         $count = count($configurables);
         $this->consoleOutput->writeln("{$count} potential configurables created");
-        $this->log->addInfo("{$count} potential configurables created");
+        $this->log->info("{$count} potential configurables created");
         $configurables = $this->splitOnValue($configurables);
 
         if ($this->enableFilterConfigurable) {
@@ -165,7 +165,7 @@ class ConfigurableBuilder extends AbstractRowModifier
 
         $count = count($configurables);
         $this->consoleOutput->writeln("<info>Created {$count} configurables</info>");
-        $this->log->addInfo("Created {$count} configurables");
+        $this->log->info("Created {$count} configurables");
 
         $this->items = array_replace($this->items, $configurables);
     }
@@ -270,7 +270,7 @@ class ConfigurableBuilder extends AbstractRowModifier
         $count = count($newConfigurables) - count($configurables);
         if ($count > 0) {
             $this->consoleOutput->writeln("Created {$count} extra configurables while splitting");
-            $this->log->addInfo("Created {$count} extra configurables while splitting");
+            $this->log->info("Created {$count} extra configurables while splitting");
         }
 
         return $newConfigurables;
