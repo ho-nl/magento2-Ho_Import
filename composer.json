@@ -6,7 +6,7 @@
         "guzzlehttp/guzzle": "^7",
         "prewk/xml-string-streamer": "^1.2",
         "prewk/xml-string-streamer-guzzle": "^1.2",
-        "kevinrob/guzzle-cache-middleware": "^1.4",
+        "kevinrob/guzzle-cache-middleware": "^4",
         "ecomdev/magento-psr6-bridge": "^0.2.1",
         "symfony/stopwatch": "~4.0",
         "bakame/psr7-csv-factory": "^1.0@dev",
