@@ -11,7 +11,8 @@
         "symfony/stopwatch": "^v6.2",
         "bakame/psr7-csv-factory": "^1.0@dev",
         "league/csv": "^9.1",
-        "monolog/monolog": "^2.8"
+        "monolog/monolog": "^2.8",
+        "ext-mbstring": "*"
     },
     "type": "magento2-module",
     "autoload": {
