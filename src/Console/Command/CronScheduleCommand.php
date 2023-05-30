@@ -88,7 +88,7 @@ class CronScheduleCommand extends Command
      *
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      *
-     * @return int
+     * @return void
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -100,7 +100,7 @@ class CronScheduleCommand extends Command
 
         if (! $job) {
             $output->writeln("<error>".((string) new Phrase("Job not found"))."</error>");
-            return 0;
+            return;
         }
 
 
@@ -109,7 +109,7 @@ class CronScheduleCommand extends Command
             $output->writeln(
                 (string) new Phrase("Job is already %1", ["<error>".$existingJob->getStatus()."</error>"])
             );
-            return 0;
+            return;
         }
 
         try {
@@ -121,7 +121,7 @@ class CronScheduleCommand extends Command
                     [$ahead]
                 )
             ."</error>");
-            return 0;
+            return;
         }
 
         $jobSchedule = $this->generateSchedule($job, $ahead);
@@ -130,7 +130,6 @@ class CronScheduleCommand extends Command
 
         $jobSchedule->getResource()->save($jobSchedule);
         $output->writeln("<info>".((string) new Phrase("Job scheduled"))."</info>");
-        return 0;
     }
 
     /**

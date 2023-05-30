@@ -99,7 +99,7 @@ class FileCsv
             $csvReader->setDelimiter($this->delimiter);
         }
         foreach ($csvReader->getIterator() as $row) {
-            yield (empty($this->headers) ? $row : \array_combine($this->headers, \array_map(self::class . '::convert_encoding', $row)));
+            yield (empty($this->headers) ? $row : \array_combine($this->headers, \array_map('utf8_encode', $row)));
         }
     }
 
@@ -111,10 +111,5 @@ class FileCsv
         return $this->requestFile[0] == '/'
             ? $this->requestFile
             : $this->directoryList->getRoot() . '/' . trim($this->requestFile, '/');
-    }
-
-    public function convert_encoding($row)
-    {
-        return mb_convert_encoding($row, 'UTF-8', 'ISO-8859-1');
     }
 }
