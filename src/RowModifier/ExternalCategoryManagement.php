@@ -231,6 +231,6 @@ class ExternalCategoryManagement extends AbstractRowModifier
     {
         return array_filter(array_map(function ($category) {
             return trim($category, " \t\n\r\0\x0B/");
-        }, explode(',', trim($categories, " \t\n\r\0\x0B/"))));
+        }, explode(',', trim($categories ?? '', " \t\n\r\0\x0B/"))));
     }
 }
