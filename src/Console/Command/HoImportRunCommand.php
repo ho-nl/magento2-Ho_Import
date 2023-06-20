@@ -95,7 +95,7 @@ class HoImportRunCommand extends Command
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
-     * @return void
+     * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -104,11 +104,12 @@ class HoImportRunCommand extends Command
         if (!isset($profiles[$profile])) {
             $profileList = implode(", ", array_keys($profiles));
             $output->writeln((string) new Phrase("<error>Profile not in profilelist: %1</error>", [$profileList]));
-            return;
+            return 0;
         }
 
         $profileInstance = $profiles[$profile];
         $profileInstance->run();
+        return 0;
     }
 
 

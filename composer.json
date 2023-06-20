@@ -2,16 +2,17 @@
     "name": "honl/magento2-import",
     "description": "",
     "require": {
-        "php": "~7.1.0 || ~7.2.0 || ~7.3.0 || ~7.4.0",
+        "php": "~7.1.0 || ~7.2.0 || ~7.3.0 || ~7.4.0 || ~8.2",
         "guzzlehttp/guzzle": "^7",
         "prewk/xml-string-streamer": "^1.2",
         "prewk/xml-string-streamer-guzzle": "^1.2",
         "kevinrob/guzzle-cache-middleware": "^4",
         "ecomdev/magento-psr6-bridge": "^0.2.1",
-        "symfony/stopwatch": "~4.0",
+        "symfony/stopwatch": "^v6.2",
         "bakame/psr7-csv-factory": "^1.0@dev",
         "league/csv": "^9.1",
-        "monolog/monolog": "^2.8"
+        "monolog/monolog": "^2.8",
+        "ext-mbstring": "*"
     },
     "type": "magento2-module",
     "autoload": {
