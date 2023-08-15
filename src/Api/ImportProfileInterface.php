@@ -15,14 +15,12 @@ interface ImportProfileInterface
      */
     public function getItems();
 
-
     /**
      * Array of the config values
      *
      * @return \[]
      */
     public function getConfig();
-
 
     /**
      * Run the import
@@ -35,4 +33,9 @@ interface ImportProfileInterface
      * @return \Exception
      */
     public function getException();
+
+    /**
+     * @return string
+     */
+    public function getErrors();
 }

@@ -48,6 +48,11 @@ abstract class ImportProfile implements ImportProfileInterface
     private $exception;
 
     /**
+     * @var ?string
+     */
+    private $errors = null;
+
+    /**
      * @param ObjectManagerFactory $objectManagerFactory
      * @param Stopwatch            $stopwatch
      * @param ConsoleOutput        $consoleOutput
@@ -97,6 +102,8 @@ abstract class ImportProfile implements ImportProfileInterface
             $this->consoleOutput->writeln("<error>$errors</error>");
             $this->log->error($errors);
 
+            $this->errors = $errors;
+
             return \Magento\Framework\Console\Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
             $this->consoleOutput->writeln($e->getMessage());
@@ -118,6 +125,14 @@ abstract class ImportProfile implements ImportProfileInterface
     public function getException(): \Exception
     {
         return $this->exception;
+    }
+
+    /**
+     * @return string
+     */
+    public function getErrors()
+    {
+        return $this->errors;
     }
 
     /**
