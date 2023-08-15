@@ -48,6 +48,11 @@ abstract class ImportProfile implements ImportProfileInterface
     private $exception;
 
     /**
+     * @var ?string
+     */
+    private $errors = null;
+
+    /**
      * @param ObjectManagerFactory $objectManagerFactory
      * @param Stopwatch            $stopwatch
      * @param ConsoleOutput        $consoleOutput
@@ -64,7 +69,6 @@ abstract class ImportProfile implements ImportProfileInterface
         $this->consoleOutput = $consoleOutput;
         $this->log = $log;
     }
-
 
     /**
      * Run the actual import
@@ -85,12 +89,11 @@ abstract class ImportProfile implements ImportProfileInterface
             $errors = $importer->processImport($items);
             $stopwatchEvent = $this->stopwatch->stop('importinstance');
 
-            $output = (string) new Phrase(
-                '%1 items imported in %2 sec, <info>%3 items / sec</info> (%4mb used)', [
+            $output = (string) new Phrase('%1 items imported in %2 sec, <info>%3 items / sec</info> (%4mb used)', [
                 count($items),
                 round($stopwatchEvent->getDuration() / 1000, 1),
                 round(count($items) / ($stopwatchEvent->getDuration() / 1000), 1),
-                round($stopwatchEvent->getMemory() / 1024 / 1024, 1)
+                round($stopwatchEvent->getMemory() / 1024 / 1024, 1),
             ]);
 
             $this->consoleOutput->writeln($output);
@@ -98,6 +101,8 @@ abstract class ImportProfile implements ImportProfileInterface
 
             $this->consoleOutput->writeln("<error>$errors</error>");
             $this->log->error($errors);
+
+            $this->errors = $errors;
 
             return \Magento\Framework\Console\Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
@@ -123,6 +128,14 @@ abstract class ImportProfile implements ImportProfileInterface
     }
 
     /**
+     * @return string
+     */
+    public function getErrors()
+    {
+        return $this->errors;
+    }
+
+    /**
      * Get all items that need to be imported
      *
      * @return array
@@ -135,24 +148,22 @@ abstract class ImportProfile implements ImportProfileInterface
         $items = $this->getItems();
         $stopwatchEvent = $this->stopwatch->stop('profileinstance');
 
-        if (! $stopwatchEvent->getDuration()) {
+        if (!$stopwatchEvent->getDuration()) {
             return $items;
         }
 
-        $output = (string) new Phrase('%1 items processed in %2 sec, <info>%3 items / sec</info> (%4mb used)',
-            [
-                count($items),
-                round($stopwatchEvent->getDuration() / 1000, 1),
-                round(count($items) / ($stopwatchEvent->getDuration() / 1000), 1),
-                round($stopwatchEvent->getMemory() / 1024 / 1024, 1)
-            ]);
+        $output = (string) new Phrase('%1 items processed in %2 sec, <info>%3 items / sec</info> (%4mb used)', [
+            count($items),
+            round($stopwatchEvent->getDuration() / 1000, 1),
+            round(count($items) / ($stopwatchEvent->getDuration() / 1000), 1),
+            round($stopwatchEvent->getMemory() / 1024 / 1024, 1),
+        ]);
 
         $this->consoleOutput->writeln($output);
         $this->log->info($output);
 
         return $items;
     }
-
 
     /**
      * Gets initialized object manager
@@ -169,7 +180,6 @@ abstract class ImportProfile implements ImportProfileInterface
             $omParams[\Magento\Store\Model\StoreManager::PARAM_RUN_CODE] = 'admin';
             $omParams[\Magento\Store\Model\Store::CUSTOM_ENTRY_POINT_PARAM] = true;
             $this->objectManager = $this->objectManagerFactory->create($omParams);
-
 
             $area = \Magento\Backend\App\Area\FrontNameResolver::AREA_CODE;
             /** @var \Magento\Framework\App\State $appState */
