@@ -505,7 +505,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
 
                 $rowData = $productTypeModel->prepareAttributesWithDefaultValueForSave(
                     $rowData,
-                    !isset($this->_oldSku[$rowSku])
+                    !isset($this->_oldSku[strtolower($rowSku)])
                 );
                 $product = $this->_proxyProdFactory->create(['data' => $rowData]);
 
@@ -551,7 +551,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                         } elseif (self::SCOPE_STORE == $attribute->getIsGlobal()) {
                             $storeIds = [$rowStore];
                         }
-                        if (!isset($this->_oldSku[$rowSku])) {
+                        if (!isset($this->_oldSku[strtolower($rowSku)])) {
                             $storeIds[] = 0;
                         }
                     }
@@ -597,7 +597,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
 
     public function skipUpdatingAttribute($rowSku, $attrCode)
     {
-        return isset($this->_oldSku[$rowSku]) && \array_key_exists(self::SKIP_ATTRIBUTES_WHEN_UPDATING, $this->_parameters) && \array_key_exists($attrCode, $this->_parameters[self::SKIP_ATTRIBUTES_WHEN_UPDATING]);
+        return isset($this->_oldSku[strtolower($rowSku)]) && \array_key_exists(self::SKIP_ATTRIBUTES_WHEN_UPDATING, $this->_parameters) && \array_key_exists($attrCode, $this->_parameters[self::SKIP_ATTRIBUTES_WHEN_UPDATING]);
     }
 
     /**
@@ -637,7 +637,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         $rowScope = $this->getRowScope($rowData);
         // BEHAVIOR_DELETE use specific validation logic
         if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
-            if (self::SCOPE_DEFAULT == $rowScope && !isset($this->_oldSku[$rowData[self::COL_SKU]])) {
+            if (self::SCOPE_DEFAULT == $rowScope && !isset($this->_oldSku[strtolower($rowData[self::COL_SKU])])) {
                 $this->addRowError(ValidatorInterface::ERROR_SKU_NOT_FOUND_FOR_DELETE, $rowNum);
                 return false;
             }
