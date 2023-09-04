@@ -89,7 +89,10 @@ abstract class ImportProfile implements ImportProfileInterface
             $errors = $importer->processImport($items);
             $stopwatchEvent = $this->stopwatch->stop('importinstance');
 
-            $output = (string) new Phrase('%1 items imported in %2 sec, <info>%3 items / sec</info> (%4mb used)', [
+            $message = $errors
+                ? 'Tried to import %1 items in %2 sec, <info>%3 items / sec</info> (%4mb used)'
+                : '%1 items imported in %2 sec, <info>%3 items / sec</info> (%4mb used)';
+            $output = (string) new Phrase($message, [
                 count($items),
                 round($stopwatchEvent->getDuration() / 1000, 1),
                 round(count($items) / ($stopwatchEvent->getDuration() / 1000), 1),
