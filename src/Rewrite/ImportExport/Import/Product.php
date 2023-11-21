@@ -25,6 +25,7 @@ use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingError;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
 use Magento\Store\Model\Store;
 
+// prettier-ignore
 class Product extends \Magento\CatalogImportExport\Model\Import\Product
 {
     const SKIP_ATTRIBUTES_WHEN_UPDATING = '_import_skip_attributes_when_updating';
@@ -746,7 +747,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      */
     private function isNeedToValidateUrlKey($rowData)
     {
-        return (!empty($rowData[self::URL_KEY]) || !empty($rowData[self::COL_NAME]))
+        return !empty($rowData[self::URL_KEY])
             && (empty($rowData[self::COL_VISIBILITY])
             || $rowData[self::COL_VISIBILITY]
             !== (string)Visibility::getOptionArray()[Visibility::VISIBILITY_NOT_VISIBLE]);
