@@ -15,6 +15,8 @@ interface ImportProfileInterface
      */
     public function getItems();
 
+    public function getProcessedItems(): array;
+
     /**
      * Array of the config values
      *
