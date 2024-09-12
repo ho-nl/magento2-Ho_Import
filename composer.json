@@ -9,7 +9,7 @@
         "kevinrob/guzzle-cache-middleware": "^4",
         "ho-nl-fork/magento-psr6-bridge": "dev-master",
         "symfony/stopwatch": "^v6.2",
-        "bakame/psr7-csv-factory": "^1.0@dev",
+        "ho-nl-fork/psr7-csv-factory": "dev-master",
         "league/csv": "^9.1",
         "monolog/monolog": "^2.8",
         "ext-mbstring": "*"
