@@ -671,7 +671,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
      */
     private function isNeedToValidateUrlKey($rowData)
     {
-        return (!empty($rowData[self::URL_KEY]) || !empty($rowData[self::COL_NAME]))
+        return !empty($rowData[self::URL_KEY])
             && (empty($rowData[self::COL_VISIBILITY])
             || $rowData[self::COL_VISIBILITY]
             !== (string)Visibility::getOptionArray()[Visibility::VISIBILITY_NOT_VISIBLE]);

@@ -52,6 +52,8 @@ abstract class ImportProfile implements ImportProfileInterface
      */
     private $errors = null;
 
+    private ?array $processedItems = null;
+
     /**
      * @param ObjectManagerFactory $objectManagerFactory
      * @param Stopwatch            $stopwatch
@@ -89,7 +91,10 @@ abstract class ImportProfile implements ImportProfileInterface
             $errors = $importer->processImport($items);
             $stopwatchEvent = $this->stopwatch->stop('importinstance');
 
-            $output = (string) new Phrase('%1 items imported in %2 sec, <info>%3 items / sec</info> (%4mb used)', [
+            $message = $errors
+                ? 'Tried to import %1 items in %2 sec, <info>%3 items / sec</info> (%4mb used)'
+                : '%1 items imported in %2 sec, <info>%3 items / sec</info> (%4mb used)';
+            $output = (string) new Phrase($message, [
                 count($items),
                 round($stopwatchEvent->getDuration() / 1000, 1),
                 round(count($items) / ($stopwatchEvent->getDuration() / 1000), 1),
@@ -102,6 +107,7 @@ abstract class ImportProfile implements ImportProfileInterface
             $this->consoleOutput->writeln("<error>$errors</error>");
             $this->log->error($errors);
 
+            $this->processedItems = $items;
             $this->errors = $errors;
 
             return \Magento\Framework\Console\Cli::RETURN_SUCCESS;
@@ -133,6 +139,11 @@ abstract class ImportProfile implements ImportProfileInterface
     public function getErrors()
     {
         return $this->errors;
+    }
+
+    public function getProcessedItems(): array
+    {
+        return $this->processedItems;
     }
 
     /**
