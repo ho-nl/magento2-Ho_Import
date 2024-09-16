@@ -12,10 +12,16 @@ use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Config as CatalogConfig;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\CatalogImportExport\Model\Import\Product\ImageTypeProcessor;
+use Magento\CatalogImportExport\Model\Import\Product\LinkProcessor;
 use Magento\CatalogImportExport\Model\Import\Product\MediaGalleryProcessor;
 use Magento\CatalogImportExport\Model\Import\Product\RowValidatorInterface as ValidatorInterface;
+use Magento\CatalogImportExport\Model\Import\Product\SkuStorage;
+use Magento\CatalogImportExport\Model\Import\Product\StatusProcessor;
+use Magento\CatalogImportExport\Model\Import\Product\StockProcessor;
 use Magento\CatalogImportExport\Model\StockItemImporterInterface;
+use Magento\CatalogImportExport\Model\StockItemProcessorInterface;
 use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Filesystem\Driver\File;
 use Magento\Framework\Intl\DateTimeFactory;
 use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
 use Magento\Framework\Model\ResourceModel\Db\TransactionManagerInterface;
@@ -25,68 +31,19 @@ use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingError;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
 use Magento\Store\Model\Store;
 
+/**
+ * @prettier-ignore
+ */
 class Product extends \Magento\CatalogImportExport\Model\Import\Product
 {
     const SKIP_ATTRIBUTES_WHEN_UPDATING = '_import_skip_attributes_when_updating';
 
-    /** @var LineFormatterMulti $lineFormatterMulti */
-    private $lineFormatterMulti;
-
-    /** @var CatalogConfig $catalogConfig */
-    private $catalogConfig;
-
+    private LineFormatterMulti $lineFormatterMulti;
+    private ?CatalogConfig $catalogConfig;
     /** @var string $productEntityLinkField */
     private $productEntityLinkField;
+    private ?SkuStorage $skuStorage;
 
-    /**
-     * @param \Magento\Framework\Json\Helper\Data                                          $jsonHelper
-     * @param \Magento\ImportExport\Helper\Data                                            $importExportData
-     * @param \Magento\ImportExport\Model\ResourceModel\Import\Data                        $importData
-     * @param \Magento\Eav\Model\Config                                                    $config
-     * @param \Magento\Framework\App\ResourceConnection                                    $resource
-     * @param \Magento\ImportExport\Model\ResourceModel\Helper                             $resourceHelper
-     * @param \Magento\Framework\Stdlib\StringUtils                                        $string
-     * @param ProcessingErrorAggregatorInterface                                           $errorAggregator
-     * @param \Magento\Framework\Event\ManagerInterface                                    $eventManager
-     * @param \Magento\CatalogInventory\Api\StockRegistryInterface                         $stockRegistry
-     * @param \Magento\CatalogInventory\Api\StockConfigurationInterface                    $stockConfiguration
-     * @param \Magento\CatalogInventory\Model\Spi\StockStateProviderInterface              $stockStateProvider
-     * @param \Magento\Catalog\Helper\Data                                                 $catalogData
-     * @param Import\Config                                                                $importConfig
-     * @param \Magento\CatalogImportExport\Model\Import\Proxy\Product\ResourceModelFactory $resourceFactory
-     * @param \Magento\CatalogImportExport\Model\Import\Product                            $optionFactory
-     * @param \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory      $setColFactory
-     * @param \Magento\CatalogImportExport\Model\Import\Product                            $productTypeFactory
-     * @param \Magento\Catalog\Model\ResourceModel\Product\LinkFactory                     $linkFactory
-     * @param \Magento\CatalogImportExport\Model\Import\Proxy\ProductFactory               $proxyProdFactory
-     * @param \Magento\CatalogImportExport\Model\Import\UploaderFactory                    $uploaderFactory
-     * @param \Magento\Framework\Filesystem                                                $filesystem
-     * @param \Magento\CatalogInventory\Model\ResourceModel\Stock\ItemFactory              $stockResItemFac
-     * @param DateTime\TimezoneInterface                                                   $localeDate
-     * @param DateTime                                                                     $dateTime
-     * @param \Psr\Log\LoggerInterface                                                     $logger
-     * @param \Magento\Framework\Indexer\IndexerRegistry                                   $indexerRegistry
-     * @param \Magento\CatalogImportExport\Model\Import\Product                            $storeResolver
-     * @param \Magento\CatalogImportExport\Model\Import\Product                            $skuProcessor
-     * @param \Magento\CatalogImportExport\Model\Import\Product                            $categoryProcessor
-     * @param \Magento\CatalogImportExport\Model\Import\Product                            $validator
-     * @param ObjectRelationProcessor                                                      $objectRelationProcessor
-     * @param TransactionManagerInterface                                                  $transactionManager
-     * @param \Magento\CatalogImportExport\Model\Import\Product                            $taxClassProcessor
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface                           $scopeConfig
-     * @param \Magento\Catalog\Model\Product\Url                                           $productUrl
-     * @param array                                                                        $data
-     * @param array                                                                        $dateAttrCodes
-     * @param CatalogConfig|null                                                           $catalogConfig
-     * @param ImageTypeProcessor|null                                                      $imageTypeProcessor
-     * @param MediaGalleryProcessor|null                                                   $mediaProcessor
-     * @param StockItemImporterInterface|null                                              $stockItemImporter
-     * @param DateTimeFactory|null                                                         $dateTimeFactory
-     * @param ProductRepositoryInterface|null                                              $productRepository
-     *
-     * @throws \Magento\Framework\Exception\FileSystemException
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
     public function __construct(
         \Magento\Framework\Json\Helper\Data $jsonHelper,
         \Magento\ImportExport\Helper\Data $importExportData,
@@ -133,109 +90,70 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         StockItemImporterInterface $stockItemImporter = null,
         DateTimeFactory $dateTimeFactory = null,
         ProductRepositoryInterface $productRepository = null,
-        $statusProcessor = null,
-        $stockProcessor = null
+        StatusProcessor $statusProcessor = null,
+        StockProcessor $stockProcessor = null,
+        LinkProcessor $linkProcessor = null,
+        ?File $fileDriver = null,
+        ?StockItemProcessorInterface $stockItemProcessor = null,
+        ?SkuStorage $skuStorage = null
     ) {
-        if ($statusProcessor && \is_a($statusProcessor, 'Magento\CatalogImportExport\Model\Import\Product\StatusProcessor')) {
-            parent::__construct(
-                $jsonHelper,
-                $importExportData,
-                $importData,
-                $config,
-                $resource,
-                $resourceHelper,
-                $string,
-                $errorAggregator,
-                $eventManager,
-                $stockRegistry,
-                $stockConfiguration,
-                $stockStateProvider,
-                $catalogData,
-                $importConfig,
-                $resourceFactory,
-                $optionFactory,
-                $setColFactory,
-                $productTypeFactory,
-                $linkFactory,
-                $proxyProdFactory,
-                $uploaderFactory,
-                $filesystem,
-                $stockResItemFac,
-                $localeDate,
-                $dateTime,
-                $logger,
-                $indexerRegistry,
-                $storeResolver,
-                $skuProcessor,
-                $categoryProcessor,
-                $validator,
-                $objectRelationProcessor,
-                $transactionManager,
-                $taxClassProcessor,
-                $scopeConfig,
-                $productUrl,
-                $data,
-                $dateAttrCodes,
-                $catalogConfig,
-                $imageTypeProcessor,
-                $mediaProcessor,
-                $stockItemImporter,
-                $dateTimeFactory,
-                $productRepository,
-                $statusProcessor,
-                $stockProcessor
-            );
-        } else {
-            parent::__construct(
-                $jsonHelper,
-                $importExportData,
-                $importData,
-                $config,
-                $resource,
-                $resourceHelper,
-                $string,
-                $errorAggregator,
-                $eventManager,
-                $stockRegistry,
-                $stockConfiguration,
-                $stockStateProvider,
-                $catalogData,
-                $importConfig,
-                $resourceFactory,
-                $optionFactory,
-                $setColFactory,
-                $productTypeFactory,
-                $linkFactory,
-                $proxyProdFactory,
-                $uploaderFactory,
-                $filesystem,
-                $stockResItemFac,
-                $localeDate,
-                $dateTime,
-                $logger,
-                $indexerRegistry,
-                $storeResolver,
-                $skuProcessor,
-                $categoryProcessor,
-                $validator,
-                $objectRelationProcessor,
-                $transactionManager,
-                $taxClassProcessor,
-                $scopeConfig,
-                $productUrl,
-                $data,
-                $dateAttrCodes,
-                $catalogConfig,
-                $imageTypeProcessor,
-                $mediaProcessor,
-                $stockItemImporter,
-                $dateTimeFactory,
-                $productRepository
-            );
-        }
+        parent::__construct(
+            $jsonHelper,
+            $importExportData,
+            $importData,
+            $config,
+            $resource,
+            $resourceHelper,
+            $string,
+            $errorAggregator,
+            $eventManager,
+            $stockRegistry,
+            $stockConfiguration,
+            $stockStateProvider,
+            $catalogData,
+            $importConfig,
+            $resourceFactory,
+            $optionFactory,
+            $setColFactory,
+            $productTypeFactory,
+            $linkFactory,
+            $proxyProdFactory,
+            $uploaderFactory,
+            $filesystem,
+            $stockResItemFac,
+            $localeDate,
+            $dateTime,
+            $logger,
+            $indexerRegistry,
+            $storeResolver,
+            $skuProcessor,
+            $categoryProcessor,
+            $validator,
+            $objectRelationProcessor,
+            $transactionManager,
+            $taxClassProcessor,
+            $scopeConfig,
+            $productUrl,
+            $data,
+            $dateAttrCodes,
+            $catalogConfig,
+            $imageTypeProcessor,
+            $mediaProcessor,
+            $stockItemImporter,
+            $dateTimeFactory,
+            $productRepository,
+            $statusProcessor,
+            $stockProcessor,
+            $linkProcessor,
+            $fileDriver,
+            $stockItemProcessor,
+            $skuStorage,
+        );
 
         $this->lineFormatterMulti = $lineFormatterMulti;
         $this->catalogConfig = $catalogConfig ?: ObjectManager::getInstance()->get(CatalogConfig::class);
+        $this->skuStorage = $skuStorage ?? ObjectManager::getInstance()
+            ->get(SkuStorage::class);
     }
 
     /**
@@ -316,7 +234,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 }
 
                 // 1. Entity phase
-                if (isset($this->_oldSku[\strtolower($rowSku)])) {
+                if ($this->isSkuExist($rowSku)) {
                     // existing row
                     if (isset($rowData['attribute_set_code'])) {
                         $attributeSetId = $this->catalogConfig->getAttributeSetId(
@@ -337,10 +255,11 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                         $attributeSetId = $this->skuProcessor->getNewSku($rowSku)['attr_set_id'];
                     }
                     // existing row
+                    $entityLinkField = $this->getProductEntityLinkField();
                     $entityRowsUp[] = [
                         'updated_at' => (new \DateTime())->format(DateTime::DATETIME_PHP_FORMAT),
                         'attribute_set_id' => $attributeSetId,
-                        $this->getProductEntityLinkField() => $this->_oldSku[\strtolower($rowSku)][$this->getProductEntityLinkField()],
+                        $entityLinkField => $this->getExistingSku($rowSku)[$entityLinkField]
                     ];
                 } else {
                     if (!$productLimit || $productsQty < $productLimit) {
@@ -505,7 +424,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
 
                 $rowData = $productTypeModel->prepareAttributesWithDefaultValueForSave(
                     $rowData,
-                    !isset($this->_oldSku[strtolower($rowSku)])
+                    $this->isSkuExist($rowSku)
                 );
                 $product = $this->_proxyProdFactory->create(['data' => $rowData]);
 
@@ -551,7 +470,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                         } elseif (self::SCOPE_STORE == $attribute->getIsGlobal()) {
                             $storeIds = [$rowStore];
                         }
-                        if (!isset($this->_oldSku[strtolower($rowSku)])) {
+                        if (!$this->isSkuExist($rowSku)) {
                             $storeIds[] = 0;
                         }
                     }
@@ -595,9 +514,11 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         return $this;
     }
 
-    public function skipUpdatingAttribute($rowSku, $attrCode)
+    public function skipUpdatingAttribute($rowSku, $attrCode): bool
     {
-        return isset($this->_oldSku[strtolower($rowSku)]) && \array_key_exists(self::SKIP_ATTRIBUTES_WHEN_UPDATING, $this->_parameters) && \array_key_exists($attrCode, $this->_parameters[self::SKIP_ATTRIBUTES_WHEN_UPDATING]);
+        return $this->isSkuExist($rowSku)
+            && \array_key_exists(self::SKIP_ATTRIBUTES_WHEN_UPDATING, $this->_parameters)
+            && \array_key_exists($attrCode, $this->_parameters[self::SKIP_ATTRIBUTES_WHEN_UPDATING]);
     }
 
     /**
@@ -633,11 +554,15 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
             // check that row is already validated
             return !$this->getErrorAggregator()->isRowInvalid($rowNum);
         }
+
         $this->_validatedRows[$rowNum] = true;
+
         $rowScope = $this->getRowScope($rowData);
+        $sku = $rowData[self::COL_SKU];
+
         // BEHAVIOR_DELETE use specific validation logic
         if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
-            if (self::SCOPE_DEFAULT == $rowScope && !isset($this->_oldSku[strtolower($rowData[self::COL_SKU])])) {
+            if (self::SCOPE_DEFAULT == $rowScope && !$this->isSkuExist($sku)) {
                 $this->addRowError(ValidatorInterface::ERROR_SKU_NOT_FOUND_FOR_DELETE, $rowNum);
                 return false;
             }
@@ -648,7 +573,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
                 $this->addRowError($message, $rowNum, $this->validator->getInvalidAttribute());
             }
         }
-        $sku = $rowData[self::COL_SKU];
+
         if (null === $sku) {
             $this->addRowError(ValidatorInterface::ERROR_SKU_IS_EMPTY, $rowNum);
         } elseif (false === $sku) {
@@ -660,11 +585,11 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
         }
         // SKU is specified, row is SCOPE_DEFAULT, new product block begins
         $this->_processedEntitiesCount++;
-        $sku = $rowData[self::COL_SKU];
-        if (isset($this->_oldSku[\strtolower($sku)])) {
+
+        if ($this->isSkuExist($sku)) {
             // can we get all necessary data from existent DB product?
             // check for supported type of existing product
-            if (isset($this->_productTypeModels[$this->_oldSku[\strtolower($sku)]['type_id']])) {
+            if (isset($this->_productTypeModels[$this->getExistingSku($sku)['type_id']])) {
                 $this->skuProcessor->addNewSku(
                     $sku,
                     $this->prepareNewSkuData($sku)
@@ -709,7 +634,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
             $rowAttributesValid = $this->_productTypeModels[$newSku['type_id']]->isRowValid(
                 $rowData,
                 $rowNum,
-                !isset($this->_oldSku[\strtolower($sku)])
+                !($this->isSkuExist($sku))
             );
             if (!$rowAttributesValid && self::SCOPE_DEFAULT == $rowScope) {
                 // mark SCOPE_DEFAULT row as invalid for future child rows if product not in DB already
@@ -762,10 +687,37 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
     private function prepareNewSkuData($sku)
     {
         $data = [];
-        foreach ($this->_oldSku[\strtolower($sku)] as $key => $value) {
-            $data[$key] = $value;
+        foreach ($this->getExistingSku($sku) as $key => $value) {
+                $data[$key] = $value;
         }
-        $data['attr_set_code'] = $this->_attrSetIdToName[$this->_oldSku[\strtolower($sku)]['attr_set_id']];
+
+        $data['attr_set_code'] = $this->_attrSetIdToName[$this->getExistingSku($sku)['attr_set_id']];
+
         return $data;
+    }
+
+    /**
+     * Check if product exists for specified SKU
+     *
+     * @param string $sku
+     * @return bool
+     */
+    private function isSkuExist($sku): bool
+    {
+        if ($sku !== null) {
+            return $this->skuStorage->has($sku);
+        }
+        return false;
+    }
+
+    /**
+     * Get existing product data for specified SKU
+     *
+     * @param string $sku
+     * @return array
+     */
+    private function getExistingSku($sku)
+    {
+        return $this->skuStorage->get((string)$sku);
     }
 }
