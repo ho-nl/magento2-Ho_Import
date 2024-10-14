@@ -424,7 +424,7 @@ class Product extends \Magento\CatalogImportExport\Model\Import\Product
 
                 $rowData = $productTypeModel->prepareAttributesWithDefaultValueForSave(
                     $rowData,
-                    $this->isSkuExist($rowSku)
+                    !$this->isSkuExist($rowSku)
                 );
                 $product = $this->_proxyProdFactory->create(['data' => $rowData]);
 
