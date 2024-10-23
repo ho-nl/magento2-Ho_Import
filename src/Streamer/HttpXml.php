@@ -128,33 +128,7 @@ class HttpXml
             "<info>Streamer\HttpXml: Getting data from URL {$this->requestUrl}</info>"
         );
 
-        $stack = \GuzzleHttp\HandlerStack::create();
-        $stack->push(new \Kevinrob\GuzzleCache\CacheMiddleware(
-            new \Kevinrob\GuzzleCache\Strategy\GreedyCacheStrategy(
-                new \Kevinrob\GuzzleCache\Storage\Psr6CacheStorage(
-                    $this->cacheItemPool
-                ),
-                $this->ttl
-            )
-        ), 'cache');
-
-        $httpClient = new \GuzzleHttp\Client(['handler' => $stack]);
-
-        $result = $httpClient->request(
-            $this->requestMethod,
-            $this->requestUrl,
-            $this->requestOptions + ['stream' => true, 'auth' => $this->auth]
-        );
-        $stream = new \Prewk\XmlStringStreamer\Stream\Guzzle('');
-
-        if ($result->getHeader('X-Kevinrob-Cache') && $result->getHeader('X-Kevinrob-Cache')[0] == 'HIT') {
-            $this->consoleOutput->write(" <info>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</info>");
-        } else {
-            $this->consoleOutput->write(" <comment>[Cache {$result->getHeader('X-Kevinrob-Cache')[0]}]</comment>");
-        }
-        $this->consoleOutput->write("\n");
-
-        $stream->setGuzzleStream($result->getBody());
+        $stream = new \Prewk\XmlStringStreamer\Stream\Guzzle($this->requestUrl);
 
         $class = isset($this->xmlOptions['uniqueNode']) ? UniqueNode::class : StringWalker::class;
         $parser = new $class($this->xmlOptions + [
