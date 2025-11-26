@@ -64,7 +64,7 @@ abstract class ImportProfile implements ImportProfileInterface
         ObjectManagerFactory $objectManagerFactory,
         Stopwatch $stopwatch,
         ConsoleOutput $consoleOutput,
-        Log $log
+        Log $log,
     ) {
         $this->objectManagerFactory = $objectManagerFactory;
         $this->stopwatch = $stopwatch;
@@ -104,8 +104,10 @@ abstract class ImportProfile implements ImportProfileInterface
             $this->consoleOutput->writeln($output);
             $this->log->info($output);
 
-            $this->consoleOutput->writeln("<error>$errors</error>");
-            $this->log->error($errors);
+            if ($errors) {
+                $this->consoleOutput->writeln("<error>$errors</error>");
+                $this->log->error($errors);
+            }
 
             $this->processedItems = $items;
             $this->errors = $errors;
