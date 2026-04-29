@@ -8,7 +8,7 @@
         "prewk/xml-string-streamer-guzzle": "^1.2",
         "kevinrob/guzzle-cache-middleware": "^4",
         "ho-nl-fork/magento-psr6-bridge": "dev-master",
-        "symfony/stopwatch": "^v6.2",
+        "symfony/stopwatch": "^6.2 || ^7.0",
         "ho-nl-fork/psr7-csv-factory": "dev-master",
         "league/csv": "^9.1",
         "monolog/monolog": "^2.8 || ^3.0",
