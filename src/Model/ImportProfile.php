@@ -109,6 +109,33 @@ abstract class ImportProfile implements ImportProfileInterface
                 $this->log->error($errors);
             }
 
+            // Issue #26: also surface per-row errors (line + column +
+            // message). validateSource passes when allowed_error_count
+            // permits the misses, but those rows are silently dropped —
+            // without this dump the developer only sees the summary
+            // "invalid rows: 4" and has no way to find them.
+            // Console output is capped at 100 so a wide-spread schema
+            // mismatch doesn't flood the terminal; the log file gets the
+            // full list either way.
+            $detailedErrors = $importer->getErrorMessages();
+            if (!empty($detailedErrors)) {
+                $total = count($detailedErrors);
+                $consoleCap = 100;
+                $this->consoleOutput->writeln(sprintf(
+                    '<comment>%d row-level error(s)%s:</comment>',
+                    $total,
+                    $total > $consoleCap
+                        ? sprintf(' — first %d shown (full list in log)', $consoleCap)
+                        : ''
+                ));
+                foreach ($detailedErrors as $i => $message) {
+                    $this->log->error($message);
+                    if ($i < $consoleCap) {
+                        $this->consoleOutput->writeln("  <error>$message</error>");
+                    }
+                }
+            }
+
             $this->processedItems = $items;
             $this->errors = $errors;
 

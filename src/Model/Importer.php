@@ -33,6 +33,16 @@ class Importer
     protected $arrayAdapterFactory;
 
     /**
+     * Reference to the data array passed into processImport — kept around
+     * so getErrorMessages() can resolve a row number back to its
+     * identifier (typically `sku`, falls back to `email` for customers).
+     * Magento's `ProcessingError` only carries the row number.
+     *
+     * @var array|null
+     */
+    private $lastDataArray;
+
+    /**
      * @var \Magento\Indexer\Model\Indexer\Collection
      */
     private $indexerCollection;
@@ -80,6 +90,7 @@ class Importer
      */
     public function processImport(&$dataArray)
     {
+        $this->lastDataArray = &$dataArray;
         $sourceAdapter = $this->loadData($dataArray);
         $validationResult = $this->importModel->validateSource($sourceAdapter);
         if (!$validationResult) {
@@ -133,20 +144,98 @@ class Importer
 
 
     /**
-     * Formatted array of error messages
-     * @return []\
+     * Formatted array of error messages — one string per validation /
+     * import error, ready to print or log. Each line reads:
+     *
+     *     Line <rownum> (<id-field>=<value>): [<column>] <message>  (— <description> if present)
+     *
+     * Designed for issue #26: the importer surfaces a summary
+     * ("Checked rows: 2822, invalid rows: 4, total errors: 4") but
+     * doesn't tell you which row or column went wrong. With this
+     * format a developer can grep straight to the offending row by
+     * line number, SKU, or email.
+     *
+     * SKU/email lookup is best-effort: it requires the source to be
+     * an in-memory array (the usual ArrayAdapter path). For other
+     * source types — CSV files, HTTP streams — `lastDataArray` stays
+     * null and the line number alone is shown.
+     *
+     * @return string[]
      */
     public function getErrorMessages()
     {
         $errorAggregator = $this->importModel->getErrorAggregator();
-        return array_map(function (ProcessingError $error) {
+        $dataArray = $this->lastDataArray;
+        return array_map(function (ProcessingError $error) use ($dataArray) {
+            $rowNumber = $error->getRowNumber();
+            $column = $error->getColumnName();
+            $description = $error->getErrorDescription();
             return sprintf(
-                'Line %s: %s %s',
-                $error->getRowNumber() ?: '[?]',
+                'Line %s%s: %s%s%s',
+                $rowNumber ?? '[?]',
+                $this->formatRowIdentifier($dataArray, $rowNumber),
+                $column ? "[$column] " : '',
                 $error->getErrorMessage(),
-                $error->getErrorDescription()
+                $description ? ' — ' . $description : ''
             );
         }, $errorAggregator->getAllErrors());
+    }
+
+    /**
+     * Per-entity natural identifier columns, ordered from most-specific
+     * to least. First match wins:
+     *
+     *   sku           — catalog_product, advanced_pricing, stock_items,
+     *                   product_links
+     *   source_code   — MSI stock_sources
+     *   email         — customer, customer_address, customer_composite,
+     *                   newsletter_subscriber
+     *   increment_id  — sales_order, invoice, credit_memo, shipment
+     *   code          — tax_rate, store / website CSV imports
+     *   url_key       — catalog_category (primary), catalog_product (fallback)
+     *   request_path  — url_rewrite
+     *   name          — catalog_category (last resort — name isn't
+     *                   unique, but it's the only thing every category
+     *                   row carries)
+     *
+     * `sku` is checked first so product imports always show the SKU even
+     * when the row also has `url_key` or `name`. Category imports fall
+     * through to `url_key` / `name` since they don't have a SKU.
+     */
+    private const DEFAULT_ROW_IDENTIFIER_FIELDS = [
+        'sku',
+        'source_code',
+        'email',
+        'increment_id',
+        'code',
+        'url_key',
+        'request_path',
+        'name',
+    ];
+
+    /**
+     * Look up a row's natural identifier (sku / email / source_code /
+     * increment_id / code) and format it for inclusion in the error
+     * message. Returns '' when the source isn't an in-memory array,
+     * the row isn't found, or no recognised identifier is present —
+     * the caller still has the line number to work with.
+     *
+     * @param array|null      $dataArray
+     * @param int|string|null $rowNumber
+     * @return string
+     */
+    private function formatRowIdentifier($dataArray, $rowNumber): string
+    {
+        if (!is_array($dataArray) || $rowNumber === null || !isset($dataArray[$rowNumber])) {
+            return '';
+        }
+        $row = $dataArray[$rowNumber];
+        foreach (self::DEFAULT_ROW_IDENTIFIER_FIELDS as $field) {
+            if (isset($row[$field]) && $row[$field] !== '') {
+                return sprintf(' (%s=%s)', $field, $row[$field]);
+            }
+        }
+        return '';
     }
 
     /**
