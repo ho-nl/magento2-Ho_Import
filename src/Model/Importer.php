@@ -185,14 +185,22 @@ class Importer
      * Per-entity natural identifier columns, ordered from most-specific
      * to least. First match wins:
      *
-     *   sku           — catalog_product, advanced_pricing, stock_items
+     *   sku           — catalog_product, advanced_pricing, stock_items,
+     *                   product_links
      *   source_code   — MSI stock_sources
-     *   email         — customer, customer_address, customer_composite
+     *   email         — customer, customer_address, customer_composite,
+     *                   newsletter_subscriber
      *   increment_id  — sales_order, invoice, credit_memo, shipment
      *   code          — tax_rate, store / website CSV imports
+     *   url_key       — catalog_category (primary), catalog_product (fallback)
+     *   request_path  — url_rewrite
+     *   name          — catalog_category (last resort — name isn't
+     *                   unique, but it's the only thing every category
+     *                   row carries)
      *
-     * Override via DI (`<argument name="rowIdentifierFields" xsi:type="array">…`)
-     * if a custom entity type needs another column surfaced.
+     * `sku` is checked first so product imports always show the SKU even
+     * when the row also has `url_key` or `name`. Category imports fall
+     * through to `url_key` / `name` since they don't have a SKU.
      */
     private const DEFAULT_ROW_IDENTIFIER_FIELDS = [
         'sku',
@@ -200,6 +208,9 @@ class Importer
         'email',
         'increment_id',
         'code',
+        'url_key',
+        'request_path',
+        'name',
     ];
 
     /**
