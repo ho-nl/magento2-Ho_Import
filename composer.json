@@ -14,6 +14,9 @@
         "monolog/monolog": "^2.8 || ^3.0",
         "ext-mbstring": "*"
     },
+    "suggest": {
+        "openspout/openspout": "Required for Ho\\Import\\Streamer\\FileXlsx — streaming XLSX reader (PHP 8.3+). Install via `composer require openspout/openspout`."
+    },
     "type": "magento2-module",
     "autoload": {
         "files": [
