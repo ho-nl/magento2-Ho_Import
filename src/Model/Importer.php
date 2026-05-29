@@ -182,12 +182,34 @@ class Importer
     }
 
     /**
-     * Look up a row's natural identifier (sku / email) and format it
-     * for inclusion in the error message. Returns '' when the source
-     * isn't an in-memory array, the row isn't found, or no recognised
-     * identifier is present.
+     * Per-entity natural identifier columns, ordered from most-specific
+     * to least. First match wins:
      *
-     * @param array|null $dataArray
+     *   sku           — catalog_product, advanced_pricing, stock_items
+     *   source_code   — MSI stock_sources
+     *   email         — customer, customer_address, customer_composite
+     *   increment_id  — sales_order, invoice, credit_memo, shipment
+     *   code          — tax_rate, store / website CSV imports
+     *
+     * Override via DI (`<argument name="rowIdentifierFields" xsi:type="array">…`)
+     * if a custom entity type needs another column surfaced.
+     */
+    private const DEFAULT_ROW_IDENTIFIER_FIELDS = [
+        'sku',
+        'source_code',
+        'email',
+        'increment_id',
+        'code',
+    ];
+
+    /**
+     * Look up a row's natural identifier (sku / email / source_code /
+     * increment_id / code) and format it for inclusion in the error
+     * message. Returns '' when the source isn't an in-memory array,
+     * the row isn't found, or no recognised identifier is present —
+     * the caller still has the line number to work with.
+     *
+     * @param array|null      $dataArray
      * @param int|string|null $rowNumber
      * @return string
      */
@@ -197,8 +219,8 @@ class Importer
             return '';
         }
         $row = $dataArray[$rowNumber];
-        foreach (['sku', 'email'] as $field) {
-            if (!empty($row[$field])) {
+        foreach (self::DEFAULT_ROW_IDENTIFIER_FIELDS as $field) {
+            if (isset($row[$field]) && $row[$field] !== '') {
                 return sprintf(' (%s=%s)', $field, $row[$field]);
             }
         }
