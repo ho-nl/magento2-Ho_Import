@@ -33,6 +33,16 @@ class Importer
     protected $arrayAdapterFactory;
 
     /**
+     * Reference to the data array passed into processImport — kept around
+     * so getErrorMessages() can resolve a row number back to its
+     * identifier (typically `sku`, falls back to `email` for customers).
+     * Magento's `ProcessingError` only carries the row number.
+     *
+     * @var array|null
+     */
+    private $lastDataArray;
+
+    /**
      * @var \Magento\Indexer\Model\Indexer\Collection
      */
     private $indexerCollection;
@@ -80,6 +90,7 @@ class Importer
      */
     public function processImport(&$dataArray)
     {
+        $this->lastDataArray = &$dataArray;
         $sourceAdapter = $this->loadData($dataArray);
         $validationResult = $this->importModel->validateSource($sourceAdapter);
         if (!$validationResult) {
@@ -136,29 +147,62 @@ class Importer
      * Formatted array of error messages — one string per validation /
      * import error, ready to print or log. Each line reads:
      *
-     *     Line <rownum>: [<column>] <message>  (— <description> if present)
+     *     Line <rownum> (<id-field>=<value>): [<column>] <message>  (— <description> if present)
      *
      * Designed for issue #26: the importer surfaces a summary
      * ("Checked rows: 2822, invalid rows: 4, total errors: 4") but
      * doesn't tell you which row or column went wrong. With this
-     * format a developer can grep straight to the offending line.
+     * format a developer can grep straight to the offending row by
+     * line number, SKU, or email.
+     *
+     * SKU/email lookup is best-effort: it requires the source to be
+     * an in-memory array (the usual ArrayAdapter path). For other
+     * source types — CSV files, HTTP streams — `lastDataArray` stays
+     * null and the line number alone is shown.
      *
      * @return string[]
      */
     public function getErrorMessages()
     {
         $errorAggregator = $this->importModel->getErrorAggregator();
-        return array_map(function (ProcessingError $error) {
+        $dataArray = $this->lastDataArray;
+        return array_map(function (ProcessingError $error) use ($dataArray) {
+            $rowNumber = $error->getRowNumber();
             $column = $error->getColumnName();
             $description = $error->getErrorDescription();
             return sprintf(
-                'Line %s: %s%s%s',
-                $error->getRowNumber() ?: '[?]',
+                'Line %s%s: %s%s%s',
+                $rowNumber ?? '[?]',
+                $this->formatRowIdentifier($dataArray, $rowNumber),
                 $column ? "[$column] " : '',
                 $error->getErrorMessage(),
                 $description ? ' — ' . $description : ''
             );
         }, $errorAggregator->getAllErrors());
+    }
+
+    /**
+     * Look up a row's natural identifier (sku / email) and format it
+     * for inclusion in the error message. Returns '' when the source
+     * isn't an in-memory array, the row isn't found, or no recognised
+     * identifier is present.
+     *
+     * @param array|null $dataArray
+     * @param int|string|null $rowNumber
+     * @return string
+     */
+    private function formatRowIdentifier($dataArray, $rowNumber): string
+    {
+        if (!is_array($dataArray) || $rowNumber === null || !isset($dataArray[$rowNumber])) {
+            return '';
+        }
+        $row = $dataArray[$rowNumber];
+        foreach (['sku', 'email'] as $field) {
+            if (!empty($row[$field])) {
+                return sprintf(' (%s=%s)', $field, $row[$field]);
+            }
+        }
+        return '';
     }
 
     /**
