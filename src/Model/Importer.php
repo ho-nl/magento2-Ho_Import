@@ -133,18 +133,30 @@ class Importer
 
 
     /**
-     * Formatted array of error messages
-     * @return []\
+     * Formatted array of error messages — one string per validation /
+     * import error, ready to print or log. Each line reads:
+     *
+     *     Line <rownum>: [<column>] <message>  (— <description> if present)
+     *
+     * Designed for issue #26: the importer surfaces a summary
+     * ("Checked rows: 2822, invalid rows: 4, total errors: 4") but
+     * doesn't tell you which row or column went wrong. With this
+     * format a developer can grep straight to the offending line.
+     *
+     * @return string[]
      */
     public function getErrorMessages()
     {
         $errorAggregator = $this->importModel->getErrorAggregator();
         return array_map(function (ProcessingError $error) {
+            $column = $error->getColumnName();
+            $description = $error->getErrorDescription();
             return sprintf(
-                'Line %s: %s %s',
+                'Line %s: %s%s%s',
                 $error->getRowNumber() ?: '[?]',
+                $column ? "[$column] " : '',
                 $error->getErrorMessage(),
-                $error->getErrorDescription()
+                $description ? ' — ' . $description : ''
             );
         }, $errorAggregator->getAllErrors());
     }
