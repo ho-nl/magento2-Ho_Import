@@ -97,7 +97,7 @@ class HoImportRunCommand extends Command
      *
      * @return int
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $profiles = $this->importProfilePool->getProfiles();
         $profile = $input->getArgument('profile');

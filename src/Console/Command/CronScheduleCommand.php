@@ -90,7 +90,7 @@ class CronScheduleCommand extends Command
      *
      * @return int
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
 
         $jobName = $input->getArgument(self::INPUT_KEY_JOB_NAME);
