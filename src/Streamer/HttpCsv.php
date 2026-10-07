@@ -159,9 +159,9 @@ class HttpCsv
         }
         $this->consoleOutput->write("\n");
 
-        $csvReader = \League\Csv\Reader::createFromStream(StreamWrapper::streamToResource($result->getBody()));
+        $csvReader = \League\Csv\Reader::from(StreamWrapper::streamToResource($result->getBody()));
         if ($this->encodingConversion) {
-            $csvReader->addStreamFilter($this->encodingConversion);
+            $csvReader->appendStreamFilterOnRead($this->encodingConversion);
         }
         if ($this->delimiter) {
             $csvReader->setDelimiter($this->delimiter);

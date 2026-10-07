@@ -10,7 +10,7 @@
         "ho-nl-fork/magento-psr6-bridge": "^0.2",
         "symfony/stopwatch": "^6.2 || ^7.0",
         "ho-nl-fork/psr7-csv-factory": "^1.0",
-        "league/csv": "^9.1",
+        "league/csv": "^9.27",
         "monolog/monolog": "^2.8 || ^3.0",
         "ext-mbstring": "*"
     },
